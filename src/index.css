@@ -150,3 +150,8 @@ details summary { cursor: pointer; color: var(--accent); }
 .flag { background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; }
 blockquote { margin: 6px 0; padding: 6px 12px; border-left: 3px solid var(--line); color: var(--muted); font-size: 0.9rem; white-space: pre-wrap; }
 .evidence summary { color: var(--good); font-size: 0.9rem; }
+
+.error-note { border: 1px solid var(--low); border-radius: 10px; padding: 10px 14px; margin: 10px 0; background: var(--bg); }
+.error-note strong { color: var(--low); }
+.error-note details { margin-left: auto; }
+.mono { font-family: ui-monospace, Consolas, monospace; word-break: break-word; }

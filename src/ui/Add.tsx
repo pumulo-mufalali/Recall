@@ -14,6 +14,8 @@ import { Queued, cardsFromFile, cardsFromText, verifyCards, type Material } from
 import type { Settings } from '../services/firebase';
 import { QUEUE_MAX_FILE, dequeue, enqueue, saveDeck, type QueuedJob } from '../services/store';
 import { EngineBadge } from './EngineBadge';
+import { ErrorNote } from './ErrorNote';
+import { Plain, friendly, type Friendly } from '../core/errors';
 import type { LiveConditions } from './useConditions';
 
 /** A card under review: its check, and whether the learner has dealt with a flag. */
@@ -47,7 +49,7 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Friendly | null>(null);
   const [review, setReview] = useState<Review | null>(ready?.review ?? null);
 
   const task: Task | null = file
@@ -61,18 +63,21 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
   const plan = useMemo(() => (task ? route(task, conditions, settings) : null), [file, text.length, conditions.online, conditions.device, settings]);
 
   const make = async () => {
-    setError('');
+    setError(null);
     const name = title.trim() || (file ? file.name : firstLine(text));
     try {
       setBusy('Writing questions…');
       const made = file ? await cardsFromFile(file, settings) : await cardsFromText(text, settings);
-      if (!made.value.length) throw new Error('No usable questions came back. Try clearer or longer material.');
+      if (!made.value.length) throw new Plain('No usable questions came back.', 'Try clearer or longer material.', true);
       const material: Material = file ? { kind: 'file', file } : { kind: 'text', text };
       setBusy('Fact-checking every answer against your material…');
       setReview(await reviewOf(name, material, made.value, made.engine, made.route, settings));
     } catch (e) {
       if (e instanceof Queued) await queueIt(name, e.message);
-      else setError(e instanceof Error ? e.message : String(e));
+      else {
+        console.error('[recall] making questions failed', e);
+        setError(friendly(e));
+      }
     } finally {
       setBusy('');
     }
@@ -81,7 +86,7 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
   const queueIt = async (name: string, reason: string) => {
     if (file) {
       if (file.size > QUEUE_MAX_FILE) {
-        setError('This file is too large to keep until you reconnect. Try again when you are online.');
+        setError(friendly(new Plain('This file is too large to keep until you reconnect.', 'Try again when you are online.')));
         return;
       }
       enqueue(uid, { title: name, reason, file: { name: file.name, type: file.type, data: await base64(file) } });
@@ -137,7 +142,7 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
           <strong>{plan.run === 'queue' ? 'Will wait' : plan.run === 'model' && plan.mode.includes('device') ? 'On this device' : 'In the cloud'}:</strong> {plan.reason}
         </p>
       )}
-      {error && <p className="error">{error}</p>}
+      {error && <ErrorNote error={error} onRetry={make} />}
       <div className="row">
         <button onClick={onDone} disabled={!!busy}>Cancel</button>
         <button className="primary" onClick={make} disabled={!task || !!busy}>

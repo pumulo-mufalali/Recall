@@ -12,6 +12,8 @@ import { Queued, explain, grade, type Outcome } from '../services/engine';
 import type { Settings } from '../services/firebase';
 import { recordAnswer } from '../services/store';
 import { EngineBadge } from './EngineBadge';
+import { ErrorNote } from './ErrorNote';
+import { friendly, type Friendly } from '../core/errors';
 
 interface Props {
   uid: string;
@@ -62,7 +64,7 @@ function CardView({ uid, card, settings, position, onAnswered, onNext }: {
   const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [marking, setMarking] = useState(false);
   const [result, setResult] = useState<{ attempt: Attempt; route: Route } | null>(null);
-  const [help, setHelp] = useState<Outcome<string> | { queued: string } | null>(null);
+  const [help, setHelp] = useState<Outcome<string> | { queued: string } | { failed: Friendly } | null>(null);
   const [explaining, setExplaining] = useState(false);
 
   const check = async () => {
@@ -80,7 +82,11 @@ function CardView({ uid, card, settings, position, onAnswered, onNext }: {
     try {
       setHelp(await explain(card.prompt, card.answer, result?.attempt.grade.missing ?? [], settings));
     } catch (e) {
-      setHelp({ queued: e instanceof Queued ? e.message : 'Could not explain right now. Try again in a moment.' });
+      if (e instanceof Queued) setHelp({ queued: e.message });
+      else {
+        console.error('[recall] explaining failed', e);
+        setHelp({ failed: friendly(e) });
+      }
     } finally {
       setExplaining(false);
     }
@@ -152,6 +158,7 @@ function CardView({ uid, card, settings, position, onAnswered, onNext }: {
             <button onClick={askWhy} disabled={explaining}>{explaining ? 'Explaining…' : 'Explain this to me'}</button>
           )}
           {help && 'queued' in help && <p className="muted">{help.queued}</p>}
+          {help && 'failed' in help && <ErrorNote error={help.failed} onRetry={askWhy} />}
           {help && 'value' in help && (
             <div className="explain">
               <EngineBadge engine={help.engine} route={help.route} />

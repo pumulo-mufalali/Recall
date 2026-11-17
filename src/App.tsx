@@ -9,6 +9,8 @@ import { Add, reviewOf, type Review } from './ui/Add';
 import { Insights } from './ui/Insights';
 import { Study } from './ui/Study';
 import { useConditions, type LiveConditions } from './ui/useConditions';
+import { ErrorNote } from './ui/ErrorNote';
+import { Plain, friendly, type Friendly } from './core/errors';
 
 type View = 'home' | 'add' | 'study' | 'insights';
 
@@ -22,7 +24,11 @@ export default function App() {
 }
 
 function SignIn() {
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Friendly | null>(null);
+  const signIn = () =>
+    signInWithPopup(auth, new GoogleAuthProvider()).catch((e) =>
+      setError(friendly(navigator.onLine ? e : new Plain('Signing in needs a connection the first time.', 'Connect to the internet and try again.', true))),
+    );
   return (
     <main className="app">
       <section className="panel center hero">
@@ -31,11 +37,11 @@ function SignIn() {
         <p>Turn your notes into questions, answer them from memory, and see the honest gap between how sure you feel and what you actually know. Marking happens on your device: private, instant, and offline.</p>
         <button
           className="primary"
-          onClick={() => signInWithPopup(auth, new GoogleAuthProvider()).catch((e) => setError(navigator.onLine ? e.message : 'Signing in needs a connection the first time.'))}
+          onClick={signIn}
         >
           Sign in with Google
         </button>
-        {error && <p className="error">{error}</p>}
+        {error && <ErrorNote error={error} onRetry={signIn} />}
       </section>
     </main>
   );
