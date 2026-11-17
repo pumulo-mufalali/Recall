@@ -67,6 +67,8 @@ export interface DraftCard {
   prompt: string;
   answer: string;
   keyPoints: string[];
+  /** Which part of split material it came from (offline, on the device), to check it against. */
+  part?: number;
 }
 
 /** Pulls JSON out of a reply that may be wrapped in a code fence or prose. */

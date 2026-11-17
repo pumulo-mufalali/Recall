@@ -40,6 +40,13 @@ describe('route', () => {
     expect(route({ kind: 'generate', source: 'pdf', bytes: 1e6 }, online)).toMatchObject({ mode: 'only_in_cloud' });
     expect(route({ kind: 'generate', source: 'pdf', bytes: 1e6 }, offline).run).toBe('queue');
   });
+  it('fact-checks with the cloud model online, on the device offline when it can', () => {
+    expect(route({ kind: 'verify', source: 'text', chars: 3000 }, online)).toMatchObject({ mode: 'prefer_in_cloud' });
+    expect(route({ kind: 'verify', source: 'text', chars: 30000 }, offline)).toMatchObject({ mode: 'only_on_device', chunks: 3 });
+    expect(route({ kind: 'verify', source: 'image', mime: 'image/png', bytes: 1e6 }, offline)).toMatchObject({ mode: 'only_on_device' });
+    expect(route({ kind: 'verify', source: 'pdf', bytes: 1e6 }, offline).run).toBe('queue');
+    expect(route({ kind: 'verify', source: 'text', chars: 300 }, stranded).run).toBe('queue');
+  });
   it('explains in the cloud online, briefly on the device offline', () => {
     expect(route({ kind: 'explain' }, online)).toMatchObject({ mode: 'prefer_in_cloud' });
     expect(route({ kind: 'explain' }, offline)).toMatchObject({ mode: 'only_on_device' });

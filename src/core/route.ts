@@ -40,7 +40,11 @@ export type Task =
   | { kind: 'generate'; source: 'text'; chars: number }
   | { kind: 'generate'; source: 'image'; mime: string; bytes: number }
   | { kind: 'generate'; source: 'pdf'; bytes: number }
-  | { kind: 'explain' };
+  | { kind: 'explain' }
+  /** Fact-checking cards against the material they came from. */
+  | { kind: 'verify'; source: 'text'; chars: number }
+  | { kind: 'verify'; source: 'image'; mime: string; bytes: number }
+  | { kind: 'verify'; source: 'pdf'; bytes: number };
 
 export type Route =
   /** Run through Firebase AI Logic in this mode. `chunks` > 1: split the source first. */
@@ -81,6 +85,21 @@ export function route(task: Task, c: Conditions, limits: Limits = DEFAULT_LIMITS
         return { run: 'model', mode: 'only_on_device', chunks, reason: `Offline: split into ${chunks} parts this device can read one by one.` };
       }
       return { run: 'queue', reason: 'Offline with no built-in model: queued until you are back online.' };
+
+    case 'verify':
+      // Online, a second and larger model checks the cards: "the small model writes, the big
+      // one checks". Offline, the device checks what it can read; the rest waits.
+      if (c.online) return model('prefer_in_cloud', 'Fact-checked by the cloud model, a second and larger model.');
+      if (ready(c)) {
+        if (task.source === 'text') {
+          const chunks = Math.ceil(task.chars / limits.deviceMaxChars);
+          return { run: 'model', mode: 'only_on_device', chunks, reason: chunks > 1 ? `Offline: fact-checked on this device, part by part (${chunks}).` : 'Offline: fact-checked on this device.' };
+        }
+        if (task.source === 'image' && (task.mime === 'image/jpeg' || task.mime === 'image/png') && task.bytes <= limits.deviceMaxImageBytes) {
+          return model('only_on_device', 'Offline: fact-checked on this device.');
+        }
+      }
+      return { run: 'queue', reason: 'Not fact-checked yet: that needs a connection.' };
 
     case 'explain':
       if (c.online) return model('prefer_in_cloud', 'A full explanation from the cloud model.');

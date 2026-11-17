@@ -22,6 +22,7 @@ import {
   type DraftCard,
 } from '../core/prompts';
 import { localGrade } from '../core/localGrade';
+import { VERIFY_SYSTEM, judge, toChecks, verifyPrompt, type CardCheck } from '../core/verify';
 import { chunkText, route, type Conditions, type DeviceModel, type Mode, type Route, type Task } from '../core/route';
 import type { Engine, Grade } from '../core/types';
 import { ai, type Settings } from './firebase';
@@ -167,10 +168,10 @@ export async function cardsFromText(text: string, settings: Settings): Promise<O
   const model = build(r.mode, CARDS_SYSTEM, CARDS_FORMAT, TEXT_IO, settings.cloudModel);
   const cards: DraftCard[] = [];
   const engines = new Set<Engine>();
-  for (const piece of pieces) {
+  for (const [part, piece] of pieces.entries()) {
     const result = await model.generateContent(cardsPrompt(piece, cardCount(piece.length)));
     engines.add(engineOf(result.response.inferenceSource));
-    cards.push(...toCards(parseJson(result.response.text())));
+    cards.push(...toCards(parseJson(result.response.text())).map((c) => (pieces.length > 1 ? { ...c, part } : c)));
   }
   return { value: dedupe(cards), engine: engines.has('cloud') ? 'cloud' : 'on-device', route: r };
 }
@@ -186,6 +187,110 @@ export async function cardsFromFile(file: File, settings: Settings): Promise<Out
   const instruction = isPdf ? `Read this document and write ${count} questions from it.` : CARDS_FROM_IMAGE(count);
   const result = await build(r.mode, CARDS_SYSTEM, CARDS_FORMAT, IMAGE_IO, settings.cloudModel).generateContent([instruction, data]);
   return { value: dedupe(toCards(parseJson(result.response.text()))), engine: engineOf(result.response.inferenceSource), route: r };
+}
+
+// ----- Fact-checking -----
+
+const VERDICTS = ['supported', 'partial', 'wrong'];
+
+const CHECK_FORMAT: Format = {
+  cloud: Schema.object({
+    properties: {
+      checks: Schema.array({
+        items: Schema.object({
+          properties: {
+            card: Schema.integer(),
+            verdict: Schema.enumString({ enum: VERDICTS }),
+            evidence: Schema.string(),
+            issue: Schema.string(),
+            answer: Schema.string(),
+            keyPoints: Schema.array({ items: Schema.string() }),
+          },
+          optionalProperties: ['answer', 'keyPoints'],
+        }),
+      }),
+    },
+  }),
+  device: {
+    type: 'object',
+    properties: {
+      checks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            card: { type: 'integer' },
+            verdict: { type: 'string', enum: VERDICTS },
+            evidence: { type: 'string' },
+            issue: { type: 'string' },
+            answer: { type: 'string' },
+            keyPoints: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['card', 'verdict', 'evidence', 'issue'],
+        },
+      },
+    },
+    required: ['checks'],
+  },
+};
+
+/** The material cards were made from, for checking them against it. */
+export type Material = { kind: 'text'; text: string } | { kind: 'file'; file: File };
+
+/**
+ * Fact-checks cards against their material (see core/verify.ts). Never throws: what cannot be
+ * checked now comes back "unchecked", with the reason, so the learner can decide.
+ */
+export async function verifyCards(drafts: DraftCard[], material: Material, settings: Settings): Promise<Outcome<CardCheck[]>> {
+  const task: Task =
+    material.kind === 'text'
+      ? { kind: 'verify', source: 'text', chars: material.text.length }
+      : material.file.type === 'application/pdf'
+        ? { kind: 'verify', source: 'pdf', bytes: material.file.size }
+        : { kind: 'verify', source: 'image', mime: material.file.type, bytes: material.file.size };
+  const r = route(task, await conditions(), settings);
+  const unchecked = (note: string): CardCheck => ({ status: 'unchecked', notes: [note], evidence: '' });
+  if (r.run !== 'model') return { value: drafts.map(() => unchecked(r.reason)), engine: 'local', route: r };
+
+  const checks: CardCheck[] = drafts.map(() => unchecked('Not checked.'));
+  const engines = new Set<Engine>();
+  const model = build(r.mode, VERIFY_SYSTEM, CHECK_FORMAT, material.kind === 'file' ? IMAGE_IO : TEXT_IO, settings.cloudModel);
+
+  // Which cards to check against which piece of the material.
+  const batches: { source: string | File; cards: number[] }[] = [];
+  if (material.kind === 'file') batches.push({ source: material.file, cards: drafts.map((_, i) => i) });
+  else if (r.chunks <= 1) batches.push({ source: material.text, cards: drafts.map((_, i) => i) });
+  else {
+    const pieces = chunkText(material.text, settings.deviceMaxChars);
+    pieces.forEach((piece, part) => batches.push({ source: piece, cards: drafts.flatMap((d, i) => (d.part === part ? [i] : [])) }));
+    drafts.forEach((d, i) => {
+      if (d.part === undefined) checks[i] = unchecked('Too long to check offline in one piece: check again when online.');
+    });
+  }
+
+  for (const batch of batches) {
+    if (!batch.cards.length) continue;
+    const these = batch.cards.map((i) => drafts[i]);
+    try {
+      const ask = verifyPrompt(these);
+      const result =
+        typeof batch.source === 'string'
+          ? await model.generateContent(`${ask}
+
+Source:
+${batch.source}`)
+          : await model.generateContent([ask, { type: 'inlineData', inlineData: { mimeType: batch.source.type, data: await base64(batch.source) } }]);
+      engines.add(engineOf(result.response.inferenceSource));
+      const replies = toChecks(parseJson(result.response.text()), these.length);
+      batch.cards.forEach((cardIndex, j) => {
+        checks[cardIndex] = judge(drafts[cardIndex], replies.get(j), typeof batch.source === 'string' ? batch.source : undefined);
+      });
+    } catch (e) {
+      console.warn('[recall] fact-check failed', e);
+      for (const i of batch.cards) checks[i] = unchecked('The fact-check failed: try again.');
+    }
+  }
+  return { value: checks, engine: engines.has('cloud') ? 'cloud' : engines.size ? 'on-device' : 'local', route: r };
 }
 
 /** Explains a card the learner keeps missing. */

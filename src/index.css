@@ -136,3 +136,17 @@ details summary { cursor: pointer; color: var(--accent); }
 .bar.actual, .swatch.actual { background: var(--accent); }
 .swatch { display: inline-block; width: 12px; height: 9px; border-radius: 3px; margin: 0 4px 0 10px; vertical-align: middle; }
 @media (max-width: 520px) { .level { grid-template-columns: 80px 1fr; } .level > :last-child { grid-column: 2; } }
+
+/* Card review and fact-checking */
+.row.tight { margin-top: 6px; gap: 8px; align-items: center; }
+.summary-line { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 6px; font-weight: 600; }
+.ok { color: var(--good); }
+.warn { color: var(--low); }
+.draft { border-left: 3px solid transparent; padding-left: 10px; }
+.draft-verified { border-left-color: var(--good); }
+.draft-flagged { border-left-color: var(--low); }
+.draft-flagged.resolved { border-left-color: var(--mid); }
+.draft-unchecked { border-left-color: var(--line); }
+.flag { background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; }
+blockquote { margin: 6px 0; padding: 6px 12px; border-left: 3px solid var(--line); color: var(--muted); font-size: 0.9rem; white-space: pre-wrap; }
+.evidence summary { color: var(--good); font-size: 0.9rem; }

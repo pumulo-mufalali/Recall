@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { dueCards } from './core/schedule';
 import type { Attempt, Card, Deck } from './core/types';
 import { cardsFromFile, cardsFromText, Queued } from './services/engine';
 import { auth, loadSettings, type Settings } from './services/firebase';
-import { dequeue, removeDeck, saveDeck, watchAttempts, watchCards, watchDecks, watchQueue, type QueuedJob } from './services/store';
-import { Add } from './ui/Add';
+import { dequeue, removeDeck, watchAttempts, watchCards, watchDecks, watchQueue, type QueuedJob } from './services/store';
+import { Add, reviewOf, type Review } from './ui/Add';
 import { Insights } from './ui/Insights';
 import { Study } from './ui/Study';
 import { useConditions, type LiveConditions } from './ui/useConditions';
@@ -50,6 +50,8 @@ function Signed({ user }: { user: User }) {
   const [cards, setCards] = useState<Card[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [jobs, setJobs] = useState<QueuedJob[]>([]);
+  const [ready, setReady] = useState<Record<string, Review>>({});
+  const [reviewing, setReviewing] = useState<string | null>(null);
 
   useEffect(() => void loadSettings().then(setSettings), []);
   useEffect(() => watchDecks(uid, setDecks), [uid]);
@@ -57,7 +59,8 @@ function Signed({ user }: { user: User }) {
   useEffect(() => watchAttempts(uid, setAttempts), [uid]);
   useEffect(() => watchQueue(uid, setJobs), [uid]);
 
-  useQueueRunner(uid, jobs, conditions, settings);
+  const onReady = useCallback((id: string, review: Review) => setReady((r) => ({ ...r, [id]: review })), []);
+  useQueueRunner(jobs, ready, conditions, settings, onReady);
 
   // Recomputed when cards change or the view changes (so returning home shows fresh due counts).
   const due = useMemo(() => dueCards(cards, new Date(), settings?.newPerSession ?? 10), [cards, settings, view]);
@@ -78,15 +81,32 @@ function Signed({ user }: { user: User }) {
           decks={decks}
           cards={cards}
           jobs={jobs}
+          ready={ready}
           attempts={attempts.length}
           onStudy={() => setView('study')}
           onAdd={() => setView('add')}
           onInsights={() => setView('insights')}
           onRemoveDeck={(d) => removeDeck(uid, d.id, cards.filter((c) => c.deckId === d.id))}
           onDropJob={(j) => dequeue(uid, j.id)}
+          onReview={(j) => {
+            setReviewing(j.id);
+            setView('add');
+          }}
         />
       )}
-      {view === 'add' && <Add uid={uid} settings={settings} conditions={conditions} onDone={() => setView('home')} />}
+      {view === 'add' && (
+        <Add
+          key={reviewing ?? 'new'}
+          uid={uid}
+          settings={settings}
+          conditions={conditions}
+          ready={reviewing && ready[reviewing] ? { job: jobs.find((j) => j.id === reviewing)!, review: ready[reviewing] } : undefined}
+          onDone={() => {
+            setReviewing(null);
+            setView('home');
+          }}
+        />
+      )}
       {view === 'study' && <Study uid={uid} cards={due} settings={settings} onDone={() => setView('home')} />}
       {view === 'insights' && <Insights attempts={attempts} cards={cards} onBack={() => setView('home')} />}
     </main>
@@ -127,12 +147,14 @@ function Home(props: {
   decks: Deck[];
   cards: Card[];
   jobs: QueuedJob[];
+  ready: Record<string, Review>;
   attempts: number;
   onStudy: () => void;
   onAdd: () => void;
   onInsights: () => void;
   onRemoveDeck: (d: Deck) => void;
   onDropJob: (j: QueuedJob) => void;
+  onReview: (j: QueuedJob) => void;
 }) {
   const { due, decks, cards, jobs } = props;
   return (
@@ -149,12 +171,18 @@ function Home(props: {
 
       {jobs.length > 0 && (
         <section className="panel">
-          <h3>Waiting for a connection</h3>
+          <h3>Waiting material</h3>
           <ul className="list">
             {jobs.map((j) => (
               <li key={j.id}>
-                <span>{j.title}<span className="muted small"> · {j.reason}</span></span>
-                <button className="link" onClick={() => props.onDropJob(j)}>Drop</button>
+                <span>
+                  {j.title}
+                  <span className="muted small"> · {props.ready[j.id] ? `${props.ready[j.id].drafts.length} questions ready to review` : j.reason}</span>
+                </span>
+                <span>
+                  {props.ready[j.id] && <button className="link" onClick={() => props.onReview(j)}>Review</button>}
+                  <button className="link" onClick={() => props.onDropJob(j)}>Drop</button>
+                </span>
               </li>
             ))}
           </ul>
@@ -184,28 +212,32 @@ function Home(props: {
   );
 }
 
-/** Turns queued material into cards once it can run (back online, or the model arrived). */
-function useQueueRunner(uid: string, jobs: QueuedJob[], c: LiveConditions, settings: Settings | null) {
+/**
+ * Turns waiting material into cards once it can run (back online, or the model arrived), and
+ * fact-checks them. Nothing is saved without the learner's review: results wait on the home
+ * screen as "ready to review" (kept in memory; the material itself stays queued until saved).
+ */
+function useQueueRunner(jobs: QueuedJob[], ready: Record<string, Review>, c: LiveConditions, settings: Settings | null, onReady: (id: string, review: Review) => void) {
   const running = useRef(false);
   useEffect(() => {
-    if (!settings || running.current || !jobs.length || !c.online) return;
+    const todo = jobs.filter((j) => !ready[j.id]);
+    if (!settings || running.current || !todo.length || !c.online) return;
     running.current = true;
     (async () => {
-      for (const job of jobs) {
+      for (const job of todo) {
         try {
-          const out = job.file
-            ? await cardsFromFile(new File([bytes(job.file.data)], job.file.name, { type: job.file.type }), settings)
-            : await cardsFromText(job.text ?? '', settings);
-          if (out.value.length) saveDeck(uid, job.title, job.file ? (job.file.type === 'application/pdf' ? 'pdf' : 'image') : 'text', out.value, out.engine);
-          dequeue(uid, job.id);
+          const file = job.file ? new File([bytes(job.file.data)], job.file.name, { type: job.file.type }) : null;
+          const made = file ? await cardsFromFile(file, settings) : await cardsFromText(job.text ?? '', settings);
+          if (!made.value.length) continue;
+          onReady(job.id, await reviewOf(job.title, file ? { kind: 'file', file } : { kind: 'text', text: job.text ?? '' }, made.value, made.engine, made.route, settings));
         } catch (e) {
-          if (!(e instanceof Queued)) console.warn('[recall] queued job failed; will retry', e);
+          if (!(e instanceof Queued)) console.warn('[recall] waiting material failed; will retry', e);
           break;
         }
       }
       running.current = false;
     })();
-  }, [uid, jobs, c.online, c.device, settings]);
+  }, [jobs, ready, c.online, c.device, settings, onReady]);
 }
 
 function bytes(b64: string): Uint8Array<ArrayBuffer> {
