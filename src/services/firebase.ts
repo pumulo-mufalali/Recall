@@ -39,12 +39,19 @@ remote.defaultConfig = {
   device_max_image_bytes: DEFAULT_LIMITS.deviceMaxImageBytes,
   cloud_grading: DEFAULT_LIMITS.cloudGrading,
   cloud_model: 'gemini-3.5-flash-lite',
+  check_model: 'gemini-3.8-flash',
+  cloud_fallback_models: 'gemini-3.8-flash,gemini-4-hydrogen',
   new_cards_per_session: 10,
 };
 
 /** Routing limits and settings from Remote Config (defaults offline or before the first fetch). */
 export interface Settings extends Limits {
+  /** Writes cards and marks answers: fast and cheap. */
   cloudModel: string;
+  /** Fact-checks cards and explains: a larger model than the writer. */
+  checkModel: string;
+  /** Tried in turn when a model is busy. */
+  fallbackModels: string[];
   newPerSession: number;
 }
 
@@ -55,6 +62,8 @@ export async function loadSettings(): Promise<Settings> {
     deviceMaxImageBytes: getValue(remote, 'device_max_image_bytes').asNumber(),
     cloudGrading: getValue(remote, 'cloud_grading').asBoolean(),
     cloudModel: getValue(remote, 'cloud_model').asString(),
+    checkModel: getValue(remote, 'check_model').asString(),
+    fallbackModels: getValue(remote, 'cloud_fallback_models').asString().split(',').map((m) => m.trim()).filter(Boolean),
     newPerSession: getValue(remote, 'new_cards_per_session').asNumber(),
   };
 }

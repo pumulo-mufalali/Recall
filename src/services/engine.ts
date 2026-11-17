@@ -21,6 +21,7 @@ import {
   toGrade,
   type DraftCard,
 } from '../core/prompts';
+import { isBusy } from '../core/busy';
 import { localGrade } from '../core/localGrade';
 import { VERIFY_SYSTEM, judge, toChecks, verifyPrompt, type CardCheck } from '../core/verify';
 import { chunkText, route, type Conditions, type DeviceModel, type Mode, type Route, type Task } from '../core/route';
@@ -120,6 +121,47 @@ function build(mode: Mode, system: string, format: Format | null, io: object, cl
   });
 }
 
+// ----- Calling a model, resiliently -----
+
+/** A request's set-up: where it may run, its instructions and format, and its cloud models in order. */
+interface Spec {
+  mode: Mode;
+  system: string;
+  format: Format | null;
+  io: object;
+  /** Cloud models to try in turn when one is busy: the first is preferred. */
+  models: string[];
+  /** Whether the on-device model can take this request if the cloud stays busy. */
+  deviceCan: boolean;
+}
+
+const PAUSES_MS = [1000, 3000, 7000];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms + Math.random() * 400));
+
+/**
+ * Runs a request: each cloud model in turn, retrying with growing pauses while it is busy;
+ * then, if the cloud stays busy and the request fits, the on-device model. Errors that are not
+ * "busy" (a bad request, App Check) fail at once.
+ */
+async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
+  let last: unknown;
+  for (const model of spec.models) {
+    for (let attempt = 0; attempt <= PAUSES_MS.length; attempt++) {
+      try {
+        return await build(spec.mode, spec.system, spec.format, spec.io, model).generateContent(request);
+      } catch (e) {
+        if (!isBusy(e)) throw e;
+        last = e;
+        if (attempt < PAUSES_MS.length) await sleep(PAUSES_MS[attempt]);
+      }
+    }
+  }
+  if (spec.deviceCan && spec.mode !== 'only_on_device' && (await deviceModel()) === 'available') {
+    return build('only_on_device', spec.system, spec.format, spec.io, spec.models[0]).generateContent(request);
+  }
+  throw last;
+}
+
 const engineOf = (source: string | undefined): Engine => (source === InferenceSource.ON_DEVICE ? 'on-device' : 'cloud');
 
 // ----- Tasks -----
@@ -148,7 +190,10 @@ export async function grade(question: string, keyPoints: string[], answer: strin
   const r = route({ kind: 'grade', chars: answer.length }, await conditions(), settings);
   if (r.run === 'model') {
     try {
-      const result = await build(r.mode, GRADE_SYSTEM, GRADE_FORMAT, TEXT_IO, settings.cloudModel).generateContent(gradePrompt(question, keyPoints, answer));
+      const result = await call(
+        { mode: r.mode, system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true },
+        gradePrompt(question, keyPoints, answer),
+      );
       const engine = engineOf(result.response.inferenceSource);
       const g = toGrade(parseJson(result.response.text()), keyPoints, engine);
       if (g) return { value: g, engine, route: r };
@@ -165,11 +210,11 @@ export async function cardsFromText(text: string, settings: Settings): Promise<O
   const r = route({ kind: 'generate', source: 'text', chars: text.length }, await conditions(), settings);
   if (r.run !== 'model') throw new Queued(r);
   const pieces = r.chunks > 1 ? chunkText(text, settings.deviceMaxChars) : [text];
-  const model = build(r.mode, CARDS_SYSTEM, CARDS_FORMAT, TEXT_IO, settings.cloudModel);
+  const spec: Spec = { mode: r.mode, system: CARDS_SYSTEM, format: CARDS_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true };
   const cards: DraftCard[] = [];
   const engines = new Set<Engine>();
   for (const [part, piece] of pieces.entries()) {
-    const result = await model.generateContent(cardsPrompt(piece, cardCount(piece.length)));
+    const result = await call(spec, cardsPrompt(piece, cardCount(piece.length)));
     engines.add(engineOf(result.response.inferenceSource));
     cards.push(...toCards(parseJson(result.response.text())).map((c) => (pieces.length > 1 ? { ...c, part } : c)));
   }
@@ -185,7 +230,8 @@ export async function cardsFromFile(file: File, settings: Settings): Promise<Out
   const data: Part = { type: 'inlineData', inlineData: { mimeType: file.type, data: await base64(file) } };
   const count = isPdf ? 12 : 6;
   const instruction = isPdf ? `Read this document and write ${count} questions from it.` : CARDS_FROM_IMAGE(count);
-  const result = await build(r.mode, CARDS_SYSTEM, CARDS_FORMAT, IMAGE_IO, settings.cloudModel).generateContent([instruction, data]);
+  const deviceCan = !isPdf && (file.type === 'image/jpeg' || file.type === 'image/png') && file.size <= settings.deviceMaxImageBytes;
+  const result = await call({ mode: r.mode, system: CARDS_SYSTEM, format: CARDS_FORMAT, io: IMAGE_IO, models: writers(settings), deviceCan }, [instruction, data]);
   return { value: dedupe(toCards(parseJson(result.response.text()))), engine: engineOf(result.response.inferenceSource), route: r };
 }
 
@@ -254,7 +300,16 @@ export async function verifyCards(drafts: DraftCard[], material: Material, setti
 
   const checks: CardCheck[] = drafts.map(() => unchecked('Not checked.'));
   const engines = new Set<Engine>();
-  const model = build(r.mode, VERIFY_SYSTEM, CHECK_FORMAT, material.kind === 'file' ? IMAGE_IO : TEXT_IO, settings.cloudModel);
+  // The checker is a different, larger model than the writer where possible, so it does not
+  // simply repeat the writer's misreading.
+  const spec: Spec = {
+    mode: r.mode,
+    system: VERIFY_SYSTEM,
+    format: CHECK_FORMAT,
+    io: material.kind === 'file' ? IMAGE_IO : TEXT_IO,
+    models: checkers(settings),
+    deviceCan: material.kind === 'text' ? material.text.length <= settings.deviceMaxChars : material.file.type === 'image/jpeg' || material.file.type === 'image/png',
+  };
 
   // Which cards to check against which piece of the material.
   const batches: { source: string | File; cards: number[] }[] = [];
@@ -275,11 +330,11 @@ export async function verifyCards(drafts: DraftCard[], material: Material, setti
       const ask = verifyPrompt(these);
       const result =
         typeof batch.source === 'string'
-          ? await model.generateContent(`${ask}
+          ? await call(spec, `${ask}
 
 Source:
 ${batch.source}`)
-          : await model.generateContent([ask, { type: 'inlineData', inlineData: { mimeType: batch.source.type, data: await base64(batch.source) } }]);
+          : await call(spec, [ask, { type: 'inlineData', inlineData: { mimeType: batch.source.type, data: await base64(batch.source) } }]);
       engines.add(engineOf(result.response.inferenceSource));
       const replies = toChecks(parseJson(result.response.text()), these.length);
       batch.cards.forEach((cardIndex, j) => {
@@ -299,9 +354,18 @@ export async function explain(question: string, answer: string, missing: string[
   const r = route({ kind: 'explain' }, c, settings);
   if (r.run !== 'model') throw new Queued(r);
   const short = r.mode === 'only_on_device';
-  const result = await build(r.mode, EXPLAIN_SYSTEM, null, TEXT_IO, settings.cloudModel).generateContent(explainPrompt(question, answer, missing, short));
+  const result = await call(
+    { mode: r.mode, system: EXPLAIN_SYSTEM, format: null, io: TEXT_IO, models: [settings.checkModel, ...writers(settings)], deviceCan: true },
+    explainPrompt(question, answer, missing, short),
+  );
   return { value: result.response.text().trim(), engine: engineOf(result.response.inferenceSource), route: r };
 }
+
+/** Cloud models for writing and marking: the configured one, then the backups. */
+const writers = (s: Settings) => unique([s.cloudModel, ...s.fallbackModels]);
+/** Cloud models for fact-checking: the larger checker first, then the rest. */
+const checkers = (s: Settings) => unique([s.checkModel, ...s.fallbackModels, s.cloudModel]);
+const unique = (list: string[]) => [...new Set(list.filter(Boolean))];
 
 function dedupe(cards: DraftCard[]): DraftCard[] {
   const seen = new Set<string>();
