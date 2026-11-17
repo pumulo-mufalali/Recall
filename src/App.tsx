@@ -101,7 +101,22 @@ function Status({ conditions: c }: { conditions: LiveConditions }) {
       <span className="sep">·</span>
       {c.device === 'available' && <span title="Gemini Nano runs in this browser">◆ Built-in AI ready</span>}
       {c.device === 'downloading' && <span>◆ Downloading built-in AI{c.progress !== null ? ` ${Math.round(c.progress * 100)}%` : '…'}</span>}
-      {c.device === 'downloadable' && <button className="link" onClick={c.download} disabled={!c.online}>◆ Get built-in AI</button>}
+      {c.device === 'downloadable' && (
+        <button
+          className="link"
+          disabled={!c.online}
+          onClick={() =>
+            confirm(
+              'Download Gemini Nano, the built-in AI, into Chrome?\n\n' +
+                'It is a one-time download of a few gigabytes (Chrome shares it with every site), and Chrome needs plenty of free disk space. ' +
+                'Once it is in, your answers are marked on this device: instantly, privately and offline.\n\n' +
+                'Until then, Recall marks answers in the cloud.',
+            ) && c.download()
+          }
+        >
+          ◆ Get built-in AI
+        </button>
+      )}
       {c.device === 'unavailable' && <span className="muted" title="This browser or device cannot run Gemini Nano: Recall uses the cloud, or its offline marker">No built-in AI here</span>}
     </div>
   );
