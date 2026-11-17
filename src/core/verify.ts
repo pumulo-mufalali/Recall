@@ -50,6 +50,27 @@ export function numbers(text: string): string[] {
   });
 }
 
+/**
+ * Numbers that are names rather than facts: a capitalised word and a small whole number,
+ * as in "Zone 1", "Chapter 3", "Figure 2" or "World War 2". These identify things; the facts
+ * worth checking are the values attached to them.
+ */
+export function labels(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(/\b[A-Z][a-zA-Z]+\s+(\d{1,2})\b(?![.,]\d)/g)) out.add(String(Number(m[1])));
+  return out;
+}
+
+/**
+ * The numbers a card actually claims: those in its answer and key points, minus numbers the
+ * question already gives ("What does a 10 kg parcel cost?" claims only the price) and labels.
+ */
+export function claimedNumbers(card: DraftCard): string[] {
+  const body = [card.answer, ...card.keyPoints].join(' ');
+  const given = new Set([...numbers(card.prompt), ...labels(body), ...labels(card.prompt)]);
+  return [...new Set(numbers(body))].filter((n) => !given.has(n));
+}
+
 /** Text reduced for comparing quotes: lowercase letters, digits and single spaces. */
 export function normalise(text: string): string {
   return text
@@ -83,9 +104,17 @@ export function judge(card: DraftCard, reply: CheckReply | undefined, sourceText
   if (evidence) {
     const inEvidence = new Set(numbers(evidence));
     const inSource = sourceText ? new Set(numbers(sourceText)) : null;
-    const claimed = [...new Set(numbers([card.answer, ...card.keyPoints].join(' ')))];
-    const unsupported = claimed.filter((n) => !inEvidence.has(n) && !(inSource?.has(n) ?? false));
-    if (unsupported.length) notes.push(`${unsupported.join(', ')} ${unsupported.length > 1 ? 'do' : 'does'} not appear in the source.`);
+    const unsupported = claimedNumbers(card).filter((n) => !inEvidence.has(n) && !(inSource?.has(n) ?? false));
+    if (unsupported.length) {
+      const list = unsupported.join(', ');
+      // With the source text in hand the check is complete; for a photo or PDF, only the quoted
+      // passage can be checked, so say exactly that.
+      notes.push(
+        sourceText
+          ? `${list} ${unsupported.length > 1 ? 'do' : 'does'} not appear in your material.`
+          : `${list} ${unsupported.length > 1 ? 'are' : 'is'} not in the passage the checker quoted: check against your material.`,
+      );
+    }
   }
 
   const correction =
@@ -119,7 +148,8 @@ export function toChecks(reply: unknown, count: number): Map<number, CheckReply>
 
 export const VERIFY_SYSTEM =
   'You are a strict fact-checker for study cards. You check each card against the source material only, never your own knowledge. ' +
-  'For each card: copy, word for word, the shortest passage of the source that supports its answer (for a table, the row and column labels and the value). ' +
+  'For each card: copy, word for word, the passages of the source that support its answer (for a table, the row and column labels and the value). ' +
+  'The evidence must contain every number the answer uses; join separate passages with " ... ". ' +
   'Compare every number, name, unit and detail exactly; a single digit wrong makes the card "wrong". ' +
   'Verdict "supported" if all of it is in the source, "partial" if only some is, "wrong" if any of it contradicts or is missing from the source. ' +
   'For "partial" or "wrong", say what is off in "issue" and give a corrected answer and key points using only the source.';
