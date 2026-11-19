@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <style>
-    .c { fill: #2c6b59; } .s { stroke: #2c6b59; } .p { stroke: #8a8174; }
+    .c { fill: #2f5fb8; } .s { stroke: #2f5fb8; } .p { stroke: #7b8696; }
     @media (prefers-color-scheme: dark) {
-      .c { fill: #6cc3a6; } .s { stroke: #6cc3a6; } .p { stroke: #a39a8d; }
+      .c { fill: #7ea6f2; } .s { stroke: #7ea6f2; } .p { stroke: #949eac; }
     }
   </style>
   <defs><clipPath id="pg"><path d="M13 18H57Q53 32 57 46H13Z"/></clipPath></defs>
