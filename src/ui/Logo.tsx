@@ -1,10 +1,80 @@
-/** Two cards and a tick: Recall's mark. */
-export function Logo({ size = 28 }: { size?: number }) {
+/**
+ * Recall's logo: a closed book lying on its side, rounded spine on the left,
+ * curved fore-edge on the right. The name sits across the pages, and the page
+ * lines stop just short of it. Colours come from theme tokens, so it
+ * follows light and dark mode.
+ *
+ * Each instance gets its own mask and clip ids. The app renders the logo more
+ * than once (sidebar and mobile header), and one copy is always hidden; with
+ * shared ids the visible copy would point at the hidden copy's mask and clip,
+ * which browsers don't apply, and the page lines would spill out of the book.
+ */
+import { useId } from 'react';
+
+/** A React id made safe to use inside url(#...). */
+function useSvgId(name: string) {
+  return `${name}-${useId().replace(/[^\w-]/g, '')}`;
+}
+
+const W = 116; // viewBox width; height is 48
+
+const WORD = {
+  x: 56, y: 32.2, fontSize: 23, length: 76,
+  fontFamily: 'var(--serif)', fontWeight: 700,
+} as const;
+
+export function Logo({ height = 44 }: { height?: number }) {
+  const gap = useSvgId('logo-word-gap');
   return (
-    <svg className="logo" width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect x="3" y="6" width="20" height="22" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="2" />
-      <rect x="9" y="3" width="20" height="22" rx="4" fill="var(--accent)" />
-      <path d="M14 14.5l3 3 6-6.5" fill="none" stroke="var(--accent-ink)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    <svg className="logo" height={height} width={(height * W) / 48} viewBox={`0 0 ${W} 48`} role="img" aria-label="Recall">
+      <defs>
+        {/* Page lines stop just short of the word; no border is drawn */}
+        <mask id={gap} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height="48">
+          <rect width={W} height="48" fill="#fff" />
+          <rect x={WORD.x - WORD.length / 2 - 3.5} y="14.6" width={WORD.length + 7} height="19.2" fill="#000" />
+        </mask>
+      </defs>
+      <Book mask={`url(#${gap})`} />
+      <Word fill="var(--ink)" />
     </svg>
+  );
+}
+
+function Word(props: { fill: string }) {
+  return (
+    <text
+      x={WORD.x} y={WORD.y} textAnchor="middle" aria-hidden
+      fontFamily={WORD.fontFamily} fontWeight={WORD.fontWeight} fontSize={WORD.fontSize}
+      textLength={WORD.length} lengthAdjust="spacingAndGlyphs" {...props}
+    >
+      Recall
+    </text>
+  );
+}
+
+function Book({ mask }: { mask: string }) {
+  const pages = useSvgId('logo-pages');
+  return (
+    <>
+      <defs>
+        <clipPath id={pages}>
+          {/* Pages fill the cover, from just inside the spine's curve to just inside the fore-edge */}
+          <path d={`M24 10.5H${W - 11}Q${W - 19} 24 ${W - 11} 37.5H24A13.5 13.5 0 0 1 24 10.5Z`} />
+        </clipPath>
+      </defs>
+      {/* Pages: fine lines that stop at the curved fore-edge */}
+      <g mask={mask}>
+        <g clipPath={`url(#${pages})`} stroke="var(--muted)" strokeWidth="1.6" opacity="0.75">
+          {[12.5, 17.2, 21.9, 26.6, 31.3, 36].map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
+        </g>
+      </g>
+      {/* Covers and spine: one C-shaped band */}
+      <path
+        d={`M${W - 5} 4H24A20 20 0 0 0 24 44H${W - 5}A2.5 2.5 0 0 0 ${W - 5} 39H24A15 15 0 0 1 24 9H${W - 5}A2.5 2.5 0 0 0 ${W - 5} 4Z`}
+        fill="var(--accent)"
+      />
+      {/* Fore-edge */}
+      <path d={`M${W - 8} 9.5Q${W - 16} 24 ${W - 8} 38.5`} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" />
+    </>
   );
 }

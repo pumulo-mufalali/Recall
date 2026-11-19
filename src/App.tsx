@@ -32,7 +32,7 @@ export default function App() {
 function Splash() {
   return (
     <div className="splash">
-      <Logo />
+      <Logo height={64} />
       <div className="spinner" aria-label="Loading" />
     </div>
   );
@@ -149,7 +149,7 @@ function Signed({ user }: { user: User }) {
       {!focus && (
         <aside className="sidebar">
           <a className="brand" href="#/">
-            <Logo /> <span>Recall</span>
+            <Logo />
           </a>
           <nav className="nav" aria-label="Main">
             {NAV.map((n) => (
@@ -176,7 +176,7 @@ function Signed({ user }: { user: User }) {
         {!focus && (
           <header className="mobile-top">
             <a className="brand" href="#/">
-              <Logo size={24} /> <span>Recall</span>
+              <Logo height={36} />
             </a>
             <StatusPill conditions={conditions} compact />
           </header>

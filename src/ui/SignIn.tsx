@@ -21,7 +21,7 @@ export function SignIn() {
   return (
     <div className="welcome">
       <header className="welcome-top">
-        <span className="brand"><Logo /> <span>Recall</span></span>
+        <span className="brand"><Logo /></span>
       </header>
 
       <section className="welcome-hero">
