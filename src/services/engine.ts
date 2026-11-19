@@ -19,10 +19,12 @@ import {
   parseJson,
   toCards,
   toGrade,
+  toSelfConfidence,
   type DraftCard,
 } from '../core/prompts';
 import { isBusy } from '../core/busy';
 import { localGrade } from '../core/localGrade';
+import { agrees, decide, doubt, type Decision, type Doubt, type Policy, type Trust } from '../core/audit';
 import { VERIFY_SYSTEM, judge, toChecks, verifyPrompt, type CardCheck } from '../core/verify';
 import { chunkText, route, type Conditions, type DeviceModel, type Mode, type Route, type Task } from '../core/route';
 import type { Engine, Grade } from '../core/types';
@@ -73,12 +75,18 @@ const GRADE_FORMAT: Format = {
     properties: {
       covered: Schema.array({ items: Schema.integer(), description: 'Numbers of the key points the answer covers' }),
       feedback: Schema.string({ description: 'At most two short sentences to the student' }),
+      confidence: Schema.enumString({ enum: ['high', 'medium', 'low'], description: 'Confidence in this marking' }),
     },
+    optionalProperties: ['confidence'],
   }),
   device: {
     type: 'object',
-    properties: { covered: { type: 'array', items: { type: 'integer' } }, feedback: { type: 'string' } },
-    required: ['covered', 'feedback'],
+    properties: {
+      covered: { type: 'array', items: { type: 'integer' } },
+      feedback: { type: 'string' },
+      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['covered', 'feedback', 'confidence'],
   },
 };
 
@@ -185,15 +193,81 @@ export async function conditions(): Promise<Conditions> {
   return { online: navigator.onLine, device: await deviceModel() };
 }
 
-/** Marks an answer. Never fails: with no model at all it falls back to the key-point matcher. */
-export async function grade(question: string, keyPoints: string[], answer: string, settings: Settings): Promise<Outcome<Grade>> {
+/** How the hybrid marker should behave: Nano's earned trust, and the learner's privacy choice. */
+export interface Hybrid {
+  trust: Trust;
+  policy: Policy;
+}
+
+/** A mark, and when Nano made it, what the self-audit decided. */
+export interface Marked extends Outcome<Grade> {
+  doubt?: Doubt;
+  decision?: Decision;
+  /** A spot-check running in the background: the cloud's mark, or null if it could not run. */
+  secondOpinion?: Promise<Grade | null>;
+}
+
+/**
+ * Marks an answer. Never fails: with no model at all it falls back to the key-point matcher.
+ *
+ * With the built-in model ready, Nano marks first and the mark is weighed for doubt (see
+ * core/audit.ts): doubtful marks are escalated to the larger cloud model before the learner
+ * sees them; a sample of confident ones is spot-checked by it in the background.
+ */
+export async function grade(question: string, keyPoints: string[], answer: string, settings: Settings, hybrid?: Hybrid): Promise<Marked> {
   const r = route({ kind: 'grade', chars: answer.length }, await conditions(), settings);
+  const prompt = gradePrompt(question, keyPoints, answer);
+  const cloudGrade = async (): Promise<Grade | null> => {
+    const result = await call({ mode: 'only_in_cloud', system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: checkers(settings), deviceCan: false }, prompt);
+    return toGrade(parseJson(result.response.text()), keyPoints, 'cloud');
+  };
+
+  if (r.run === 'model' && r.mode !== 'only_in_cloud' && hybrid) {
+    try {
+      const result = await call({ mode: 'only_on_device', system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true }, prompt);
+      const reply = parseJson(result.response.text());
+      const nano = toGrade(reply, keyPoints, 'on-device');
+      if (nano) {
+        const d = doubt(nano, toSelfConfidence(reply), localGrade(answer, keyPoints), answer);
+        const decision = decide(d, hybrid.trust, hybrid.policy, navigator.onLine && settings.cloudGrading, Math.random());
+        const routed: Route = { ...r, reason: decision.reason };
+
+        if (decision.kind === 'escalate') {
+          try {
+            const cloud = await cloudGrade();
+            if (cloud) {
+              const check = { kind: 'escalated' as const, nano: nano.score, cloud: cloud.score, agree: agrees(nano.score, cloud.score) };
+              return { value: { ...cloud, check }, engine: 'cloud', route: routed, doubt: d, decision };
+            }
+          } catch (e) {
+            console.warn('[recall] escalation failed; keeping the on-device mark', e);
+          }
+          return {
+            value: nano,
+            engine: 'on-device',
+            route: { ...r, reason: 'The cloud could not be reached, so the on-device mark stands.' },
+            doubt: d,
+            decision: { kind: 'keep', reason: 'Cloud unreachable.' },
+          };
+        }
+
+        const secondOpinion =
+          decision.kind === 'spot-check'
+            ? cloudGrade().catch((e) => {
+                console.warn('[recall] spot-check failed', e);
+                return null;
+              })
+            : undefined;
+        return { value: nano, engine: 'on-device', route: routed, doubt: d, decision, secondOpinion };
+      }
+    } catch (e) {
+      console.warn('[recall] on-device marking failed; falling back', e);
+    }
+  }
+
   if (r.run === 'model') {
     try {
-      const result = await call(
-        { mode: r.mode, system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true },
-        gradePrompt(question, keyPoints, answer),
-      );
+      const result = await call({ mode: r.mode, system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true }, prompt);
       const engine = engineOf(result.response.inferenceSource);
       const g = toGrade(parseJson(result.response.text()), keyPoints, engine);
       if (g) return { value: g, engine, route: r };

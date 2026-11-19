@@ -65,6 +65,11 @@ export interface Grade {
   /** One or two sentences for the learner. */
   feedback: string;
   engine: Engine;
+  /**
+   * When the cloud model also marked an answer Nano marked: escalated (the learner saw the
+   * cloud mark) or spot-checked (Nano's mark stood unless the cloud disagreed).
+   */
+  check?: { kind: 'escalated' | 'spot-check'; nano: number; cloud: number; agree: boolean };
 }
 
 /** One review: what was claimed, what was written, how it was marked. */

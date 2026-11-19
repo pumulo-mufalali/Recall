@@ -19,6 +19,7 @@ export function gradePrompt(question: string, keyPoints: string[], answer: strin
     ...keyPoints.map((p, i) => `${i + 1}. ${p}`),
     `Student answer: ${answer.trim() || '(blank)'}`,
     'For each key point, say whether the answer covers it. Then give feedback.',
+    'Finally rate your confidence in this marking: "high" if clear-cut, "medium" if a judgement call, "low" if unsure.',
   ].join('\n');
 }
 
@@ -96,6 +97,12 @@ export function toGrade(reply: unknown, keyPoints: string[], engine: Grade['engi
   const missing = keyPoints.filter((_, i) => !hits.has(i));
   const feedback = typeof r.feedback === 'string' && r.feedback.trim() ? r.feedback.trim() : missing.length ? `Missing: ${missing.join('; ')}.` : 'All there.';
   return { score: keyPoints.length ? covered.length / keyPoints.length : 0, covered, missing, feedback, engine };
+}
+
+/** The model's confidence in its own marking, if it gave a usable one. */
+export function toSelfConfidence(reply: unknown): 'high' | 'medium' | 'low' | null {
+  const c = reply && typeof reply === 'object' ? String((reply as { confidence?: unknown }).confidence ?? '').toLowerCase().trim() : '';
+  return c === 'high' || c === 'medium' || c === 'low' ? c : null;
 }
 
 /** Cards from a model reply: malformed entries dropped, duplicates removed, sizes bounded. */

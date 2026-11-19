@@ -4,6 +4,7 @@
  *   decks/{deckId}/cards/{id}    one question, its model answer, key points, schedule
  *   attempts/{id}                every answer, with confidence and marking (for calibration)
  *   queue/{id}                   material waiting for a connection (see route.ts)
+ *   audits/{id}                  the cloud model's check of an on-device mark (see audit.ts)
  *
  * Firestore's persistent cache makes all of it work offline: reads come from the cache, and
  * writes apply locally at once and sync when the connection returns. Offline, a write's promise
@@ -28,12 +29,14 @@ import {
 import type { DraftCard } from '../core/prompts';
 import { newSrs, review } from '../core/schedule';
 import type { Attempt, Card, Confidence, Deck, Engine, Grade } from '../core/types';
+import type { Audit } from '../core/audit';
 import { db } from './firebase';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
 const cards = (uid: string, deckId: string) => collection(db, 'users', uid, 'decks', deckId, 'cards');
 const attempts = (uid: string) => collection(db, 'users', uid, 'attempts');
 const queue = (uid: string) => collection(db, 'users', uid, 'queue');
+const audits = (uid: string) => collection(db, 'users', uid, 'audits');
 
 /** Logs a write that the server later refused (offline writes are retried on their own). */
 const settle = (p: Promise<unknown>) => void p.catch((e) => console.error('[recall] write failed', e));
@@ -75,6 +78,26 @@ export function recordAnswer(uid: string, card: Card, answer: string, confidence
   batch.update(doc(cards(uid, card.deckId), card.id), { srs: review(card.srs, grade.score, confidence, now) });
   settle(batch.commit());
   return attempt;
+}
+
+/**
+ * A spot-check disagreed: the larger cloud model's mark replaces Nano's, and the card is
+ * rescheduled from where it stood before the answer (`card` is that earlier state).
+ */
+export function reviseAnswer(uid: string, card: Card, attempt: Attempt, grade: Grade): void {
+  const batch = writeBatch(db);
+  batch.update(doc(attempts(uid), attempt.id), { grade });
+  batch.update(doc(cards(uid, card.deckId), card.id), { srs: review(card.srs, grade.score, attempt.confidence, new Date(attempt.at)) });
+  settle(batch.commit());
+}
+
+export function recordAudit(uid: string, audit: Omit<Audit, 'id' | 'at'>): void {
+  const ref = doc(audits(uid));
+  settle(setDoc(ref, { ...audit, id: ref.id, at: new Date().toISOString() } satisfies Audit));
+}
+
+export function watchAudits(uid: string, on: (audits: Audit[]) => void): Unsubscribe {
+  return onSnapshot(query(audits(uid), orderBy('at', 'desc')), (s) => on(s.docs.map((d) => d.data() as Audit)));
 }
 
 export function editCard(uid: string, card: Card, change: Partial<Pick<Card, 'prompt' | 'answer' | 'keyPoints'>>): void {
