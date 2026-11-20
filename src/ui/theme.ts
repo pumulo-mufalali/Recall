@@ -27,7 +27,7 @@ function apply() {
   const resolved = theme === 'system' ? (dark.matches ? 'dark' : 'light') : theme;
   document.documentElement.dataset.theme = resolved;
   // Phone browser bars (index.html's theme-color tags) follow the chosen theme, not just the system.
-  const bar = resolved === 'dark' ? '#12161c' : '#f4f6f8';
+  const bar = resolved === 'dark' ? '#000000' : '#f4f6f8';
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', bar));
 }
 

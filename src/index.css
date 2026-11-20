@@ -54,15 +54,16 @@
 /* Dark colours. src/ui/theme.ts sets data-theme from the learner's choice or the system. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #12161c;
-  --bg-2: #171c23;
-  --panel: #1b2129;
+  /* Pure black page; cards one step lighter so they stay distinct. */
+  --bg: #000000;
+  --bg-2: #0b0b0b;
+  --panel: #141414;
   --ink: #ffffff;
   --ink-2: #ffffff;
   --muted: #ffffff;
   --subtle: #949eac;
-  --line: #2a323d;
-  --track: #262d37;
+  --line: #2a2a2a;
+  --track: #262626;
   --accent: #7ea6f2;
   --accent-2: #9bbaf6;
   --accent-ink: #0d1729;
