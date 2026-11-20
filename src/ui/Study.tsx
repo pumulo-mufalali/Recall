@@ -175,7 +175,7 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
   return (
     <div className="study-body">
       <div className="qcard">
-        {deck && <p className="eyebrow">{deck}</p>}
+        <div className="qcard-head"><p className="eyebrow">{deck ?? 'Question'}</p></div>
         <h1 className="question">{card.prompt}</h1>
       </div>
 

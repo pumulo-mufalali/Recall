@@ -47,13 +47,15 @@ export function Library({ decks, cards, attempts, onDelete }: { decks: Deck[]; c
             const mine = cards.filter((c) => c.deckId === d.id);
             const p = deckProgress(mine, attempts, now);
             return (
-              <article className="deck" key={d.id}>
+              <article className={`deck deck-${d.source}`} key={d.id}>
                 <a className="deck-link" href={href({ name: 'deck', id: d.id })}>
-                  <div className="deck-top">
-                    <span className={`deck-icon src-${d.source}`}><Icon name={SOURCE_ICON[d.source]} size={18} /></span>
-                    {p.due > 0 && <span className="pill warm">{p.due} due</span>}
+                  <div className="deck-head">
+                    <div className="deck-top">
+                      <span className={`deck-icon src-${d.source}`}><Icon name={SOURCE_ICON[d.source]} size={18} /></span>
+                      {p.due > 0 && <span className="pill warm">{p.due} due</span>}
+                    </div>
+                    <h3>{d.title}</h3>
                   </div>
-                  <h3>{d.title}</h3>
                   <p className="muted small">{SOURCE_LABEL[d.source]} · {p.total} cards · added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</p>
                   <ProgressBar known={p.known} learning={p.learning} total={p.total} />
                   <p className="deck-foot small">
