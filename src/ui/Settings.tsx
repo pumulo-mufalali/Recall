@@ -16,6 +16,7 @@ import { Icon, type IconName } from './Icon';
 import { useNotifyPermission } from './reminders';
 import { ThemeSwitch } from './ThemeSwitch';
 import { setTextSize, useTextSize } from './textSize';
+import { setAllowMobileData, useAllowMobileData } from './dataPolicy';
 import type { LiveConditions } from './useConditions';
 
 type Ask = (a: { title: string; body?: ReactNode; confirm: string; danger?: boolean }) => Promise<boolean>;
@@ -110,6 +111,9 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
         <Row label="Built-in AI" help="Gemini Nano in Chrome marks answers on this device: instant, private, offline.">
           <ModelState c={conditions} onGet={() => askDownload(ask, conditions)} />
         </Row>
+        <Row label="Download on mobile data" help="The built-in AI is a few GB. By default Recall only downloads it on Wi-Fi.">
+          <Choice value={useAllowMobileData()} options={[[false, 'Wi-Fi only'], [true, 'Allow']]} onChange={setAllowMobileData} label="Download on mobile data" />
+        </Row>
         <p className="small"><a href="#/engine">See how Recall's AI works <Icon name="arrow" size={13} /></a></p>
       </Section>
 
@@ -158,7 +162,7 @@ function Row({ label, help, children }: { label: string; help?: ReactNode; child
 }
 
 /** A small engraved segmented control for a setting. */
-function Choice<T extends string | number>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
+function Choice<T extends string | number | boolean>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (v: T) => void; label: string }) {
   return (
     <div className="seg" role="radiogroup" aria-label={label}>
       {options.map(([v, text]) => (

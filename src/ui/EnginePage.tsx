@@ -4,6 +4,7 @@
  * Go offline or install the model and the table changes in front of you.
  */
 import type { ReactNode } from 'react';
+import { downloadBlocked, useDownloadBlocked } from './dataPolicy';
 import { POLICY_HELP, POLICY_LABEL, thresholds, type Audit, type Policy, type Trust } from '../core/audit';
 import { route, type Route, type Task } from '../core/route';
 import { Ring } from './charts';
@@ -26,12 +27,14 @@ const TASKS: { label: string; detail: string; task: Task }[] = [
 
 /** Asks before downloading the built-in model (a few gigabytes), then starts it. Used here and in Settings. */
 export async function askDownload(ask: (a: { title: string; body?: ReactNode; confirm: string }) => Promise<boolean>, c: LiveConditions) {
+  // On mobile data, only if the learner allowed it in Settings.
+  if (downloadBlocked()) return;
   const yes = await ask({
     title: 'Download the built-in AI?',
     body: (
       <>
         <p>Chrome will download Gemini Nano, a one-time download of a few gigabytes that every site shares. Chrome needs plenty of free disk space.</p>
-        <p><b>Use Wi-Fi, not mobile data or a limited bundle.</b> Chrome only downloads on a connection that is not marked as metered.</p>
+        <p><b>Use Wi-Fi, not mobile data or a limited bundle.</b> Recall holds the download back on mobile data unless you allow it in Settings.</p>
         <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud, which uses very little data.</p>
       </>
     ),
@@ -213,6 +216,7 @@ function TrustPanel({ trust, audits, attempts, policy }: { trust: Trust; audits:
 }
 
 export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void }) {
+  const blocked = useDownloadBlocked();
   if (c.device === 'available') return <p className="state ok"><Icon name="check" size={15} /> Ready</p>;
   // Progress is only known for a download started here; otherwise Chrome started it itself
   // (or another site did), and only Chrome can stop it.
@@ -227,23 +231,17 @@ export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void 
     return (
       <div className="dl">
         <p className="state"><Icon name="download" size={15} /> Chrome is downloading it (a few GB, once)</p>
-        <details className="dl-stop">
-          <summary className="small">On limited data? How to stop it</summary>
-          <ul className="small">
-            <li><b>Mark your connection as metered.</b> Windows: Settings › Network &amp; internet › your Wi-Fi or hotspot › Metered connection. Chrome will not download on it.</li>
-            <li><b>Or turn it off in Chrome:</b> open <code>chrome://flags</code>, find “optimization guide on device”, set it to Disabled and relaunch.</li>
-          </ul>
-          <p className="small muted">Recall keeps working without it: answers are marked in the cloud, which uses very little data.</p>
-        </details>
       </div>
     );
   if (c.device === 'downloadable')
     return (
       <div className="dl">
-        <button className="btn sm primary" onClick={onGet} disabled={!c.online}>
+        <button className="btn sm primary" onClick={onGet} disabled={!c.online || blocked}>
           <Icon name="download" size={15} /> Get the built-in AI
         </button>
-        <p className="small muted dl-note">A few GB, once. Use Wi-Fi, not mobile data.</p>
+        <p className="small muted dl-note">
+          {blocked ? <>You are on mobile data. Connect to Wi-Fi, or <a href="#/settings">allow mobile data in Settings</a>.</> : 'A few GB, once. Wi-Fi only, unless you allow mobile data in Settings.'}
+        </p>
       </div>
     );
   return <p className="state off">Not available in this browser. Recall uses the cloud, or the offline marker.</p>;
