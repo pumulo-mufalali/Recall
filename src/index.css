@@ -3,9 +3,12 @@
   --bg: #f4f6f8;
   --bg-2: #eceff3;
   --panel: #ffffff;
-  --ink: #1d2430;
-  --ink-2: #374151;
-  --muted: #5d6878;
+  /* Text is full black for readability. --subtle (grey) is only for interface signals:
+     inactive tabs and options, past days, icon buttons, placeholders, decoration. */
+  --ink: #000000;
+  --ink-2: #000000;
+  --muted: #000000;
+  --subtle: #5d6878;
   --line: #dde2e8;
   --track: #e5e9ee;
   --accent: #2f5fb8;
@@ -54,9 +57,10 @@
   --bg: #12161c;
   --bg-2: #171c23;
   --panel: #1b2129;
-  --ink: #e3e7ed;
-  --ink-2: #c5ccd6;
-  --muted: #949eac;
+  --ink: #ffffff;
+  --ink-2: #ffffff;
+  --muted: #ffffff;
+  --subtle: #949eac;
   --line: #2a323d;
   --track: #262d37;
   --accent: #7ea6f2;
@@ -129,7 +133,7 @@ label.btn { position: relative; }
 .link { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 0.88rem; }
 .icon-btn {
   display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
-  border: none; background: transparent; color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
+  border: none; background: transparent; color: var(--subtle); cursor: pointer; transition: background .15s, color .15s;
 }
 .icon-btn:hover { background: var(--bg-2); color: var(--ink); }
 @media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } }
@@ -142,7 +146,7 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 3px var(--accent-soft); }
 textarea { resize: vertical; line-height: 1.55; }
-::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
+::placeholder { color: color-mix(in srgb, var(--subtle) 85%, transparent); }
 .search { max-width: 320px; padding: 9px 14px; border-radius: 999px; }
 .field { display: block; margin-top: 16px; }
 .field > span:first-child { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
@@ -186,7 +190,7 @@ textarea { resize: vertical; line-height: 1.55; }
 .me { display: flex; align-items: center; gap: 10px; padding: 10px 10px; margin-top: 4px; border-radius: 12px; color: var(--ink); border: 1px solid transparent; transition: background .15s, border-color .15s; }
 .me:hover { background: var(--bg-2); }
 .me.active { background: var(--panel); border-color: var(--line); box-shadow: var(--shadow-sm); }
-.me .icon { margin-left: auto; color: var(--muted); }
+.me .icon { margin-left: auto; color: var(--subtle); }
 .me img, .avatar { width: 32px; height: 32px; border-radius: 50%; flex: none; }
 .avatar { display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .me-name { flex: 1; font-size: 0.88rem; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -226,7 +230,7 @@ textarea { resize: vertical; line-height: 1.55; }
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(14px); border-top: 1px solid var(--line);
   }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--muted); font-size: 0.7rem; font-weight: 600; border-radius: 12px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--subtle); font-size: 0.7rem; font-weight: 600; border-radius: 12px; }
   .tab.active { color: var(--accent); }
   .tab-add .icon { width: 40px; height: 32px; padding: 4px 8px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
   .tab-add span { display: none; }
@@ -263,7 +267,7 @@ textarea { resize: vertical; line-height: 1.55; }
 .row-item { display: flex; align-items: center; gap: 14px; padding: 12px 4px; color: inherit; }
 .link-row { border-radius: 10px; margin: 0 -8px; padding: 12px; transition: background .15s; }
 .link-row:hover { background: var(--bg); }
-.row-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--bg-2); color: var(--muted); }
+.row-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--bg-2); color: var(--subtle); }
 .row-icon.tone-good { background: var(--good-soft); }
 .row-icon.tone-bad { background: var(--bad-soft); }
 .row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -320,7 +324,7 @@ textarea { resize: vertical; line-height: 1.55; }
 .trend-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
 .trend-area { fill: color-mix(in srgb, var(--accent) 12%, transparent); }
 .trend-dot { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
-.trend-target { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; opacity: .6; }
+.trend-target { stroke: var(--subtle); stroke-dasharray: 4 4; stroke-width: 1; opacity: .6; }
 
 /* ---------- Today ---------- */
 /* The next planned session (or a quiet link to the calendar), above the hero. */
@@ -378,7 +382,7 @@ textarea { resize: vertical; line-height: 1.55; }
 @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
 .tile { display: flex; flex-direction: column; gap: 2px; padding: 16px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow-sm); }
 a.tile:hover { border-color: var(--accent); }
-.tile-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--bg-2); color: var(--muted); margin-bottom: 8px; }
+.tile-icon { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--bg-2); color: var(--subtle); margin-bottom: 8px; }
 .tile-value { font: 700 1.6rem/1.1 var(--sans); }
 .tile-value small { font: 500 0.85rem var(--sans); color: var(--muted); }
 .tile-label { font-size: 0.8rem; color: var(--muted); font-weight: 550; }
@@ -559,7 +563,7 @@ a.tile:hover { border-color: var(--accent); }
   display: inline-flex; padding: 4px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--line); gap: 2px; overflow-x: auto; max-width: 100%;
   box-shadow: inset 0 1px 2px var(--engrave-shade), 0 1px 0 var(--engrave-light);
 }
-.seg button { font: inherit; font-size: 0.85rem; font-weight: 600; border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.seg button { font: inherit; font-size: 0.85rem; font-weight: 600; border: none; background: transparent; color: var(--subtle); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .seg button { transition: background .15s, color .15s, box-shadow .15s; }
 .seg button:hover:not(.on) { color: var(--ink); }
 .seg button.on {
@@ -702,7 +706,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .conf kbd { position: absolute; top: 10px; right: 10px; }
 .conf-label { font-weight: 650; }
 .conf-pct { font-size: 0.8rem; color: var(--muted); }
-.conf-1 { --c: var(--muted); }
+.conf-1 { --c: var(--subtle); }
 .conf-2 { --c: var(--mid); }
 .conf-3 { --c: var(--cloud); }
 .conf-4 { --c: var(--accent); }
@@ -879,7 +883,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .cal-day.load-2 { background: color-mix(in srgb, var(--accent) 13%, var(--panel)); }
 .cal-day.load-3 { background: color-mix(in srgb, var(--accent) 20%, var(--panel)); }
 .cal-day.load-4 { background: color-mix(in srgb, var(--accent) 28%, var(--panel)); }
-.cal-day.past { background: transparent; color: var(--muted); }
+.cal-day.past { background: transparent; color: var(--subtle); }
 .cal-day.other { opacity: 0.45; }
 .cal-day.picked { outline: 2px solid var(--accent); outline-offset: -1px; }
 .cal-date { font-weight: 700; font-size: 0.85rem; line-height: 1.5; padding: 0 2px; }
@@ -890,7 +894,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
   font-size: 0.66rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; border-left: 3px solid var(--warm);
   background: var(--warm-soft); color: var(--warm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.cal-more { font-size: 0.66rem; color: var(--muted); font-weight: 600; }
+.cal-more { font-size: 0.66rem; color: var(--subtle); font-weight: 600; }
 .cal-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; }
 .cal-key { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
 .cal-key.load-1 { background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }

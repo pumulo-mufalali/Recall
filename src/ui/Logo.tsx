@@ -60,7 +60,7 @@ function Book({ mask }: { mask: string }) {
       </defs>
       {/* Pages: fine lines that stop at the curved fore-edge */}
       <g mask={mask}>
-        <g clipPath={`url(#${pages})`} stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" opacity="0.75">
+        <g clipPath={`url(#${pages})`} stroke="var(--subtle)" strokeWidth="1.5" strokeLinecap="round" opacity="0.75">
           {PAGE_LINES.map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
         </g>
       </g>
