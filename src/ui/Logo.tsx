@@ -59,22 +59,22 @@ function Book({ mask }: { mask: string }) {
       <defs>
         <clipPath id={pages}>
           {/* Pages fill the cover, from just inside the spine's curve to just inside the fore-edge */}
-          <path d={`M24 10.5H${W - 11}Q${W - 19} 24 ${W - 11} 37.5H24A13.5 13.5 0 0 1 24 10.5Z`} />
+          <path d={`M24 7.5H${W - 11}Q${W - 19} 24 ${W - 11} 40.5H24A16.5 16.5 0 0 1 24 7.5Z`} />
         </clipPath>
       </defs>
       {/* Pages: fine lines that stop at the curved fore-edge */}
       <g mask={mask}>
         <g clipPath={`url(#${pages})`} stroke="var(--muted)" strokeWidth="1.6" opacity="0.75">
-          {[12.5, 17.2, 21.9, 26.6, 31.3, 36].map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
+          {[9.3, 13.5, 17.7, 21.9, 26.1, 30.3, 34.5, 38.7].map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
         </g>
       </g>
-      {/* Covers and spine: one C-shaped band */}
+      {/* Covers and spine: one thin C-shaped band */}
       <path
-        d={`M${W - 5} 4H24A20 20 0 0 0 24 44H${W - 5}A2.5 2.5 0 0 0 ${W - 5} 39H24A15 15 0 0 1 24 9H${W - 5}A2.5 2.5 0 0 0 ${W - 5} 4Z`}
+        d={`M${W - 5} 4H24A20 20 0 0 0 24 44H${W - 5}A1 1 0 0 0 ${W - 5} 42H24A18 18 0 0 1 24 6H${W - 5}A1 1 0 0 0 ${W - 5} 4Z`}
         fill="var(--accent)"
       />
       {/* Fore-edge */}
-      <path d={`M${W - 8} 9.5Q${W - 16} 24 ${W - 8} 38.5`} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" />
+      <path d={`M${W - 8} 7Q${W - 16} 24 ${W - 8} 41`} fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
     </>
   );
 }
