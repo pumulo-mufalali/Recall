@@ -8,6 +8,7 @@ import { useMemo, useState } from 'react';
 import { REMIND_OPTIONS, SESSION_LENGTHS, forecast, googleCalendarUrl, monthGrid, toIcs, upcoming, type Session } from '../core/plan';
 import { dayKey } from '../core/stats';
 import type { Card, Deck } from '../core/types';
+import type { StudyPrefs } from '../core/prefs';
 import { removeSession, saveSession } from '../services/store';
 import { Icon } from './Icon';
 import { useNotifyPermission } from './reminders';
@@ -39,7 +40,7 @@ function downloadIcs(s: Session, decks: Deck[]) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-export function Plan({ uid, cards, decks, sessions }: { uid: string; cards: Card[]; decks: Deck[]; sessions: Session[] }) {
+export function Plan({ uid, cards, decks, sessions, prefs }: { uid: string; cards: Card[]; decks: Deck[]; sessions: Session[]; prefs: StudyPrefs }) {
   const now = new Date();
   const todayKey = dayKey(now);
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
@@ -143,8 +144,10 @@ export function Plan({ uid, cards, decks, sessions }: { uid: string; cards: Card
 
             {!pickedPast && (
               <ScheduleForm
+                key={pickedKey}
                 day={picked}
                 decks={decks}
+                prefs={prefs}
                 onSave={(s) => setJustAdded(saveSession(uid, s).id)}
               />
             )}
@@ -200,16 +203,16 @@ function SessionRow({ s, decks, showDay, highlight, onRemove }: { s: Session; de
   );
 }
 
-function ScheduleForm({ day, decks, onSave }: { day: Date; decks: Deck[]; onSave: (s: Omit<Session, 'id' | 'createdAt'>) => void }) {
+function ScheduleForm({ day, decks, prefs, onSave }: { day: Date; decks: Deck[]; prefs: StudyPrefs; onSave: (s: Omit<Session, 'id' | 'createdAt'>) => void }) {
   // Today: the next full hour; other days: late afternoon.
   const [clock, setClock] = useState(() => {
     const isToday = dayKey(day) === dayKey(new Date());
     const h = isToday ? Math.min(23, new Date().getHours() + 1) : 17;
     return `${String(h).padStart(2, '0')}:00`;
   });
-  const [minutes, setMinutes] = useState<number>(25);
+  const [minutes, setMinutes] = useState<number>(prefs.sessionMinutes);
   const [deckId, setDeckId] = useState('');
-  const [remind, setRemind] = useState<number>(10);
+  const [remind, setRemind] = useState<number>(prefs.remind);
 
   const [h, m] = clock.split(':').map(Number);
   const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h || 0, m || 0);
@@ -264,7 +267,7 @@ function ScheduleForm({ day, decks, onSave }: { day: Date; decks: Deck[]; onSave
 }
 
 function Reminders() {
-  const [permission, ask] = useNotifyPermission();
+  const [permission] = useNotifyPermission();
   return (
     <section className="card reminders">
       <h3><Icon name="bell" size={18} /> Reminders</h3>
@@ -272,10 +275,12 @@ function Reminders() {
         <b>When Recall is closed,</b> your calendar app reminds you: add each session with the buttons above.
         {' '}<b>While it is open,</b> Recall can notify you itself.
       </p>
-      {permission === 'default' && <button className="btn sm" onClick={ask}><Icon name="bell" size={14} /> Turn on notifications</button>}
-      {permission === 'granted' && <p className="small reminders-on"><Icon name="check" size={14} /> Notifications are on in this browser.</p>}
-      {permission === 'denied' && <p className="small muted">Notifications are blocked for Recall in this browser's site settings. Calendar reminders still work.</p>}
-      {permission === 'unsupported' && <p className="small muted">This browser cannot show notifications. Calendar reminders still work.</p>}
+      {permission === 'granted' ? (
+        <p className="small reminders-on"><Icon name="check" size={14} /> Notifications are on in this browser.</p>
+      ) : (
+        <p className="small muted">{permission === 'default' ? 'Notifications are off.' : permission === 'denied' ? 'Notifications are blocked in this browser.' : 'This browser cannot show notifications.'} Calendar reminders still work.</p>
+      )}
+      <a className="small" href="#/settings">Reminder settings <Icon name="arrow" size={13} /></a>
     </section>
   );
 }

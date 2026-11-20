@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { dueCards } from './core/schedule';
 import type { Attempt, Card, Deck } from './core/types';
 import { cardsFromFile, cardsFromText, Queued } from './services/engine';
 import { auth, loadSettings, type Settings } from './services/firebase';
-import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, type QueuedJob } from './services/store';
+import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, watchPrefs, type QueuedJob } from './services/store';
+import { DEFAULT_STUDY_PREFS, type StudyPrefs } from './core/prefs';
 import type { Session } from './core/plan';
 import { trustFrom, type Audit } from './core/audit';
 import { usePolicy } from './ui/usePolicy';
@@ -20,7 +21,7 @@ import { EnginePage } from './ui/EnginePage';
 import { SignIn } from './ui/SignIn';
 import { Icon, type IconName } from './ui/Icon';
 import { Logo } from './ui/Logo';
-import { ThemeSwitch } from './ui/ThemeSwitch';
+import { Settings as SettingsPage } from './ui/Settings';
 import { useConfirm } from './ui/Dialog';
 import { go, href, useRoute, type Route } from './ui/router';
 
@@ -65,6 +66,7 @@ function Signed({ user }: { user: User }) {
   const [jobs, setJobs] = useState<QueuedJob[]>([]);
   const [audits, setAudits] = useState<Audit[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [prefs, setPrefs] = useState<StudyPrefs>(DEFAULT_STUDY_PREFS);
   const [policy, setPolicy] = usePolicy();
   const [ready, setReady] = useState<Record<string, Review>>({});
   const [ask, dialog] = useConfirm();
@@ -76,6 +78,7 @@ function Signed({ user }: { user: User }) {
   useEffect(() => watchQueue(uid, setJobs), [uid]);
   useEffect(() => watchAudits(uid, setAudits), [uid]);
   useEffect(() => watchSessions(uid, setSessions), [uid]);
+  useEffect(() => watchPrefs(uid, setPrefs), [uid]);
   const trust = useMemo(() => trustFrom(audits), [audits]);
   const hybrid = useMemo(() => ({ trust, policy }), [trust, policy]);
 
@@ -87,7 +90,8 @@ function Signed({ user }: { user: User }) {
   useReminders(sessions, describeSession);
 
   // Recomputed when cards change or the screen changes (so returning shows fresh due counts).
-  const newPerSession = settings?.newPerSession ?? 10;
+  // The learner's own choice (Settings), else the app default from Remote Config.
+  const newPerSession = prefs.newPerSession ?? settings?.newPerSession ?? 10;
   const due = useMemo(() => dueCards(cards, new Date(), newPerSession), [cards, newPerSession, route]);
 
   const deleteDeck = async (d: Deck) => {
@@ -100,10 +104,6 @@ function Signed({ user }: { user: User }) {
     if (!yes) return false;
     removeDeck(uid, d.id, cards.filter((c) => c.deckId === d.id));
     return true;
-  };
-
-  const leave = async () => {
-    if (await ask({ title: 'Sign out?', body: <p>Your cards are saved to your account and will be here when you sign back in.</p>, confirm: 'Sign out' })) signOut(auth);
   };
 
   if (!settings) return <Splash />;
@@ -148,13 +148,27 @@ function Signed({ user }: { user: User }) {
       break;
     }
     case 'plan':
-      screen = <Plan uid={uid} cards={cards} decks={decks} sessions={sessions} />;
+      screen = <Plan uid={uid} cards={cards} decks={decks} sessions={sessions} prefs={prefs} />;
       break;
     case 'insights':
       screen = <Insights attempts={attempts} cards={cards} decks={decks} />;
       break;
     case 'engine':
-      screen = <EnginePage conditions={conditions} settings={settings} attempts={attempts} audits={audits} trust={trust} policy={policy} onPolicy={setPolicy} />;
+      screen = <EnginePage conditions={conditions} settings={settings} attempts={attempts} audits={audits} trust={trust} policy={policy} />;
+      break;
+    case 'settings':
+      screen = (
+        <SettingsPage
+          user={user}
+          prefs={prefs}
+          defaultNew={settings.newPerSession}
+          conditions={conditions}
+          policy={policy}
+          onPolicy={setPolicy}
+          data={{ decks, cards, attempts, sessions }}
+          ask={ask}
+        />
+      );
       break;
   }
 
@@ -175,15 +189,12 @@ function Signed({ user }: { user: User }) {
             ))}
           </nav>
           <div className="sidebar-foot">
-            <ThemeSwitch />
             <StatusPill conditions={conditions} />
-            <div className="me">
+            <a className={`me${active === 'settings' ? ' active' : ''}`} href={href({ name: 'settings' })} aria-current={active === 'settings' ? 'page' : undefined} title="Settings">
               {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user.displayName ?? '?')[0]}</span>}
               <span className="me-name">{user.displayName ?? user.email}</span>
-              <button className="icon-btn" onClick={leave} title="Sign out" aria-label="Sign out">
-                <Icon name="out" size={18} />
-              </button>
-            </div>
+              <Icon name="settings" size={18} />
+            </a>
           </div>
         </aside>
       )}
@@ -194,8 +205,10 @@ function Signed({ user }: { user: User }) {
               <Logo height={36} />
             </a>
             <div className="mobile-actions">
-              <ThemeSwitch compact />
               <StatusPill conditions={conditions} compact />
+              <a className="icon-btn" href={href({ name: 'settings' })} aria-label="Settings" title="Settings">
+                <Icon name="settings" size={20} />
+              </a>
             </div>
           </header>
         )}

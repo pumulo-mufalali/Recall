@@ -45,6 +45,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Large text (Settings > Appearance; see textSize.ts). */
+:root[data-text="large"] { font-size: 18px; }
+
 /* Dark colours. src/ui/theme.ts sets data-theme from the learner's choice or the system. */
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -179,7 +182,11 @@ textarea { resize: vertical; line-height: 1.55; }
 .nav-item.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow-sm); }
 .nav-count { margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--warm); color: #fff; font-size: 0.75rem; font-weight: 700; display: grid; place-items: center; }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
-.me { display: flex; align-items: center; gap: 10px; padding: 8px 6px 0 8px; border-top: 1px solid var(--line); padding-top: 14px; }
+/* The learner's name at the foot of the sidebar opens Settings. */
+.me { display: flex; align-items: center; gap: 10px; padding: 10px 10px; margin-top: 4px; border-radius: 12px; color: var(--ink); border: 1px solid transparent; transition: background .15s, border-color .15s; }
+.me:hover { background: var(--bg-2); }
+.me.active { background: var(--panel); border-color: var(--line); box-shadow: var(--shadow-sm); }
+.me .icon { margin-left: auto; color: var(--muted); }
 .me img, .avatar { width: 32px; height: 32px; border-radius: 50%; flex: none; }
 .avatar { display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .me-name { flex: 1; font-size: 0.88rem; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -912,3 +919,36 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .reminders h3 { margin: 0 0 6px; }
 .reminders p { margin: 0 0 10px; }
 .reminders-on { display: flex; align-items: center; gap: 6px; color: var(--good); font-weight: 600; }
+
+/* ---------- Settings ---------- */
+.settings-section .card-head { margin-bottom: 4px; }
+.settings-section h3 .icon { color: var(--accent); }
+/* A setting: what it is on the left, its control on the right (stacked on phones). */
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.settings-section .card-head + .settings-row, .settings-section .card-head + .account { border-top: none; }
+.settings-label { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0; }
+.settings-label strong { font-weight: 650; }
+.settings-control { flex: 0 1 auto; max-width: 100%; display: flex; justify-content: flex-end; }
+.settings-control .seg { max-width: 100%; }
+.settings-control .theme-switch { width: auto; display: inline-flex; }
+.settings-control .theme-switch button { flex: none; padding: 6px 12px; font-size: 0.85rem; }
+@media (max-width: 560px) {
+  .settings-control { flex: 1 1 100%; justify-content: stretch; }
+  .settings-control .seg, .settings-control .theme-switch { display: flex; width: 100%; }
+  .settings-control .seg button, .settings-control .theme-switch button { flex: 1; justify-content: center; padding-inline: 6px; }
+}
+.state-on { display: inline-flex; align-items: center; gap: 6px; color: var(--good); font-weight: 650; font-size: 0.9rem; }
+.account { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.account img, .account .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 700; font-size: 1.2rem; background: var(--accent-soft); color: var(--accent); }
+.account-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.account-who .small { overflow-wrap: anywhere; }
+.shortcuts { border-top: 1px solid var(--line); }
+.shortcuts .label { margin: 14px 0 8px; }
+.shortcuts dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; align-items: center; }
+.shortcuts dd { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+.settings-error { color: var(--bad); margin: 8px 0 0; }
+/* An arrow at the end of a text link stays on the line with it. */
+.settings p a .icon, .reminders a .icon { display: inline-block; vertical-align: -2px; }
+.policy-now { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; }
+.policy-now .icon { color: var(--accent); }
+.policy-now a { margin-left: auto; }

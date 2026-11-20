@@ -13,7 +13,8 @@ export type Route =
   | { name: 'study'; deckId?: string; all?: boolean }
   | { name: 'plan' }
   | { name: 'insights' }
-  | { name: 'engine' };
+  | { name: 'engine' }
+  | { name: 'settings' };
 
 export function parse(hash: string): Route {
   const [, a, b, c] = hash.replace(/^#/, '').split('/');
@@ -34,6 +35,8 @@ export function parse(hash: string): Route {
       return { name: 'insights' };
     case 'engine':
       return { name: 'engine' };
+    case 'settings':
+      return { name: 'settings' };
     default:
       return { name: 'today' };
   }

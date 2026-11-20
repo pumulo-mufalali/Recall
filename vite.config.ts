@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 // The app shell is cached by a service worker, so Recall opens with no connection;
 // the learner's data comes from Firestore's own offline cache.
 export default defineConfig({
+  // Shown in Settings > About.
+  define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)) },
   // The two public Firebase values may also be set without the VITE_ prefix: Vercel refuses
   // VITE_-prefixed variables unless they are marked as public, and both are public by design.
   envPrefix: ['VITE_', 'FIREBASE_CONFIG', 'RECAPTCHA_ENTERPRISE_KEY'],

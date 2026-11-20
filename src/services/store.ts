@@ -6,6 +6,7 @@
  *   queue/{id}                   material waiting for a connection (see route.ts)
  *   audits/{id}                  the cloud model's check of an on-device mark (see audit.ts)
  *   sessions/{id}                a planned study session (see plan.ts)
+ *   prefs/study                  study preferences from Settings (see prefs.ts)
  *
  * Firestore's persistent cache makes all of it work offline: reads come from the cache, and
  * writes apply locally at once and sync when the connection returns. Offline, a write's promise
@@ -17,6 +18,7 @@ import {
   collectionGroup,
   deleteDoc,
   doc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
@@ -32,6 +34,7 @@ import { newSrs, review } from '../core/schedule';
 import type { Attempt, Card, Confidence, Deck, Engine, Grade } from '../core/types';
 import type { Audit } from '../core/audit';
 import type { Session } from '../core/plan';
+import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
 import { db } from './firebase';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
@@ -159,4 +162,34 @@ export function saveSession(uid: string, session: Omit<Session, 'id' | 'createdA
 
 export function removeSession(uid: string, id: string): void {
   settle(deleteDoc(doc(sessions(uid), id)));
+}
+
+const prefsDoc = (uid: string) => doc(db, 'users', uid, 'prefs', 'study');
+
+export function watchPrefs(uid: string, on: (prefs: StudyPrefs) => void): Unsubscribe {
+  return onSnapshot(prefsDoc(uid), (d) => on({ ...DEFAULT_STUDY_PREFS, ...(d.data() as Partial<StudyPrefs> | undefined) }));
+}
+
+export function savePrefs(uid: string, change: Partial<StudyPrefs>): void {
+  settle(setDoc(prefsDoc(uid), change, { merge: true }));
+}
+
+/**
+ * Deletes everything stored for this learner: decks and their cards, answers, audits, planned
+ * sessions, waiting material and preferences. Unlike other writes it waits for the server (the
+ * caller may delete the account next, after which these documents could no longer be removed).
+ */
+export async function deleteAllData(uid: string): Promise<void> {
+  const refs = [];
+  const deckDocs = await getDocs(decks(uid));
+  for (const d of deckDocs.docs) {
+    refs.push(...(await getDocs(cards(uid, d.id))).docs.map((c) => c.ref), d.ref);
+  }
+  for (const col of [attempts(uid), audits(uid), sessions(uid), queue(uid)]) refs.push(...(await getDocs(col)).docs.map((d) => d.ref));
+  refs.push(prefsDoc(uid));
+  for (let i = 0; i < refs.length; i += 400) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + 400).forEach((r) => batch.delete(r));
+    await batch.commit();
+  }
 }

@@ -3,6 +3,7 @@
  * download), and for every kind of work the route the router would pick right now and why.
  * Go offline or install the model and the table changes in front of you.
  */
+import type { ReactNode } from 'react';
 import { POLICY_HELP, POLICY_LABEL, thresholds, type Audit, type Policy, type Trust } from '../core/audit';
 import { route, type Route, type Task } from '../core/route';
 import { Ring } from './charts';
@@ -23,32 +24,33 @@ const TASKS: { label: string; detail: string; task: Task }[] = [
   { label: 'Explain a missed card', detail: 'When you ask why', task: { kind: 'explain' } },
 ];
 
-export function EnginePage({ conditions: c, settings, attempts, audits, trust, policy, onPolicy }: {
+/** Asks before downloading the built-in model (a few gigabytes), then starts it. Used here and in Settings. */
+export async function askDownload(ask: (a: { title: string; body?: ReactNode; confirm: string }) => Promise<boolean>, c: LiveConditions) {
+  const yes = await ask({
+    title: 'Download the built-in AI?',
+    body: (
+      <>
+        <p>Chrome will download Gemini Nano, a one-time download of a few gigabytes that every site shares. Chrome needs plenty of free disk space.</p>
+        <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud.</p>
+      </>
+    ),
+    confirm: 'Download',
+  });
+  if (yes) c.download();
+}
+
+export function EnginePage({ conditions: c, settings, attempts, audits, trust, policy }: {
   conditions: LiveConditions;
   settings: Settings;
   attempts: Attempt[];
   audits: Audit[];
   trust: Trust;
   policy: Policy;
-  onPolicy: (p: Policy) => void;
 }) {
   const [ask, dialog] = useConfirm();
   const split = engineSplit(attempts);
   const total = attempts.length;
-
-  const getModel = async () => {
-    const yes = await ask({
-      title: 'Download the built-in AI?',
-      body: (
-        <>
-          <p>Chrome will download Gemini Nano, a one-time download of a few gigabytes that every site shares. Chrome needs plenty of free disk space.</p>
-          <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud.</p>
-        </>
-      ),
-      confirm: 'Download',
-    });
-    if (yes) c.download();
-  };
+  const getModel = () => askDownload(ask, c);
 
   return (
     <div className="stack">
@@ -87,7 +89,7 @@ export function EnginePage({ conditions: c, settings, attempts, audits, trust, p
         </div>
       </section>
 
-      <TrustPanel trust={trust} audits={audits} attempts={attempts} policy={policy} onPolicy={onPolicy} />
+      <TrustPanel trust={trust} audits={audits} attempts={attempts} policy={policy} />
 
       <section className="card">
         <div className="card-head">
@@ -149,7 +151,7 @@ export function EnginePage({ conditions: c, settings, attempts, audits, trust, p
  * Recall calibrates its own AI: how often the cloud model agrees with Nano's marks, how that
  * trust sets the escalation and spot-check thresholds, and how much writing stayed private.
  */
-function TrustPanel({ trust, audits, attempts, policy, onPolicy }: { trust: Trust; audits: Audit[]; attempts: Attempt[]; policy: Policy; onPolicy: (p: Policy) => void }) {
+function TrustPanel({ trust, audits, attempts, policy }: { trust: Trust; audits: Audit[]; attempts: Attempt[]; policy: Policy }) {
   const th = thresholds(trust, policy);
   const escalated = audits.filter((a) => a.kind === 'escalated').length;
   const spot = audits.filter((a) => a.kind === 'spot-check').length;
@@ -177,13 +179,11 @@ function TrustPanel({ trust, audits, attempts, policy, onPolicy }: { trust: Trus
         </div>
 
         <div className="trust-body">
-          <div className="seg" role="radiogroup" aria-label="Privacy mode">
-            {(['private', 'balanced', 'accurate'] as Policy[]).map((p) => (
-              <button key={p} role="radio" aria-checked={policy === p} className={policy === p ? 'on' : ''} onClick={() => onPolicy(p)}>
-                <Icon name={p === 'private' ? 'shield' : p === 'accurate' ? 'check' : 'device'} size={15} /> {POLICY_LABEL[p]}
-              </button>
-            ))}
-          </div>
+          <p className="policy-now">
+            <Icon name={policy === 'private' ? 'shield' : policy === 'accurate' ? 'check' : 'device'} size={15} />
+            <span>Privacy mode: <b>{POLICY_LABEL[policy]}</b></span>
+            <a className="small" href="#/settings">Change in Settings</a>
+          </p>
           <p className="muted small">{POLICY_HELP[policy]}</p>
 
           <dl className="trust-stats">
@@ -211,7 +211,7 @@ function TrustPanel({ trust, audits, attempts, policy, onPolicy }: { trust: Trus
   );
 }
 
-function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void }) {
+export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void }) {
   if (c.device === 'available') return <p className="state ok"><Icon name="check" size={15} /> Ready</p>;
   if (c.device === 'downloading')
     return (
