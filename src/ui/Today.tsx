@@ -2,15 +2,15 @@
  * The home screen: what is due and a way to start, the streak and this week's numbers,
  * material waiting for a connection, the decks in progress and recent activity.
  */
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
-import { activity, dayKey, deckProgress, engineSplit, nextDue, relative, streak } from '../core/stats';
+import { activity, dayKey, deckProgress, engineSplit, nextDue, perDay, relative, streak } from '../core/stats';
 import { RIGHT } from '../core/calibration';
 import type { Attempt, Card, Deck } from '../core/types';
 import { saveDeck, type QueuedJob } from '../services/store';
 import type { Review } from './Add';
 import { Icon } from './Icon';
-import { Heatmap, ProgressBar, Ring } from './charts';
+import { Heatmap, ProgressBar } from './charts';
 import { href } from './router';
 import { SAMPLE_CARDS, SAMPLE_TITLE } from './sample';
 import type { LiveConditions } from './useConditions';
@@ -33,7 +33,15 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
     const week = attempts.filter((a) => Date.now() - Date.parse(a.at) < 7 * 86_400_000);
     const split = engineSplit(attempts);
     const today = dayKey(new Date());
+    const days = perDay(attempts);
+    // The last seven days, oldest first, for the streak tile's week strip.
+    const lastWeek = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return { key: dayKey(d), studied: days.has(dayKey(d)), today: i === 6, label: d.toLocaleDateString(undefined, { weekday: 'long' }) };
+    });
     return {
+      lastWeek,
       today: attempts.filter((a) => dayKey(new Date(a.at)) === today).length,
       streak: streak(attempts, new Date()),
       week: week.length,
@@ -61,10 +69,7 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
       </header>
 
       <section className={`hero-card${due.length ? '' : ' done'}`}>
-        <Ring value={due.length ? stats.today / (stats.today + due.length) : 1} size={112} stroke={10}>
-          <span className="ring-num">{due.length || <Icon name="check" size={36} />}</span>
-          {due.length > 0 && <span className="ring-label">due</span>}
-        </Ring>
+        <DueStack due={due.length} />
         <div className="hero-copy">
           {due.length ? (
             <>
@@ -72,8 +77,14 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
               <p className="muted">
                 {reviews > 0 && `${reviews} to review`}
                 {reviews > 0 && fresh > 0 && ' · '}
-                {fresh > 0 && `${fresh} new`} · about {minutes} min{stats.today > 0 && ` · ${stats.today} done today`}
+                {fresh > 0 && `${fresh} new`} · about {minutes} min
               </p>
+              {stats.today > 0 && (
+                <div className="today-progress">
+                  <span className="today-bar"><span style={{ width: `${(stats.today / (stats.today + due.length)) * 100}%` }} /></span>
+                  <span className="muted small">{stats.today} done today</span>
+                </div>
+              )}
               <a className="btn primary lg" href={href({ name: 'study' })}>
                 <Icon name="play" size={18} /> Start session
               </a>
@@ -91,7 +102,13 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
       </section>
 
       <section className="tiles">
-        <Tile icon="flame" tone="warm" value={stats.streak} unit={stats.streak === 1 ? 'day' : 'days'} label="Streak" />
+        <Tile icon="flame" tone="warm" value={stats.streak} unit={stats.streak === 1 ? 'day' : 'days'} label="Streak">
+          <span className="week-dots" role="img" aria-label={`Studied on ${stats.lastWeek.filter((d) => d.studied).length} of the last 7 days`}>
+            {stats.lastWeek.map((d) => (
+              <span key={d.key} className={`week-dot${d.studied ? ' on' : ''}${d.today ? ' today' : ''}`} title={`${d.label}: ${d.studied ? 'studied' : 'no study'}`} />
+            ))}
+          </span>
+        </Tile>
         <Tile icon="check" value={stats.week} label="Answered this week" />
         <Tile icon="insights" value={stats.accuracy === null ? '–' : `${Math.round(stats.accuracy * 100)}%`} label="Right this week" />
         <Tile icon="shield" tone="device" value={stats.private === null ? '–' : `${Math.round(stats.private * 100)}%`} label="Marked privately on device" href="#/engine" />
@@ -160,12 +177,32 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
   );
 }
 
-function Tile({ icon, value, unit, label, tone, href: link }: { icon: 'flame' | 'check' | 'insights' | 'shield'; value: number | string; unit?: string; label: string; tone?: 'warm' | 'device'; href?: string }) {
+/**
+ * The cards waiting today, as a small fanned stack of index cards with the count on the top
+ * one (up to three cards show behind it). Caught up: a single card with a tick.
+ */
+function DueStack({ due }: { due: number }) {
+  const behind = Math.min(3, Math.max(0, due - 1));
+  return (
+    <div className={`due-stack behind-${behind}`} aria-hidden>
+      {Array.from({ length: behind }, (_, i) => <span key={i} className="due-sheet" />)}
+      <span className="due-sheet top">
+        <span className="due-sheet-head">{due ? 'Due today' : 'Today'}</span>
+        <span className="due-sheet-body">
+          {due ? <><b>{due}</b><small>{due === 1 ? 'card' : 'cards'}</small></> : <><Icon name="check" size={34} /><small>All done</small></>}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function Tile({ icon, value, unit, label, tone, href: link, children }: { icon: 'flame' | 'check' | 'insights' | 'shield'; value: number | string; unit?: string; label: string; tone?: 'warm' | 'device'; href?: string; children?: ReactNode }) {
   const body = (
     <>
       <span className={`tile-icon ${tone ? `tone-${tone}` : ''}`}><Icon name={icon} size={18} /></span>
       <span className="tile-value">{value}{unit && <small> {unit}</small>}</span>
       <span className="tile-label">{label}</span>
+      {children}
     </>
   );
   return link ? <a className="tile" href={link}>{body}</a> : <div className="tile">{body}</div>;

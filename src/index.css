@@ -275,9 +275,13 @@ textarea { resize: vertical; line-height: 1.55; }
 .pbar-known { background: var(--accent); }
 .pbar-learning { background: color-mix(in srgb, var(--accent) 40%, var(--track)); }
 
-.heatmap { display: flex; gap: 4px; margin-bottom: 12px; overflow: hidden; }
-.heat-col { display: flex; flex-direction: column; gap: 4px; flex: 1; max-width: 18px; }
+.heatmap-wrap { margin-bottom: 12px; }
+.heatmap { display: grid; gap: 4px; align-items: center; justify-content: start; }
+.heat-month { font-size: 0.7rem; color: var(--muted); white-space: nowrap; overflow: visible; width: 0; line-height: 1.4; }
+.heat-weekday { font-size: 0.68rem; color: var(--muted); padding-right: 6px; line-height: 1; }
 .heat { aspect-ratio: 1; border-radius: 4px; background: var(--track); }
+.heat-legend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; font-size: 0.7rem; color: var(--muted); }
+.heat-legend .heat { width: 11px; border-radius: 3px; }
 .heat-1 { background: color-mix(in srgb, var(--accent) 30%, var(--track)); }
 .heat-2 { background: color-mix(in srgb, var(--accent) 55%, var(--track)); }
 .heat-3 { background: color-mix(in srgb, var(--accent) 80%, var(--track)); }
@@ -316,7 +320,34 @@ textarea { resize: vertical; line-height: 1.55; }
   background: linear-gradient(135deg, var(--panel), color-mix(in srgb, var(--accent-soft) 70%, var(--panel)));
   border: 1px solid var(--line); box-shadow: var(--shadow);
 }
-.hero-card.done .ring-inner { color: var(--good); }
+/* Today's due cards as a fanned stack of index cards; it fans out a little more on hover. */
+.due-stack { position: relative; width: 132px; height: 112px; flex: none; margin: 4px 8px; }
+.due-sheet {
+  position: absolute; inset: 0; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm); transition: transform .3s ease;
+}
+.due-sheet:nth-child(1):not(.top) { transform: rotate(-9deg) translate(-6px, 3px); }
+.due-sheet:nth-child(2):not(.top) { transform: rotate(-5deg) translate(-3px, 2px); }
+.due-sheet:nth-child(3):not(.top) { transform: rotate(-2deg); }
+.hero-card:hover .due-sheet:nth-child(1):not(.top) { transform: rotate(-14deg) translate(-12px, 5px); }
+.hero-card:hover .due-sheet:nth-child(2):not(.top) { transform: rotate(-8deg) translate(-7px, 3px); }
+.hero-card:hover .due-sheet:nth-child(3):not(.top) { transform: rotate(-3deg) translate(-2px, 1px); }
+.due-sheet.top { display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow); transform: rotate(2deg); }
+.hero-card:hover .due-sheet.top { transform: rotate(0deg) translateY(-2px); }
+.due-sheet-head { padding: 7px 12px 5px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--accent); }
+.due-sheet-body {
+  --ruled: 18px; --rule: color-mix(in srgb, var(--accent) 14%, transparent);
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--ink);
+  background: linear-gradient(to bottom, transparent calc(100% - 1px), var(--rule) 0) 0 4px / 100% var(--ruled);
+}
+.due-sheet-body b { font: 700 2.2rem/1 var(--serif); }
+.due-sheet-body small { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.hero-card.done .due-sheet-head { border-bottom-color: var(--good); }
+.hero-card.done .due-sheet-body { color: var(--good); }
+.today-progress { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px; max-width: 360px; }
+.today-bar { flex: 1; height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.today-bar span { display: block; height: 100%; background: var(--good); border-radius: 99px; transition: width .6s ease; }
+@media (max-width: 560px) { .today-progress { margin-inline: auto; } }
 .hero-copy h2 { font-size: 1.6rem; margin-bottom: 4px; }
 .hero-copy .btn { margin-top: 8px; }
 @media (max-width: 560px) { .hero-card { flex-direction: column; text-align: center; padding: 24px 20px; gap: 16px; } }
@@ -329,6 +360,11 @@ a.tile:hover { border-color: var(--accent); }
 .tile-value { font: 700 1.6rem/1.1 var(--serif); }
 .tile-value small { font: 500 0.85rem var(--sans); color: var(--muted); }
 .tile-label { font-size: 0.8rem; color: var(--muted); font-weight: 550; }
+/* The streak tile's week strip: one dot per day, filled when you studied, today outlined. */
+.week-dots { display: flex; gap: 5px; margin-top: 8px; }
+.week-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--track); }
+.week-dot.on { background: var(--warm); }
+.week-dot.today { box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px color-mix(in srgb, var(--warm) 60%, transparent); }
 
 .onboard { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
 @media (max-width: 760px) { .onboard { grid-template-columns: 1fr; } }

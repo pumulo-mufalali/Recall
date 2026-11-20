@@ -40,18 +40,42 @@ export function ProgressBar({ known, learning, total }: { known: number; learnin
   );
 }
 
+const WEEKDAYS = ['Mon', '', 'Wed', '', 'Fri', '', ''];
+
+/**
+ * Answers per day as a grid: one column per week (Monday at the top), with month names
+ * where a new month starts, Mon/Wed/Fri down the side and a Less-to-More legend.
+ */
 export function Heatmap({ cols }: { cols: { day: string; count: number; future: boolean }[][] }) {
   const max = Math.max(1, ...cols.flat().map((d) => d.count));
   const level = (n: number) => (n === 0 ? 0 : Math.min(4, Math.ceil((n / max) * 4)));
+  const monthOf = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { month: 'short' });
+  // A column is labelled when the month of its first day differs from the previous column's
+  // (the first column only if it starts in the first week of its month, to avoid a stray label).
+  const months = cols.map((col, i) => {
+    const m = monthOf(col[0].day);
+    if (i === 0) return Number(col[0].day.slice(8)) <= 7 ? m : '';
+    return m !== monthOf(cols[i - 1][0].day) ? m : '';
+  });
   return (
-    <div className="heatmap" role="img" aria-label="Answers per day over recent weeks">
-      {cols.map((col, i) => (
-        <div className="heat-col" key={i}>
-          {col.map((d) => (
-            <span key={d.day} className={`heat heat-${d.future ? 'future' : level(d.count)}`} title={d.future ? '' : `${d.day}: ${d.count} answers`} />
-          ))}
-        </div>
-      ))}
+    <div className="heatmap-wrap">
+      <div className="heatmap" role="img" aria-label="Answers per day over recent weeks" style={{ gridTemplateColumns: `auto repeat(${cols.length}, minmax(0, 18px))` }}>
+        {months.map((m, i) => <span key={`m${i}`} className="heat-month" style={{ gridColumn: i + 2, gridRow: 1 }}>{m}</span>)}
+        {WEEKDAYS.map((w, r) => <span key={`w${r}`} className="heat-weekday" style={{ gridColumn: 1, gridRow: r + 2 }}>{w}</span>)}
+        {cols.map((col, i) =>
+          col.map((d, r) => (
+            <span
+              key={d.day}
+              className={`heat heat-${d.future ? 'future' : level(d.count)}`}
+              style={{ gridColumn: i + 2, gridRow: r + 2 }}
+              title={d.future ? '' : `${d.day}: ${d.count} ${d.count === 1 ? 'answer' : 'answers'}`}
+            />
+          )),
+        )}
+      </div>
+      <div className="heat-legend" aria-hidden>
+        Less {[0, 1, 2, 3, 4].map((l) => <span key={l} className={`heat heat-${l}`} />)} More
+      </div>
     </div>
   );
 }
