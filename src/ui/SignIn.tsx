@@ -73,10 +73,12 @@ export function SignIn() {
 
 function Step({ icon, title, children }: { icon: 'device' | 'cloud' | 'insights'; title: string; children: React.ReactNode }) {
   return (
-    <div className="step">
-      <span className={`step-icon step-${icon}`}><Icon name={icon} /></span>
-      <h3>{title}</h3>
-      <p className="muted">{children}</p>
+    <div className={`step index-card ic-${icon}`}>
+      <div className="index-card-head">
+        <span className={`step-icon step-${icon}`}><Icon name={icon} /></span>
+        <h3>{title}</h3>
+      </div>
+      <p className="index-card-body">{children}</p>
     </div>
   );
 }
