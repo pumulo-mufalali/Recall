@@ -3,6 +3,9 @@
   --bg: #f4f6f8;
   --bg-2: #eceff3;
   --panel: #ffffff;
+  /* Surfaces that float above the page, such as dialogs. */
+  --raised: #ffffff;
+  --scrim: rgb(16 24 40 / 0.4);
   /* Text is full black for readability. --subtle (grey) is only for interface signals:
      inactive tabs and options, past days, icon buttons, placeholders, decoration. */
   --ink: #000000;
@@ -58,6 +61,8 @@
   --bg: #000000;
   --bg-2: #0b0b0b;
   --panel: #141414;
+  --raised: #1f1f1f;
+  --scrim: rgb(0 0 0 / 0.6);
   --ink: #ffffff;
   --ink-2: #ffffff;
   --muted: #ffffff;
@@ -831,8 +836,8 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .error-body .actions { margin-top: 8px; }
 .error-body details summary { cursor: pointer; color: var(--muted); }
 
-.dialog { border: none; border-radius: 12px; padding: 24px; width: min(440px, calc(100vw - 32px)); background: var(--panel); color: var(--ink); box-shadow: var(--shadow-lg); }
-.dialog::backdrop { background: rgb(16 24 40 / 0.4); backdrop-filter: blur(3px); }
+.dialog { border: 1px solid var(--line); border-radius: 12px; padding: 24px; width: min(440px, calc(100vw - 32px)); background: var(--raised); color: var(--ink); box-shadow: var(--shadow-lg); }
+.dialog::backdrop { background: var(--scrim); backdrop-filter: blur(3px); }
 .dialog[open] { animation: rise .2s ease; }
 .dialog-body { color: var(--ink-2); margin-top: 8px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
