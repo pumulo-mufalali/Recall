@@ -196,7 +196,7 @@ function SessionRow({ s, decks, showDay, highlight, onRemove }: { s: Session; de
         </span>
         {highlight && <span className="small session-tip">Saved. Add it to your calendar so your phone reminds you even when Recall is closed.</span>}
       </span>
-      <button className="icon-btn" onClick={onRemove} aria-label={`Remove the ${time(start)} session`} title="Remove">
+      <button className="icon-btn danger" onClick={onRemove} aria-label={`Remove the ${time(start)} session`} title="Remove">
         <Icon name="trash" size={16} />
       </button>
     </div>

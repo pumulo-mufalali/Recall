@@ -370,7 +370,7 @@ function ReviewView({ review, setReview, settings, online, onBack, onSave }: {
                 <span className={`chip chip-${status}`}>
                   {status === 'verified' ? 'Verified' : status === 'flagged' ? 'Needs a look' : status === 'fixed' ? 'Resolved' : 'Not checked'}
                 </span>
-                <button className="icon-btn" onClick={() => setReview({ ...review, drafts: drafts.filter((_, j) => j !== i) })} aria-label="Remove this card" title="Remove">
+                <button className="icon-btn danger" onClick={() => setReview({ ...review, drafts: drafts.filter((_, j) => j !== i) })} aria-label="Remove this card" title="Remove">
                   <Icon name="trash" size={16} />
                 </button>
               </div>

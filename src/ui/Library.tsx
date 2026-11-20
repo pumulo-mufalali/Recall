@@ -68,7 +68,7 @@ export function Library({ decks, cards, attempts, onDelete }: { decks: Deck[]; c
                   <p className="book-foot small">
                     <span className="muted">Added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
                     {p.accuracy !== null && <span className="deck-acc">{Math.round(p.accuracy * 100)}% right</span>}
-                    <button className="icon-btn deck-del" onClick={() => onDelete(d)} aria-label={`Delete ${d.title}`} title="Delete deck">
+                    <button className="icon-btn danger deck-del" onClick={() => onDelete(d)} aria-label={`Delete ${d.title}`} title="Delete deck">
                       <Icon name="trash" size={16} />
                     </button>
                   </p>
