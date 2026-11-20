@@ -26,6 +26,10 @@
   --mid: #8a5800;
   --mid-soft: #f8eed9;
   --bad: #c0392f;
+  /* Controls in full colour, the same in both themes: solid fills with white text. */
+  --solid: #2f5fb8;
+  --solid-2: #264e99;
+  --on-solid: #ffffff;
   /* Delete buttons: full-strength red in both themes (solid, and as text). */
   --danger: #dc2626;
   --danger-2: #b91c1c;
@@ -86,6 +90,9 @@
   --mid: #e0b25c;
   --mid-soft: #2e2717;
   --bad: #ef8a80;
+  --solid: #2f5fb8;
+  --solid-2: #264e99;
+  --on-solid: #ffffff;
   --danger: #dc2626;
   --danger-2: #b91c1c;
   --danger-text: #ff4d4d;
@@ -138,8 +145,8 @@ kbd { font: 600 0.72rem var(--mono); padding: 1px 6px; border-radius: 5px; borde
 .btn:hover:not(:disabled) { border-color: var(--accent); }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; cursor: default; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent); }
-.btn.primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
+.btn.primary { background: var(--solid); border-color: var(--solid); color: var(--on-solid); box-shadow: 0 2px 8px color-mix(in srgb, var(--solid) 30%, transparent); }
+.btn.primary:hover:not(:disabled) { background: var(--solid-2); border-color: var(--solid-2); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn.ghost:hover:not(:disabled) { background: var(--inset); border-color: transparent; }
 .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--danger) 30%, transparent); }
@@ -154,7 +161,7 @@ label.btn { position: relative; }
 .link { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 0.88rem; }
 .icon-btn {
   display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
-  border: none; background: transparent; color: var(--subtle); cursor: pointer; transition: background .15s, color .15s;
+  border: none; background: transparent; color: var(--ink); cursor: pointer; transition: background .15s, color .15s;
 }
 .icon-btn:hover { background: var(--inset); color: var(--ink); }
 @media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } }
@@ -251,9 +258,9 @@ textarea { resize: vertical; line-height: 1.55; }
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--raised) 92%, transparent); backdrop-filter: blur(14px); border-top: 1px solid var(--line);
   }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--subtle); font-size: 0.7rem; font-weight: 600; border-radius: 12px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; color: var(--ink); font-size: 0.7rem; font-weight: 600; border-radius: 12px; }
   .tab.active { color: var(--accent); }
-  .tab-add .icon { width: 40px; height: 32px; padding: 4px 8px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
+  .tab-add .icon { width: 40px; height: 32px; padding: 4px 8px; border-radius: 12px; background: var(--solid); color: var(--on-solid); }
   .tab-add span { display: none; }
   .tab-add { justify-content: center; }
   h1 { font-size: 1.6rem; }
@@ -584,14 +591,14 @@ a.tile:hover { border-color: var(--accent); }
   display: inline-flex; padding: 4px; border-radius: 999px; background: var(--inset); border: 1px solid var(--line); gap: 2px; overflow-x: auto; max-width: 100%;
   box-shadow: inset 0 1px 2px var(--engrave-shade), 0 1px 0 var(--engrave-light);
 }
-.seg button { font: inherit; font-size: 0.85rem; font-weight: 600; border: none; background: transparent; color: var(--subtle); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.seg button { font: inherit; font-size: 0.85rem; font-weight: 600; border: none; background: transparent; color: var(--ink); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .seg button { transition: background .15s, color .15s, box-shadow .15s; }
 .seg button:hover:not(.on) { color: var(--ink); }
 .seg button.on {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 7%, var(--inset));
-  box-shadow: inset 0 2px 4px var(--engrave-shade), inset 0 1px 1px var(--engrave-shade), 0 1px 0 var(--engrave-light);
-  text-shadow: 0 1px 0 var(--engrave-light);
+  color: var(--on-solid);
+  background: var(--solid);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.35), inset 0 1px 1px rgb(0 0 0 / 0.25), 0 1px 0 var(--engrave-light);
+  text-shadow: 0 -1px 0 rgb(0 0 0 / 0.25);
 }
 .seg.big { display: flex; width: 100%; }
 .theme-switch { display: flex; width: 100%; }
@@ -723,14 +730,17 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
   border: 1.5px solid var(--line); background: var(--panel); font: inherit; color: var(--ink); cursor: pointer; text-align: left; transition: border-color .15s, background .15s, transform .1s;
 }
 .conf:hover:not(:disabled) { border-color: var(--c); }
-.conf.chosen { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--panel)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.conf.chosen { border-color: var(--cs); background: var(--cs); color: var(--on-solid); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cs) 25%, transparent); }
+.conf.chosen .conf-pct { color: var(--on-solid); }
+.conf.chosen kbd { background: rgb(255 255 255 / 0.15); border-color: rgb(255 255 255 / 0.35); color: var(--on-solid); }
 .conf kbd { position: absolute; top: 10px; right: 10px; }
 .conf-label { font-weight: 650; }
 .conf-pct { font-size: 0.8rem; color: var(--muted); }
-.conf-1 { --c: var(--subtle); }
-.conf-2 { --c: var(--mid); }
-.conf-3 { --c: var(--cloud); }
-.conf-4 { --c: var(--accent); }
+/* --c: the hover outline; --cs: the solid fill when chosen (white text, both themes). */
+.conf-1 { --c: var(--subtle); --cs: #4b5563; }
+.conf-2 { --c: var(--mid); --cs: #a16207; }
+.conf-3 { --c: var(--cloud); --cs: #6b4fbf; }
+.conf-4 { --c: var(--accent); --cs: var(--solid); }
 @media (hover: none) { .conf kbd { display: none; } }
 
 .result { display: flex; flex-direction: column; gap: 16px; animation: rise .3s ease; }
