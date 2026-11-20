@@ -64,11 +64,24 @@ export function go(r: Route, replace = false): void {
   if (replace) dispatchEvent(new HashChangeEvent('hashchange'));
 }
 
+/**
+ * Makes the address match the screen shown: an unknown or incomplete address (#/foo,
+ * #/deck with no deck, an empty one) is replaced by the address of the screen it opens,
+ * without adding a history entry.
+ */
+function canonical(r: Route): void {
+  const h = href(r);
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parse(location.hash));
   useEffect(() => {
+    canonical(parse(location.hash));
     const on = () => {
-      setRoute(parse(location.hash));
+      const r = parse(location.hash);
+      canonical(r);
+      setRoute(r);
       scrollTo({ top: 0 });
     };
     addEventListener('hashchange', on);

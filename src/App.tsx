@@ -25,9 +25,38 @@ import { Settings as SettingsPage } from './ui/Settings';
 import { useConfirm } from './ui/Dialog';
 import { go, href, useRoute, type Route } from './ui/router';
 
+/** Where to go after signing in, when someone arrived signed out at a deep link. */
+const AFTER_SIGN_IN = 'recall.after';
+
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
+  const previous = useRef<User | null | undefined>(undefined);
   useEffect(() => onAuthStateChanged(auth, setUser), []);
+
+  // The landing page has the plain address: no screen's #/route in it. Arriving signed out at a
+  // deep link (a reminder's #/study, say) keeps it for after sign-in; signing out does not,
+  // so the next sign-in starts at Today rather than wherever the last person left off.
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = user;
+    if (user === undefined) return;
+    try {
+      if (user === null) {
+        const deep = location.hash && location.hash !== '#/' ? location.hash : '';
+        if (was === undefined && deep) sessionStorage.setItem(AFTER_SIGN_IN, deep);
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      } else if (!was) {
+        const after = sessionStorage.getItem(AFTER_SIGN_IN);
+        sessionStorage.removeItem(AFTER_SIGN_IN);
+        if (after) {
+          history.replaceState(null, '', after);
+          dispatchEvent(new HashChangeEvent('hashchange'));
+        }
+      }
+    } catch {
+      // Storage blocked: sign-in simply starts at Today.
+    }
+  }, [user]);
 
   if (user === undefined) return <Splash />;
   if (!user) return <SignIn />;
