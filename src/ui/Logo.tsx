@@ -43,7 +43,7 @@ export function Logo({ height = 44 }: { height?: number }) {
         </mask>
       </defs>
       <Book mask={`url(#${gap})`} />
-      <path d={WORD_PATH} fill="var(--ink)" />
+      <path d={WORD_PATH} fill="var(--accent)" />
     </svg>
   );
 }
@@ -67,10 +67,10 @@ function Book({ mask }: { mask: string }) {
       {/* Covers and spine: one C-shaped band, twice as thick as a page line */}
       <path
         d={`M${W - 5} 4H24A20 20 0 0 0 24 44H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 41H24A17 17 0 0 1 24 7H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 4Z`}
-        fill="var(--accent)"
+        fill="var(--ink)"
       />
       {/* Fore-edge */}
-      <path d={`M${W - 8} 7.8Q${W - 16} 24 ${W - 8} 40.2`} fill="none" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
+      <path d={`M${W - 8} 7.8Q${W - 16} 24 ${W - 8} 40.2`} fill="none" stroke="var(--ink)" strokeWidth="2.6" strokeLinecap="round" />
     </>
   );
 }
