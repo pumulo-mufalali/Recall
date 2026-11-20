@@ -6,6 +6,7 @@ import { Plain, friendly, type Friendly } from '../core/errors';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
+import { ThemeSwitch } from './ThemeSwitch';
 
 export function SignIn() {
   const [error, setError] = useState<Friendly | null>(null);
@@ -22,6 +23,7 @@ export function SignIn() {
     <div className="welcome">
       <header className="welcome-top">
         <span className="brand"><Logo /></span>
+        <ThemeSwitch compact />
       </header>
 
       <section className="welcome-hero">

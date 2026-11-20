@@ -17,6 +17,7 @@ import { EnginePage } from './ui/EnginePage';
 import { SignIn } from './ui/SignIn';
 import { Icon, type IconName } from './ui/Icon';
 import { Logo } from './ui/Logo';
+import { ThemeSwitch } from './ui/ThemeSwitch';
 import { useConfirm } from './ui/Dialog';
 import { go, href, useRoute, type Route } from './ui/router';
 
@@ -161,6 +162,7 @@ function Signed({ user }: { user: User }) {
             ))}
           </nav>
           <div className="sidebar-foot">
+            <ThemeSwitch />
             <StatusPill conditions={conditions} />
             <div className="me">
               {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user.displayName ?? '?')[0]}</span>}
@@ -178,7 +180,10 @@ function Signed({ user }: { user: User }) {
             <a className="brand" href="#/">
               <Logo height={36} />
             </a>
-            <StatusPill conditions={conditions} compact />
+            <div className="mobile-actions">
+              <ThemeSwitch compact />
+              <StatusPill conditions={conditions} compact />
+            </div>
           </header>
         )}
         <div className="screen" key={active}>{screen}</div>

@@ -42,39 +42,38 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #12161c;
-    --bg-2: #171c23;
-    --panel: #1b2129;
-    --ink: #e3e7ed;
-    --ink-2: #c5ccd6;
-    --muted: #949eac;
-    --line: #2a323d;
-    --track: #262d37;
-    --accent: #7ea6f2;
-    --accent-2: #9bbaf6;
-    --accent-ink: #0d1729;
-    --accent-soft: #1c2840;
-    --good: #6cc895;
-    --good-soft: #18291f;
-    --mid: #e0b25c;
-    --mid-soft: #2e2717;
-    --bad: #ef8a80;
-    --bad-soft: #35201f;
-    --warm: #f09c62;
-    --warm-soft: #33241a;
-    --device: #7ea6f2;
-    --device-soft: #1c2840;
-    --cloud: #b4a0f2;
-    --cloud-soft: #262040;
-    --local: #a9b3c1;
-    --local-soft: #222932;
-    --shadow-sm: none;
-    --shadow: 0 0 0 1px rgb(255 255 255 / 0.02);
-    --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.5);
-  }
+/* Dark colours. src/ui/theme.ts sets data-theme from the learner's choice or the system. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #12161c;
+  --bg-2: #171c23;
+  --panel: #1b2129;
+  --ink: #e3e7ed;
+  --ink-2: #c5ccd6;
+  --muted: #949eac;
+  --line: #2a323d;
+  --track: #262d37;
+  --accent: #7ea6f2;
+  --accent-2: #9bbaf6;
+  --accent-ink: #0d1729;
+  --accent-soft: #1c2840;
+  --good: #6cc895;
+  --good-soft: #18291f;
+  --mid: #e0b25c;
+  --mid-soft: #2e2717;
+  --bad: #ef8a80;
+  --bad-soft: #35201f;
+  --warm: #f09c62;
+  --warm-soft: #33241a;
+  --device: #7ea6f2;
+  --device-soft: #1c2840;
+  --cloud: #b4a0f2;
+  --cloud-soft: #262040;
+  --local: #a9b3c1;
+  --local-soft: #222932;
+  --shadow-sm: none;
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.5);
 }
 
 * { box-sizing: border-box; }
@@ -205,6 +204,7 @@ textarea { resize: vertical; line-height: 1.55; }
     background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
   }
   .mobile-top .brand { padding: 0; flex: none; }
+  .mobile-actions { display: flex; align-items: center; gap: 4px; min-width: 0; }
   .mobile-top .status-model { max-width: 120px; }
   .screen { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
   .shell.focus .screen { padding-bottom: 32px; }
@@ -422,6 +422,8 @@ a.tile:hover { border-color: var(--accent); }
 .seg button { font: inherit; font-size: 0.85rem; font-weight: 600; border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .seg button.on { background: var(--panel); color: var(--ink); box-shadow: var(--shadow-sm); }
 .seg.big { display: flex; width: 100%; }
+.theme-switch { display: flex; width: 100%; }
+.theme-switch button { flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.78rem; }
 .seg.big button { flex: 1; justify-content: center; padding: 10px 14px; font-size: 0.92rem; }
 
 .card-list { list-style: none; margin: 0; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); }
