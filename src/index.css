@@ -129,6 +129,7 @@ label.btn { position: relative; }
   border: none; background: transparent; color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
 }
 .icon-btn:hover { background: var(--bg-2); color: var(--ink); }
+@media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 input, textarea {
@@ -235,8 +236,8 @@ textarea { resize: vertical; line-height: 1.55; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; box-shadow: var(--shadow); }
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
 .card-head h3 { margin: 0; }
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 960px) { .split { grid-template-columns: 1fr; } }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 960px) { .split { grid-template-columns: minmax(0, 1fr); } }
 
 .empty { text-align: center; padding: 56px 24px; background: var(--panel); border: 1px dashed var(--line); border-radius: var(--r); display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .empty .muted { max-width: 46ch; margin-bottom: 16px; }
@@ -503,6 +504,7 @@ a.tile:hover { border-color: var(--accent); }
 @media (max-width: 560px) { .deck-hero { flex-direction: column; align-items: flex-start; } }
 
 .toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+@media (max-width: 560px) { .toolbar .seg { display: flex; width: 100%; } .toolbar .seg button { flex: 1; justify-content: center; padding-inline: 8px; } .toolbar .search { max-width: none; } }
 /* Segmented control, engraved: the bar is a shallow groove in the page, and the chosen
    option is pressed into it (shade on its upper edge, a highlight on its lower lip, and
    letterpress text). */
@@ -679,10 +681,10 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .points .hit .icon { color: var(--good); }
 .points .miss { background: var(--bad-soft); }
 .points .miss .icon { color: var(--bad); }
-.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .compare > div { padding: 14px 16px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
-.compare p { margin: 4px 0 0; white-space: pre-wrap; }
-@media (max-width: 560px) { .compare { grid-template-columns: 1fr; } }
+.compare p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .compare { grid-template-columns: minmax(0, 1fr); } }
 .result > .btn { align-self: flex-start; }
 .explain { padding: 16px; border-radius: 8px; border: 1px dashed var(--line); background: var(--panel); display: flex; flex-direction: column; gap: 10px; }
 .explain p { white-space: pre-wrap; margin: 0; }
@@ -722,7 +724,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .table th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 650; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .table td { padding: 10px; border-bottom: 1px solid var(--line); }
 .table tr:last-child td { border-bottom: none; }
-.table td:not(:first-child), .table th:not(:first-child) { text-align: right; width: 80px; }
+.table td:not(:first-child), .table th:not(:first-child) { text-align: right; width: 1%; white-space: nowrap; }
 
 /* ---------- AI engine ---------- */
 .engine-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -786,8 +788,11 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .audit-note.agreed .icon { color: var(--good); }
 .audit-note.revised { background: var(--mid-soft); }
 .audit-note.revised .icon { color: var(--mid); }
-.trust-grid { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: start; margin-bottom: 14px; }
-@media (max-width: 700px) { .trust-grid { grid-template-columns: 1fr; justify-items: center; } .trust-body { width: 100%; } }
+.trust-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; align-items: start; margin-bottom: 14px; }
+@media (max-width: 700px) { .trust-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; } .trust-body { width: 100%; min-width: 0; } }
+/* The privacy switch spans the panel, its three options sharing the width. */
+.trust-body .seg { display: flex; width: 100%; }
+.trust-body .seg button { flex: 1; justify-content: center; padding-inline: 8px; }
 .trust-gauge { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .trust-body { display: flex; flex-direction: column; gap: 10px; }
 .trust-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 0; }
