@@ -26,6 +26,10 @@
   --mid: #8a5800;
   --mid-soft: #f8eed9;
   --bad: #c0392f;
+  /* Delete buttons: full-strength red in both themes (solid, and as text). */
+  --danger: #dc2626;
+  --danger-2: #b91c1c;
+  --danger-text: #c81e1e;
   --bad-soft: #fbe7e5;
   --warm: #b04f0e;
   --warm-soft: #fbe9dc;
@@ -82,6 +86,9 @@
   --mid: #e0b25c;
   --mid-soft: #2e2717;
   --bad: #ef8a80;
+  --danger: #dc2626;
+  --danger-2: #b91c1c;
+  --danger-text: #ff4d4d;
   --bad-soft: #35201f;
   --warm: #f09c62;
   --warm-soft: #33241a;
@@ -135,8 +142,12 @@ kbd { font: 600 0.72rem var(--mono); padding: 1px 6px; border-radius: 5px; borde
 .btn.primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
 .btn.ghost:hover:not(:disabled) { background: var(--inset); border-color: transparent; }
-.btn.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
-.btn.danger-text { color: var(--bad); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--danger) 30%, transparent); }
+.btn.danger:hover:not(:disabled) { background: var(--danger-2); border-color: var(--danger-2); }
+.btn.danger-text { color: var(--danger-text); }
+.btn.danger-text:not(.ghost) { border-color: color-mix(in srgb, var(--danger-text) 55%, transparent); }
+.btn.danger-text:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 10%, transparent); border-color: var(--danger-text); }
+.btn.danger-text.ghost:hover:not(:disabled) { border-color: transparent; }
 .btn.sm { padding: 6px 12px; font-size: 0.85rem; }
 .btn.lg { padding: 13px 24px; font-size: 1rem; }
 label.btn { position: relative; }
