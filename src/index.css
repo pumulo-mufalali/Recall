@@ -132,12 +132,12 @@ label.btn { position: relative; }
 @media (pointer: coarse) { .icon-btn { width: 44px; height: 44px; } }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-input, textarea {
+input, textarea, select {
   font: inherit; width: 100%; padding: 11px 14px;
   border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); color: var(--ink);
   transition: border-color .15s, box-shadow .15s, background .15s;
 }
-input:focus, textarea:focus { outline: none; border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 3px var(--accent-soft); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); background: var(--panel); box-shadow: 0 0 0 3px var(--accent-soft); }
 textarea { resize: vertical; line-height: 1.55; }
 ::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
 .search { max-width: 320px; padding: 9px 14px; border-radius: 999px; }
@@ -316,6 +316,20 @@ textarea { resize: vertical; line-height: 1.55; }
 .trend-target { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; opacity: .6; }
 
 /* ---------- Today ---------- */
+/* The next planned session (or a quiet link to the calendar), above the hero. */
+.next-session {
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: var(--r);
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-sm); color: var(--ink);
+}
+.next-session.soon { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.next-session.quiet { background: transparent; box-shadow: none; border-style: dashed; color: var(--muted); font-weight: 600; font-size: 0.92rem; }
+.next-session.quiet span { flex: 1; }
+.next-session.quiet:hover { color: var(--accent); border-color: var(--accent); }
+.next-session-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--accent-soft); color: var(--accent); }
+.next-session-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.next-session-main .eyebrow { margin: 0; }
+.next-session-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .hero-card {
   display: flex; align-items: center; gap: 28px; padding: 28px; border-radius: 12px;
   background: linear-gradient(135deg, var(--panel), color-mix(in srgb, var(--accent-soft) 70%, var(--panel)));
@@ -832,3 +846,69 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .audit-dot.escalated { border-radius: 2px; transform: rotate(45deg) scale(.85); }
 .audit-dot.ok { background: var(--good); }
 .audit-dot.bad { background: var(--bad); }
+
+/* ---------- Plan: the study calendar ---------- */
+.plan-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 960px) { .plan-layout { grid-template-columns: minmax(0, 1fr); } }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cal-head h3 { margin: 0; }
+.cal-nav { display: flex; align-items: center; gap: 2px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.cal-weekday { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+/* A day: its date, how many cards come due (shaded by load), and its sessions. */
+.cal-day {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; min-height: 78px;
+  padding: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.cal-day:hover { border-color: var(--accent); }
+.cal-day.load-1 { background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+.cal-day.load-2 { background: color-mix(in srgb, var(--accent) 13%, var(--panel)); }
+.cal-day.load-3 { background: color-mix(in srgb, var(--accent) 20%, var(--panel)); }
+.cal-day.load-4 { background: color-mix(in srgb, var(--accent) 28%, var(--panel)); }
+.cal-day.past { background: transparent; color: var(--muted); }
+.cal-day.other { opacity: 0.45; }
+.cal-day.picked { outline: 2px solid var(--accent); outline-offset: -1px; }
+.cal-date { font-weight: 700; font-size: 0.85rem; line-height: 1.5; padding: 0 2px; }
+.cal-day.today .cal-date { background: var(--accent); color: var(--accent-ink); border-radius: 99px; padding: 0 7px; }
+.cal-due { display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+.cal-sessions { display: flex; flex-direction: column; gap: 2px; width: 100%; margin-top: auto; }
+.cal-session {
+  font-size: 0.66rem; font-weight: 700; padding: 1px 4px; border-radius: 3px; border-left: 3px solid var(--warm);
+  background: var(--warm-soft); color: var(--warm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-more { font-size: 0.66rem; color: var(--muted); font-weight: 600; }
+.cal-legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; }
+.cal-key { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
+.cal-key.load-1 { background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+.cal-key.load-4 { background: color-mix(in srgb, var(--accent) 28%, var(--panel)); }
+.cal-key-session { display: inline-block; width: 16px; height: 9px; margin-left: 10px; border-radius: 2px; border-left: 3px solid var(--warm); background: var(--warm-soft); }
+/* Phones: smaller days, and sessions as dots. */
+@media (max-width: 560px) {
+  .cal-grid { gap: 3px; }
+  .cal-day { min-height: 54px; padding: 4px; align-items: center; }
+  .cal-due .icon { display: none; }
+  .cal-sessions { flex-direction: row; justify-content: center; gap: 3px; }
+  .cal-session { font-size: 0; width: 7px; height: 7px; padding: 0; border: none; border-radius: 50%; background: var(--warm); }
+  .cal-more { display: none; }
+}
+
+.day-panel h3 { margin: 0; }
+.day-due { margin: 4px 0 6px; }
+.session-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
+.session-row.fresh { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); border-radius: 8px; padding: 12px; margin: 6px 0; border-top-color: transparent; }
+.session-time { display: flex; flex-direction: column; min-width: 58px; }
+.session-time b { font-size: 1rem; }
+.session-time small { font-size: 0.75rem; color: var(--muted); }
+.session-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.session-main strong { font-weight: 650; overflow-wrap: anywhere; }
+.session-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.session-tip { color: var(--accent); font-weight: 600; margin-top: 4px; }
+.schedule { border-top: 1px solid var(--line); margin-top: 8px; }
+.schedule .label { margin: 14px 0 0; }
+.schedule-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.schedule .field { margin-top: 12px; }
+.schedule .seg { margin-top: 0; }
+.reminders h3 { margin: 0 0 6px; }
+.reminders p { margin: 0 0 10px; }
+.reminders-on { display: flex; align-items: center; gap: 6px; color: var(--good); font-weight: 600; }

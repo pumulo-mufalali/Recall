@@ -22,7 +22,8 @@ export default defineConfig({
         display: 'standalone',
         icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
-      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg}', '**/roboto-latin-*.woff2'] },
+      // sw-notify.js (in public/) adds what happens when a session reminder is clicked.
+      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg}', '**/roboto-latin-*.woff2'], importScripts: ['sw-notify.js'] },
     }),
   ],
 });

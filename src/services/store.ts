@@ -5,6 +5,7 @@
  *   attempts/{id}                every answer, with confidence and marking (for calibration)
  *   queue/{id}                   material waiting for a connection (see route.ts)
  *   audits/{id}                  the cloud model's check of an on-device mark (see audit.ts)
+ *   sessions/{id}                a planned study session (see plan.ts)
  *
  * Firestore's persistent cache makes all of it work offline: reads come from the cache, and
  * writes apply locally at once and sync when the connection returns. Offline, a write's promise
@@ -30,6 +31,7 @@ import type { DraftCard } from '../core/prompts';
 import { newSrs, review } from '../core/schedule';
 import type { Attempt, Card, Confidence, Deck, Engine, Grade } from '../core/types';
 import type { Audit } from '../core/audit';
+import type { Session } from '../core/plan';
 import { db } from './firebase';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
@@ -37,6 +39,7 @@ const cards = (uid: string, deckId: string) => collection(db, 'users', uid, 'dec
 const attempts = (uid: string) => collection(db, 'users', uid, 'attempts');
 const queue = (uid: string) => collection(db, 'users', uid, 'queue');
 const audits = (uid: string) => collection(db, 'users', uid, 'audits');
+const sessions = (uid: string) => collection(db, 'users', uid, 'sessions');
 
 /** Logs a write that the server later refused (offline writes are retried on their own). */
 const settle = (p: Promise<unknown>) => void p.catch((e) => console.error('[recall] write failed', e));
@@ -141,4 +144,19 @@ export function enqueue(uid: string, job: Omit<QueuedJob, 'id' | 'at'>): void {
 
 export function dequeue(uid: string, id: string): void {
   settle(deleteDoc(doc(queue(uid), id)));
+}
+
+export function watchSessions(uid: string, on: (sessions: Session[]) => void): Unsubscribe {
+  return onSnapshot(query(sessions(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as Session)));
+}
+
+export function saveSession(uid: string, session: Omit<Session, 'id' | 'createdAt'>): Session {
+  const ref = doc(sessions(uid));
+  const saved: Session = { ...session, id: ref.id, createdAt: new Date().toISOString() };
+  settle(setDoc(ref, saved));
+  return saved;
+}
+
+export function removeSession(uid: string, id: string): void {
+  settle(deleteDoc(doc(sessions(uid), id)));
 }

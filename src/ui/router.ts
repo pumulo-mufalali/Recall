@@ -11,6 +11,7 @@ export type Route =
   | { name: 'add' }
   | { name: 'review'; jobId: string }
   | { name: 'study'; deckId?: string; all?: boolean }
+  | { name: 'plan' }
   | { name: 'insights' }
   | { name: 'engine' };
 
@@ -27,6 +28,8 @@ export function parse(hash: string): Route {
       return b ? { name: 'review', jobId: b } : { name: 'today' };
     case 'study':
       return { name: 'study', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
+    case 'plan':
+      return { name: 'plan' };
     case 'insights':
       return { name: 'insights' };
     case 'engine':

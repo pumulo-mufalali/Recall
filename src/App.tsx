@@ -4,7 +4,8 @@ import { dueCards } from './core/schedule';
 import type { Attempt, Card, Deck } from './core/types';
 import { cardsFromFile, cardsFromText, Queued } from './services/engine';
 import { auth, loadSettings, type Settings } from './services/firebase';
-import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, type QueuedJob } from './services/store';
+import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, type QueuedJob } from './services/store';
+import type { Session } from './core/plan';
 import { trustFrom, type Audit } from './core/audit';
 import { usePolicy } from './ui/usePolicy';
 import { Add, reviewOf, type Review } from './ui/Add';
@@ -12,6 +13,8 @@ import { Insights } from './ui/Insights';
 import { Study } from './ui/Study';
 import { useConditions, type LiveConditions } from './ui/useConditions';
 import { Today } from './ui/Today';
+import { Plan, sessionText } from './ui/Plan';
+import { useReminders } from './ui/reminders';
 import { Library, DeckView } from './ui/Library';
 import { EnginePage } from './ui/EnginePage';
 import { SignIn } from './ui/SignIn';
@@ -43,6 +46,7 @@ const NAV: { route: Route; label: string; icon: IconName }[] = [
   { route: { name: 'today' }, label: 'Today', icon: 'today' },
   { route: { name: 'library' }, label: 'Library', icon: 'library' },
   { route: { name: 'add' }, label: 'Add', icon: 'add' },
+  { route: { name: 'plan' }, label: 'Plan', icon: 'calendar' },
   { route: { name: 'insights' }, label: 'Insights', icon: 'insights' },
   { route: { name: 'engine' }, label: 'AI engine', icon: 'engine' },
 ];
@@ -60,6 +64,7 @@ function Signed({ user }: { user: User }) {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [jobs, setJobs] = useState<QueuedJob[]>([]);
   const [audits, setAudits] = useState<Audit[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [policy, setPolicy] = usePolicy();
   const [ready, setReady] = useState<Record<string, Review>>({});
   const [ask, dialog] = useConfirm();
@@ -70,11 +75,16 @@ function Signed({ user }: { user: User }) {
   useEffect(() => watchAttempts(uid, setAttempts), [uid]);
   useEffect(() => watchQueue(uid, setJobs), [uid]);
   useEffect(() => watchAudits(uid, setAudits), [uid]);
+  useEffect(() => watchSessions(uid, setSessions), [uid]);
   const trust = useMemo(() => trustFrom(audits), [audits]);
   const hybrid = useMemo(() => ({ trust, policy }), [trust, policy]);
 
   const onReady = useCallback((id: string, review: Review) => setReady((r) => ({ ...r, [id]: review })), []);
   useQueueRunner(jobs, ready, conditions, settings, onReady);
+
+  // Session reminders while Recall is open (its calendar exports cover the rest).
+  const describeSession = useCallback((s: Session) => sessionText(s, decks), [decks]);
+  useReminders(sessions, describeSession);
 
   // Recomputed when cards change or the screen changes (so returning shows fresh due counts).
   const newPerSession = settings?.newPerSession ?? 10;
@@ -104,7 +114,7 @@ function Signed({ user }: { user: User }) {
   let screen;
   switch (route.name) {
     case 'today':
-      screen = <Today user={user} due={due} decks={decks} cards={cards} attempts={attempts} jobs={jobs} ready={ready} conditions={conditions} onDropJob={(j) => dequeue(uid, j.id)} />;
+      screen = <Today user={user} due={due} decks={decks} cards={cards} attempts={attempts} jobs={jobs} ready={ready} sessions={sessions} conditions={conditions} onDropJob={(j) => dequeue(uid, j.id)} />;
       break;
     case 'library':
       screen = <Library decks={decks} cards={cards} attempts={attempts} onDelete={deleteDeck} />;
@@ -137,6 +147,9 @@ function Signed({ user }: { user: User }) {
       screen = <Study key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
       break;
     }
+    case 'plan':
+      screen = <Plan uid={uid} cards={cards} decks={decks} sessions={sessions} />;
+      break;
     case 'insights':
       screen = <Insights attempts={attempts} cards={cards} decks={decks} />;
       break;
@@ -190,7 +203,7 @@ function Signed({ user }: { user: User }) {
       </main>
       {!focus && (
         <nav className="tabbar" aria-label="Main">
-          {NAV.map((n) => (
+          {NAV.filter((n) => n.route.name !== 'engine').map((n) => (
             <a key={n.label} href={href(n.route)} className={`tab${active === n.route.name ? ' active' : ''}${n.route.name === 'add' ? ' tab-add' : ''}`} aria-current={active === n.route.name ? 'page' : undefined}>
               <Icon name={n.icon} size={n.route.name === 'add' ? 24 : 21} />
               <span>{n.route.name === 'engine' ? 'AI' : n.label}</span>

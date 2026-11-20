@@ -7,6 +7,8 @@ import type { User } from 'firebase/auth';
 import { activity, dayKey, deckProgress, engineSplit, nextDue, perDay, relative, streak } from '../core/stats';
 import { RIGHT } from '../core/calibration';
 import type { Attempt, Card, Deck } from '../core/types';
+import { current, upcoming, type Session } from '../core/plan';
+import { sessionText } from './Plan';
 import { saveDeck, type QueuedJob } from '../services/store';
 import type { Review } from './Add';
 import { Icon } from './Icon';
@@ -23,11 +25,12 @@ interface Props {
   attempts: Attempt[];
   jobs: QueuedJob[];
   ready: Record<string, Review>;
+  sessions: Session[];
   conditions: LiveConditions;
   onDropJob: (j: QueuedJob) => void;
 }
 
-export function Today({ user, due, decks, cards, attempts, jobs, ready, conditions, onDropJob }: Props) {
+export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions, conditions, onDropJob }: Props) {
   const now = new Date();
   const stats = useMemo(() => {
     const week = attempts.filter((a) => Date.now() - Date.parse(a.at) < 7 * 86_400_000);
@@ -67,6 +70,8 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
           <h1>{greeting(now)}{first ? `, ${first}` : ''}.</h1>
         </div>
       </header>
+
+      <NextSession sessions={sessions} decks={decks} now={now} />
 
       <section className={`hero-card${due.length ? '' : ' done'}`}>
         <DueStack due={due.length} />
@@ -174,6 +179,37 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, conditio
         </section>
       </div>
     </div>
+  );
+}
+
+/**
+ * The next planned session, if it starts within a day (or is under way): when, what, and a
+ * Start button from 15 minutes before. Nothing planned: a quiet link to the calendar.
+ */
+function NextSession({ sessions, decks, now }: { sessions: Session[]; decks: Deck[]; now: Date }) {
+  const live = current(sessions, now);
+  const next = live ?? upcoming(sessions, now)[0];
+  if (!next || Date.parse(next.at) - now.getTime() > 86_400_000) {
+    return (
+      <a className="next-session quiet" href={href({ name: 'plan' })}>
+        <Icon name="calendar" size={18} /> <span>Plan your study sessions for the week</span> <Icon name="arrow" size={16} />
+      </a>
+    );
+  }
+  const t = sessionText(next, decks);
+  const start = new Date(next.at);
+  const soon = live || start.getTime() - now.getTime() <= 15 * 60_000;
+  const when = live ? 'Now' : `${start.toDateString() === now.toDateString() ? 'Today' : 'Tomorrow'} at ${start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+  return (
+    <section className={`next-session${soon ? ' soon' : ''}`}>
+      <span className="next-session-icon"><Icon name="calendar" size={20} /></span>
+      <span className="next-session-main">
+        <span className="eyebrow">{live ? 'Session under way' : 'Next session'}</span>
+        <strong>{t.title.replace(/^Recall: /, '')}</strong>
+        <span className="muted small">{when} · {next.minutes} min</span>
+      </span>
+      {soon ? <a className="btn sm primary" href={t.hash}><Icon name="play" size={14} /> Start</a> : <a className="btn sm" href={href({ name: 'plan' })}>Plan</a>}
+    </section>
   );
 }
 
