@@ -31,7 +31,8 @@ export async function askDownload(ask: (a: { title: string; body?: ReactNode; co
     body: (
       <>
         <p>Chrome will download Gemini Nano, a one-time download of a few gigabytes that every site shares. Chrome needs plenty of free disk space.</p>
-        <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud.</p>
+        <p><b>Use Wi-Fi, not mobile data or a limited bundle.</b> Chrome only downloads on a connection that is not marked as metered.</p>
+        <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud, which uses very little data.</p>
       </>
     ),
     confirm: 'Download',
@@ -213,18 +214,37 @@ function TrustPanel({ trust, audits, attempts, policy }: { trust: Trust; audits:
 
 export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void }) {
   if (c.device === 'available') return <p className="state ok"><Icon name="check" size={15} /> Ready</p>;
+  // Progress is only known for a download started here; otherwise Chrome started it itself
+  // (or another site did), and only Chrome can stop it.
+  if (c.device === 'downloading' && c.progress !== null)
+    return (
+      <div className="dl">
+        <p className="state"><Icon name="download" size={15} /> Downloading · {Math.round(c.progress * 100)}%</p>
+        <div className="dl-bar"><span style={{ width: `${c.progress * 100}%` }} /></div>
+      </div>
+    );
   if (c.device === 'downloading')
     return (
       <div className="dl">
-        <p className="state"><Icon name="download" size={15} /> Downloading{c.progress !== null ? ` · ${Math.round(c.progress * 100)}%` : '…'}</p>
-        <div className="dl-bar"><span style={{ width: `${(c.progress ?? 0) * 100}%` }} /></div>
+        <p className="state"><Icon name="download" size={15} /> Chrome is downloading it (a few GB, once)</p>
+        <details className="dl-stop">
+          <summary className="small">On limited data? How to stop it</summary>
+          <ul className="small">
+            <li><b>Mark your connection as metered.</b> Windows: Settings › Network &amp; internet › your Wi-Fi or hotspot › Metered connection. Chrome will not download on it.</li>
+            <li><b>Or turn it off in Chrome:</b> open <code>chrome://flags</code>, find “optimization guide on device”, set it to Disabled and relaunch.</li>
+          </ul>
+          <p className="small muted">Recall keeps working without it: answers are marked in the cloud, which uses very little data.</p>
+        </details>
       </div>
     );
   if (c.device === 'downloadable')
     return (
-      <button className="btn sm primary" onClick={onGet} disabled={!c.online}>
-        <Icon name="download" size={15} /> Get the built-in AI
-      </button>
+      <div className="dl">
+        <button className="btn sm primary" onClick={onGet} disabled={!c.online}>
+          <Icon name="download" size={15} /> Get the built-in AI
+        </button>
+        <p className="small muted dl-note">A few GB, once. Use Wi-Fi, not mobile data.</p>
+      </div>
     );
   return <p className="state off">Not available in this browser. Recall uses the cloud, or the offline marker.</p>;
 }
