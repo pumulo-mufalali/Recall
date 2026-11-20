@@ -55,7 +55,7 @@ function Book({ mask }: { mask: string }) {
       <defs>
         <clipPath id={pages}>
           {/* Pages fill the cover, from just inside the spine's curve to just inside the fore-edge */}
-          <path d={`M24 8.5H${W - 11}Q${W - 19} 24 ${W - 11} 39.5H24A15.5 15.5 0 0 1 24 8.5Z`} />
+          <path d={`M14 8.5H${W - 11}Q${W - 19} 24 ${W - 11} 39.5H14Q10.5 39.5 10.5 36Q9.8 24 10.5 12Q10.5 8.5 14 8.5Z`} />
         </clipPath>
       </defs>
       {/* Pages: fine lines that stop at the curved fore-edge */}
@@ -64,9 +64,9 @@ function Book({ mask }: { mask: string }) {
           {PAGE_LINES.map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
         </g>
       </g>
-      {/* Covers and spine: one C-shaped band, twice as thick as a page line */}
+      {/* Covers and spine: one band, twice as thick as a page line. The spine is nearly flat, with a slight bow and rounded corners. */}
       <path
-        d={`M${W - 5} 4H24A20 20 0 0 0 24 44H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 41H24A17 17 0 0 1 24 7H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 4Z`}
+        d={`M${W - 5} 4H13Q6 4 6 11Q4.6 24 6 37Q6 44 13 44H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 41H13Q9 41 9 37Q7.8 24 9 11Q9 7 13 7H${W - 5}A1.5 1.5 0 0 0 ${W - 5} 4Z`}
         fill="var(--ink)"
       />
       {/* Fore-edge */}
