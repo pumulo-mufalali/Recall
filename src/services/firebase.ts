@@ -11,8 +11,9 @@ import { fetchAndActivate, getRemoteConfig, getValue } from 'firebase/remote-con
 import { GoogleAIBackend, getAI } from 'firebase/ai';
 import { DEFAULT_LIMITS, type Limits } from '../core/route';
 
-const config = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG ?? '{}');
-if (!config.apiKey) throw new Error('VITE_FIREBASE_CONFIG is missing: copy .env.example to .env.local and fill it in.');
+// Either name works (see envPrefix in vite.config.ts).
+const config = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG || import.meta.env.FIREBASE_CONFIG || '{}');
+if (!config.apiKey) throw new Error('VITE_FIREBASE_CONFIG (or FIREBASE_CONFIG) is missing: copy .env.example to .env.local and fill it in.');
 
 export const app = initializeApp(config);
 
@@ -20,7 +21,7 @@ export const app = initializeApp(config);
 // it in the Firebase console). Production uses reCAPTCHA Enterprise.
 if (import.meta.env.DEV) (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN: boolean | string }).FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true;
 export const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_KEY ?? 'unset'),
+  provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_KEY || import.meta.env.RECAPTCHA_ENTERPRISE_KEY || 'unset'),
   isTokenAutoRefreshEnabled: true,
 });
 
