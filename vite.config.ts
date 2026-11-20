@@ -22,7 +22,7 @@ export default defineConfig({
         display: 'standalone',
         icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
-      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg}'] },
+      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg}', '**/roboto-latin-*.woff2'] },
     }),
   ],
 });
