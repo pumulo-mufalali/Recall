@@ -42,32 +42,37 @@ export function Library({ decks, cards, attempts, onDelete }: { decks: Deck[]; c
           <a className="btn primary" href="#/add">Add material</a>
         </div>
       ) : (
-        <div className="deck-grid">
+        <div className="shelf">
           {shown.map((d) => {
             const mine = cards.filter((c) => c.deckId === d.id);
             const p = deckProgress(mine, attempts, now);
             return (
               <article className={`deck deck-${d.source}`} key={d.id}>
-                <a className="deck-link" href={href({ name: 'deck', id: d.id })}>
-                  <div className="deck-head">
-                    <div className="deck-top">
-                      <span className={`deck-icon src-${d.source}`}><Icon name={SOURCE_ICON[d.source]} size={18} /></span>
-                      {p.due > 0 && <span className="pill warm">{p.due} due</span>}
-                    </div>
-                    <h3>{d.title}</h3>
-                  </div>
-                  <p className="muted small">{SOURCE_LABEL[d.source]} · {p.total} cards · added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</p>
+                {/* The deck as a book: a coloured cover with the title on a label plate, and a
+                    bookmark ribbon when cards are due. The numbers sit underneath, on the shelf. */}
+                <a className="book" href={href({ name: 'deck', id: d.id })} aria-label={`${d.title}: ${p.total} cards${p.due ? `, ${p.due} due` : ''}`}>
+                  <span className="book-icon"><Icon name={SOURCE_ICON[d.source]} size={16} /></span>
+                  {p.due > 0 && <span className="book-ribbon">{p.due}<small>due</small></span>}
+                  <span className="book-plate">
+                    <span className="book-title">{d.title}</span>
+                    <span className="book-sub">{SOURCE_LABEL[d.source]} · {p.total} cards</span>
+                  </span>
+                </a>
+                <div className="book-meta">
                   <ProgressBar known={p.known} learning={p.learning} total={p.total} />
                   <p className="deck-foot small">
                     <span><b>{p.known}</b> known</span>
                     <span><b>{p.learning}</b> learning</span>
                     <span><b>{p.fresh}</b> new</span>
-                    {p.accuracy !== null && <span className="deck-acc">{Math.round(p.accuracy * 100)}% right</span>}
                   </p>
-                </a>
-                <button className="icon-btn deck-del" onClick={() => onDelete(d)} aria-label={`Delete ${d.title}`} title="Delete deck">
-                  <Icon name="trash" size={16} />
-                </button>
+                  <p className="book-foot small">
+                    <span className="muted">Added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+                    {p.accuracy !== null && <span className="deck-acc">{Math.round(p.accuracy * 100)}% right</span>}
+                    <button className="icon-btn deck-del" onClick={() => onDelete(d)} aria-label={`Delete ${d.title}`} title="Delete deck">
+                      <Icon name="trash" size={16} />
+                    </button>
+                  </p>
+                </div>
               </article>
             );
           })}
