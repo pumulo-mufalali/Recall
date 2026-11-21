@@ -60,17 +60,18 @@ export function Library({ decks, cards, attempts, onDelete }: { decks: Deck[]; c
                 </a>
                 <div className="book-meta">
                   <ProgressBar known={p.known} learning={p.learning} total={p.total} />
-                  <p className="deck-foot small">
-                    <span><b>{p.known}</b> known</span>
-                    <span><b>{p.learning}</b> learning</span>
-                    <span><b>{p.fresh}</b> new</span>
-                  </p>
-                  <p className="book-foot small">
-                    <span className="muted">Added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
-                    {p.accuracy !== null && <span className="deck-acc">{Math.round(p.accuracy * 100)}% right</span>}
+                  <div className="book-row">
+                    <p className="deck-foot small">
+                      <span><b>{p.known}</b> known</span>
+                      <span><b>{p.learning}</b> learning</span>
+                    </p>
                     <button className="icon-btn danger deck-del" onClick={() => onDelete(d)} aria-label={`Delete ${d.title}`} title="Delete deck">
                       <Icon name="trash" size={16} />
                     </button>
+                  </div>
+                  <p className="book-foot small muted">
+                    <span className="book-date">Added {new Date(d.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+                    {p.accuracy !== null && <span className="deck-acc">{Math.round(p.accuracy * 100)}% right</span>}
                   </p>
                 </div>
               </article>
