@@ -1,6 +1,6 @@
 /** The front door: what Recall is, how its hybrid AI works, and Google sign-in. */
-import { useState } from 'react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { Plain, friendly, type Friendly } from '../core/errors';
 import { ErrorNote } from './ErrorNote';
@@ -10,12 +10,31 @@ import { Logo } from './Logo';
 export function SignIn() {
   const [error, setError] = useState<Friendly | null>(null);
   const [busy, setBusy] = useState(false);
-  const signIn = () => {
+  const fail = (e: unknown) => setError(friendly(navigator.onLine ? e : new Plain('Signing in needs a connection the first time.', 'Connect to the internet and try again.', true)));
+
+  // Back from a redirect sign-in: success arrives through onAuthStateChanged; only a failure needs showing.
+  useEffect(() => void getRedirectResult(auth).catch(fail), []);
+
+  const signIn = async () => {
     setBusy(true);
     setError(null);
-    signInWithPopup(auth, new GoogleAuthProvider())
-      .catch((e) => setError(friendly(navigator.onLine ? e : new Plain('Signing in needs a connection the first time.', 'Connect to the internet and try again.', true))))
-      .finally(() => setBusy(false));
+    const provider = new GoogleAuthProvider();
+    try {
+      // Phones open a "pop-up" as a separate tab, whose result often never comes back: go by redirect.
+      if (onPhone()) return await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      const code = (e as { code?: string })?.code ?? '';
+      if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+        try {
+          return await signInWithRedirect(auth, provider);
+        } catch (e2) {
+          fail(e2);
+        }
+      } else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') fail(e);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -90,4 +109,10 @@ function GoogleMark() {
       <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
     </svg>
   );
+}
+
+/** A phone or tablet: a touch screen with no precise pointer, or a mobile browser. */
+function onPhone(): boolean {
+  const ua = navigator as Navigator & { userAgentData?: { mobile?: boolean } };
+  return ua.userAgentData?.mobile ?? (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches);
 }
