@@ -995,3 +995,62 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .policy-now { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; }
 .policy-now .icon { color: var(--accent); }
 .policy-now a { margin-left: auto; }
+
+/* ----- Oral exam ----- */
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.hero-actions .btn { margin-top: 0; }
+.qcard-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qcard-head .icon-btn { margin: -6px -10px -6px 0; }
+.viva-voice { display: inline-flex; align-items: center; gap: 6px; padding: 0 32px 18px; margin-top: -18px; }
+@media (max-width: 560px) { .viva-voice { padding: 0 22px 16px; } }
+
+.viva-lobby { align-items: center; text-align: center; padding-top: 24px; max-width: 620px; margin: 0 auto; }
+.viva-lobby h1 { margin: 0; }
+.viva-lobby .lede { margin: 0; }
+.viva-plan { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+.viva-plan li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
+.viva-plan li > span:last-child { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.viva-plan .btn { margin-top: 6px; }
+.row-icon.tone-cloud { color: var(--cloud); background: var(--cloud-soft); }
+
+/* The orb: the examiner speaking, thinking, or the microphone listening (it swells with --lvl). */
+.viva-orb {
+  --lvl: 0;
+  width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  color: var(--accent-ink); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 70%, white), var(--accent));
+  box-shadow: 0 0 0 calc(4px + var(--lvl) * 18px) color-mix(in srgb, var(--accent) 18%, transparent), 0 8px 24px -8px var(--accent);
+  transition: box-shadow .08s linear;
+}
+.viva-orb.idle { background: var(--accent-soft); color: var(--accent); box-shadow: none; }
+.viva-orb.speaking { animation: orb-speak 1.1s ease-in-out infinite; }
+.viva-orb.thinking { animation: orb-think 1.6s ease-in-out infinite; }
+@keyframes orb-speak { 50% { box-shadow: 0 0 0 16px color-mix(in srgb, var(--accent) 14%, transparent), 0 8px 24px -8px var(--accent); } }
+@keyframes orb-think { 50% { transform: scale(.92); opacity: .8; } }
+@media (prefers-reduced-motion: reduce) { .viva-orb { animation: none !important; transition: none; } }
+
+.viva-wait { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 18px 0; text-align: center; }
+.viva-wait p { margin: 0; }
+
+.viva-probe {
+  border-radius: var(--r); padding: 14px 18px; background: var(--cloud-soft); border: 1px solid color-mix(in srgb, var(--cloud) 30%, transparent);
+  display: flex; flex-direction: column; gap: 6px; animation: rise .25s ease;
+}
+.viva-probe p { margin: 0; font-size: 1.15rem; font-weight: 600; }
+.viva-probe-tag { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--cloud); }
+
+.mic-panel { border-radius: var(--r); padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+.mic-panel.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.mic-row { display: flex; align-items: center; gap: 16px; }
+.mic-row .viva-orb { width: 56px; height: 56px; }
+.mic-meter { flex: 1; height: 48px; display: flex; align-items: center; gap: 3px; min-width: 0; }
+.mic-meter span { flex: 1; min-width: 2px; border-radius: 3px; background: var(--accent); opacity: .75; transition: height .08s linear; }
+.mic-panel:not(.on) .mic-meter span { background: var(--track); }
+.mic-time { width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+.mic-text { margin: 0; font-size: 1.08rem; line-height: 1.55; min-height: 3.1em; }
+.mic-where { display: inline-flex; align-items: center; gap: 6px; }
+.end-note { text-align: right; margin: -6px 0 0; }
+
+.points .prompted { background: var(--mid-soft); }
+.points .prompted .icon { color: var(--mid); }
+.points .prompted .muted { margin-left: auto; white-space: nowrap; }
+.compare > div > .muted + p + .muted { display: block; margin-top: 10px; }

@@ -70,6 +70,8 @@ export interface Grade {
    * cloud mark) or spot-checked (Nano's mark stood unless the cloud disagreed).
    */
   check?: { kind: 'escalated' | 'spot-check'; nano: number; cloud: number; agree: boolean };
+  /** In an oral exam: key points recalled only after a follow-up question (they count half). */
+  prompted?: string[];
 }
 
 /** One review: what was claimed, what was written, how it was marked. */
@@ -81,4 +83,6 @@ export interface Attempt {
   answer: string;
   confidence: Confidence;
   grade: Grade;
+  /** How it was answered: typed (the default) or spoken in an oral exam. */
+  mode?: 'typed' | 'oral';
 }

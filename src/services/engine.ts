@@ -6,7 +6,7 @@
  * (Chrome's Prompt API: `initialPrompts` and `responseConstraint`), so each task configures
  * both, and the same request means the same thing on either.
  */
-import { InferenceSource, Schema, getGenerativeModel, type GenerativeModel, type Part } from 'firebase/ai';
+import { InferenceSource, ResponseModality, Schema, getGenerativeModel, type GenerativeModel, type Part } from 'firebase/ai';
 import {
   CARDS_FROM_IMAGE,
   CARDS_SYSTEM,
@@ -17,6 +17,10 @@ import {
   explainPrompt,
   gradePrompt,
   parseJson,
+  PROBE_SYSTEM,
+  TRANSCRIBE_PROMPT,
+  probePrompt,
+  toProbe,
   toCards,
   toGrade,
   toSelfConfidence,
@@ -24,6 +28,7 @@ import {
 } from '../core/prompts';
 import { isBusy } from '../core/busy';
 import { localGrade } from '../core/localGrade';
+import { cleanProbe, fallbackProbe, pcmToWav, rateOf } from '../core/viva';
 import { agrees, decide, doubt, type Decision, type Doubt, type Policy, type Trust } from '../core/audit';
 import { VERIFY_SYSTEM, judge, toChecks, verifyPrompt, type CardCheck } from '../core/verify';
 import { chunkText, route, type Conditions, type DeviceModel, type Mode, type Route, type Task } from '../core/route';
@@ -433,6 +438,81 @@ export async function explain(question: string, answer: string, missing: string[
     explainPrompt(question, answer, missing, short),
   );
   return { value: result.response.text().trim(), engine: engineOf(result.response.inferenceSource), route: r };
+}
+
+// ----- The oral exam -----
+
+/**
+ * An examiner's follow-up to a partial spoken answer. Written on the device when it can (it is
+ * made from the learner's words); in the cloud only when the policy allows; otherwise an open
+ * question. Every reply goes through the leak guard, so a follow-up never gives the answer away.
+ */
+export async function probe(question: string, said: string, missing: string[], settings: Settings, policy: Policy): Promise<Outcome<string>> {
+  const c = await conditions();
+  let r = route({ kind: 'probe' }, c, settings);
+  if (r.run === 'model' && r.mode === 'only_in_cloud' && policy === 'private') r = { run: 'local', reason: 'Private mode: an open follow-up, so nothing you said leaves this device.' };
+  const fallback = (reason: string): Outcome<string> => ({ value: fallbackProbe(question), engine: 'local', route: { run: 'local', reason } });
+  if (r.run !== 'model') return fallback(r.reason);
+  const spec: Spec = { mode: r.mode, system: PROBE_SYSTEM, format: null, io: TEXT_IO, models: writers(settings), deviceCan: true };
+  // Two tries: a small model sometimes blurts the answer; the guard catches it and asks again.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await call(spec, probePrompt(question, said, missing));
+      const clean = cleanProbe(toProbe(result.response.text()), question, missing);
+      if (clean) return { value: clean, engine: engineOf(result.response.inferenceSource), route: r };
+    } catch (e) {
+      console.warn('[recall] follow-up failed', e);
+      break;
+    }
+  }
+  return fallback('The model’s follow-up gave too much away, so an open one is asked instead.');
+}
+
+const voiceCache = new Map<string, Blob>();
+
+/**
+ * A question read aloud by Gemini's text-to-speech, through Firebase AI Logic, as a playable
+ * WAV. Cached per text, so a deck read twice costs nothing the second time. Throws when the
+ * cloud voice cannot be had; the caller then uses the device's own voice.
+ */
+export async function speech(text: string, settings: Settings): Promise<Blob> {
+  const key = `${settings.ttsModel}|${settings.ttsVoice}|${text}`;
+  const hit = voiceCache.get(key);
+  if (hit) return hit;
+  const model = getGenerativeModel(ai, {
+    model: settings.ttsModel,
+    generationConfig: {
+      responseModalities: [ResponseModality.AUDIO],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: settings.ttsVoice } } },
+    },
+  });
+  let last: unknown;
+  for (let attempt = 0; attempt <= 1; attempt++) {
+    try {
+      const result = await model.generateContent(`Say clearly and warmly, like a teacher in an oral exam: ${text}`);
+      const audio = result.response.inlineDataParts()?.find((p) => p.inlineData.mimeType.startsWith('audio/'))?.inlineData;
+      if (!audio) throw new Error('no audio in the reply');
+      const raw = Uint8Array.from(atob(audio.data), (ch) => ch.charCodeAt(0));
+      const wav = /L16|pcm/i.test(audio.mimeType) ? new Blob([pcmToWav(raw, rateOf(audio.mimeType))], { type: 'audio/wav' }) : new Blob([raw], { type: audio.mimeType });
+      if (voiceCache.size > 60) voiceCache.delete(voiceCache.keys().next().value!);
+      voiceCache.set(key, wav);
+      return wav;
+    } catch (e) {
+      last = e;
+      if (!isBusy(e)) break;
+      await sleep(PAUSES_MS[0]);
+    }
+  }
+  throw last;
+}
+
+/** A spoken answer (WAV) as text, by Gemini in the cloud: used only when the device cannot. */
+export async function transcribe(wav: Blob, settings: Settings): Promise<string> {
+  const result = await call(
+    { mode: 'only_in_cloud', system: 'You transcribe speech accurately.', format: null, io: TEXT_IO, models: writers(settings), deviceCan: false },
+    [TRANSCRIBE_PROMPT, { type: 'inlineData', inlineData: { mimeType: 'audio/wav', data: await base64(wav) } }],
+  );
+  return result.response.text().trim();
 }
 
 /** Cloud models for writing and marking: the configured one, then the backups. */

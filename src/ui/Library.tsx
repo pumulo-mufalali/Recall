@@ -131,6 +131,7 @@ export function DeckView({ uid, deck, cards, attempts, newPerSession, ask, onDel
               <span className="muted small">{next ? `Next card ${relative(next, now)}.` : 'Nothing due.'}</span>
             )}
             {p.total > 0 && <a className="btn" href={href({ name: 'study', deckId: deck.id, all: true })}>Practise all {p.total}</a>}
+            {p.total > 0 && <a className="btn" href={href({ name: 'viva', deckId: deck.id, all: studyNow === 0 })} title="Answer out loud, with follow-up questions"><Icon name="mic" size={16} /> Oral exam</a>}
             <button className="btn ghost danger-text" onClick={onDelete}><Icon name="trash" size={16} /> Delete</button>
           </div>
         </div>

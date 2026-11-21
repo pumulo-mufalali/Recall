@@ -43,6 +43,8 @@ remote.defaultConfig = {
   check_model: 'gemini-3.8-flash',
   cloud_fallback_models: 'gemini-3.8-flash,gemini-4-hydrogen',
   new_cards_per_session: 10,
+  tts_model: 'gemini-2.5-flash-preview-tts',
+  tts_voice: 'Kore',
 };
 
 /** Routing limits and settings from Remote Config (defaults offline or before the first fetch). */
@@ -54,6 +56,10 @@ export interface Settings extends Limits {
   /** Tried in turn when a model is busy. */
   fallbackModels: string[];
   newPerSession: number;
+  /** Reads questions aloud in an oral exam (a Gemini text-to-speech model). */
+  ttsModel: string;
+  /** One of its prebuilt voices. */
+  ttsVoice: string;
 }
 
 export async function loadSettings(): Promise<Settings> {
@@ -66,5 +72,7 @@ export async function loadSettings(): Promise<Settings> {
     checkModel: getValue(remote, 'check_model').asString(),
     fallbackModels: getValue(remote, 'cloud_fallback_models').asString().split(',').map((m) => m.trim()).filter(Boolean),
     newPerSession: getValue(remote, 'new_cards_per_session').asNumber(),
+    ttsModel: getValue(remote, 'tts_model').asString(),
+    ttsVoice: getValue(remote, 'tts_voice').asString(),
   };
 }

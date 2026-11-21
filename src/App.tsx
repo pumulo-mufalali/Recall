@@ -12,6 +12,7 @@ import { usePolicy } from './ui/usePolicy';
 import { Add, reviewOf, type Review } from './ui/Add';
 import { Insights } from './ui/Insights';
 import { Study } from './ui/Study';
+import { Viva } from './ui/Viva';
 import { useConditions, type LiveConditions } from './ui/useConditions';
 import { Today } from './ui/Today';
 import { Plan, sessionText } from './ui/Plan';
@@ -82,7 +83,7 @@ const NAV: { route: Route; label: string; icon: IconName }[] = [
 ];
 
 /** Which nav item a screen belongs to. */
-const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' ? 'today' : r.name);
+const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' || r.name === 'viva' ? 'today' : r.name);
 
 function Signed({ user }: { user: User }) {
   const uid = user.uid;
@@ -137,7 +138,7 @@ function Signed({ user }: { user: User }) {
 
   if (!settings) return <Splash />;
 
-  const focus = route.name === 'study';
+  const focus = route.name === 'study' || route.name === 'viva';
   const active = section(route);
 
   let screen;
@@ -174,6 +175,11 @@ function Signed({ user }: { user: User }) {
     case 'study': {
       const pick = route.deckId ? (route.all ? cards.filter((c) => c.deckId === route.deckId) : dueCards(cards.filter((c) => c.deckId === route.deckId), new Date(), newPerSession)) : due;
       screen = <Study key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
+      break;
+    }
+    case 'viva': {
+      const pick = route.deckId ? (route.all ? cards.filter((c) => c.deckId === route.deckId) : dueCards(cards.filter((c) => c.deckId === route.deckId), new Date(), newPerSession)) : due;
+      screen = <Viva key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} online={conditions.online} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
       break;
     }
     case 'plan':

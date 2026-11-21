@@ -75,10 +75,10 @@ export function saveDeck(uid: string, title: string, source: Deck['source'], dra
 }
 
 /** Records an answer and moves the card's schedule on, in one batch. */
-export function recordAnswer(uid: string, card: Card, answer: string, confidence: Confidence, grade: Grade): Attempt {
+export function recordAnswer(uid: string, card: Card, answer: string, confidence: Confidence, grade: Grade, mode: Attempt['mode'] = 'typed'): Attempt {
   const now = new Date();
   const ref = doc(attempts(uid));
-  const attempt: Attempt = { id: ref.id, cardId: card.id, deckId: card.deckId, at: now.toISOString(), answer, confidence, grade };
+  const attempt: Attempt = { id: ref.id, cardId: card.id, deckId: card.deckId, at: now.toISOString(), answer, confidence, grade, mode };
   const batch = writeBatch(db);
   batch.set(ref, attempt);
   batch.update(doc(cards(uid, card.deckId), card.id), { srs: review(card.srs, grade.score, confidence, now) });

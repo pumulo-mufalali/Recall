@@ -11,6 +11,7 @@ export type Route =
   | { name: 'add' }
   | { name: 'review'; jobId: string }
   | { name: 'study'; deckId?: string; all?: boolean }
+  | { name: 'viva'; deckId?: string; all?: boolean }
   | { name: 'plan' }
   | { name: 'insights' }
   | { name: 'engine' }
@@ -29,6 +30,8 @@ export function parse(hash: string): Route {
       return b ? { name: 'review', jobId: b } : { name: 'today' };
     case 'study':
       return { name: 'study', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
+    case 'viva':
+      return { name: 'viva', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
     case 'plan':
       return { name: 'plan' };
     case 'insights':
@@ -52,6 +55,8 @@ export function href(r: Route): string {
       return `#/review/${r.jobId}`;
     case 'study':
       return `#/study${r.deckId ? `/${r.deckId}${r.all ? '/all' : ''}` : ''}`;
+    case 'viva':
+      return `#/viva${r.deckId ? `/${r.deckId}${r.all ? '/all' : ''}` : ''}`;
     default:
       return `#/${r.name}`;
   }
