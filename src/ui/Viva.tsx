@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CONFIDENCE_CLAIM, CONFIDENCE_LABEL, type Attempt, type Card, type Confidence, type Deck, type Grade } from '../core/types';
 import { RIGHT } from '../core/calibration';
 import { agrees } from '../core/audit';
-import { mergeOral, oralTranscript, shouldProbe, voicePlan, type Listen, type Speak, type VoicePlan } from '../core/viva';
+import { mergeOral, oralTranscript, shouldProbe, voicePlan, type Listen, type VoicePlan } from '../core/viva';
 import { grade, probe, type Hybrid } from '../services/engine';
 import type { Settings } from '../services/firebase';
 import { recordAnswer, recordAudit, reviseAnswer } from '../services/store';
@@ -112,39 +112,34 @@ function Lobby({ count, settings, hybrid, online, onStart }: { count: number; se
   return (
     <div className="study-body viva-lobby">
       <span className="viva-orb idle" aria-hidden><Icon name="mic" size={34} /></span>
-      <p className="eyebrow">Oral exam</p>
-      <h1>Say it out loud.</h1>
+      <h1>Oral exam</h1>
       <p className="lede">
-        {count} {count === 1 ? 'question' : 'questions'}, read aloud. Answer as if your teacher asked you. When you leave something out, you get one follow-up that nudges you toward it, without giving it away. A point you recall only after the nudge counts for half.
+        {count} {count === 1 ? 'question' : 'questions'}, answered out loud. Miss a point and you get one follow-up; what you recall after it earns half marks.
       </p>
 
       <ul className="viva-plan">
         <li>
           <span className={`row-icon ${plan.speakQuestion === 'cloud' ? 'tone-cloud' : 'tone-device'}`}><Icon name="speaker" size={18} /></span>
-          <span><strong>Questions are read aloud</strong><span className="muted small">{plan.speakReason}</span></span>
+          <span><strong>Voice</strong><span className="muted small">{plan.speakReason}</span></span>
         </li>
         <li>
           <span className={`row-icon ${plan.listen === 'device' ? 'tone-device' : plan.listen === 'cloud' ? 'tone-cloud' : ''}`}><Icon name={plan.listen === 'type' ? 'edit' : 'mic'} size={18} /></span>
           <span>
-            <strong>{plan.listen === 'type' ? 'You type your answers' : 'Your answers are heard'}</strong>
+            <strong>{plan.listen === 'type' ? 'Answers: typed' : 'Listening'}</strong>
             <span className="muted small">{speech === null ? 'Checking this browser…' : plan.listenReason}</span>
             {speech === 'downloadable' && (
               <button className="btn sm" onClick={install} disabled={installing}>
-                {installing ? <><span className="spinner sm" /> Getting it…</> : <><Icon name="download" size={14} /> Hear me on this device instead</>}
+                {installing ? <><span className="spinner sm" /> Getting it…</> : <><Icon name="download" size={14} /> Listen on this device instead</>}
               </button>
             )}
           </span>
-        </li>
-        <li>
-          <span className="row-icon tone-device"><Icon name="device" size={18} /></span>
-          <span><strong>Follow-ups and marking</strong><span className="muted small">Written and marked from what you said by Gemini Nano on this device when it is ready, checked by the cloud only as your privacy mode allows.</span></span>
         </li>
       </ul>
 
       <button className="btn primary lg" onClick={() => onStart(plan)} disabled={speech === null} autoFocus>
         <Icon name="play" size={18} /> Begin
       </button>
-      <p className="muted small">Use headphones if you can, so the microphone does not hear the questions.</p>
+      <p className="muted small">Headphones help.</p>
     </div>
   );
 }
@@ -176,14 +171,12 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
   const [followUp, setFollowUp] = useState<{ text: string; engine: Grade['engine']; reason: string } | null>(null);
   const [second, setSecond] = useState('');
   const [typed, setTyped] = useState('');
-  const [voice, setVoice] = useState<Speak | null>(null);
   const [outcome, setOutcome] = useState<{ attempt: Attempt; grade: Grade; reason: string } | null>(null);
   const mic = useMic(plan.listen, settings);
   const nextRef = useRef<HTMLButtonElement>(null);
 
   const speak = async (text: string, kind: 'question' | 'reply') => {
-    const used = await say(text, kind === 'question' ? plan.speakQuestion : plan.speakReply, settings);
-    if (used) setVoice(used);
+    await say(text, kind === 'question' ? plan.speakQuestion : plan.speakReply, settings);
   };
 
   // 1. Read the question, then ask for a confidence.
@@ -310,7 +303,6 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
           <button className="icon-btn" onClick={() => void speak(card.prompt, 'question')} aria-label="Read the question again" title="Read again (R)"><Icon name="repeat" size={18} /></button>
         </div>
         <h1 className="question">{card.prompt}</h1>
-        {voice && <span className="muted small viva-voice"><Icon name="speaker" size={13} /> {voice === 'cloud' ? 'Gemini voice' : 'This device’s voice'}</span>}
       </div>
 
       {followUp && step.at !== 'result' && (
@@ -323,7 +315,7 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
 
       {(step.at === 'asking' || step.at === 'confidence') && (
         <div className="answer-area">
-          <p className="label">{step.at === 'asking' ? 'Listen…' : 'How sure are you?'} <span className="muted small">Decide before you answer.</span></p>
+          <p className="label">How sure are you?</p>
           <div className="confidence" role="radiogroup" aria-label="Confidence">
             {([1, 2, 3, 4] as Confidence[]).map((c) => (
               <button key={c} role="radio" aria-checked={confidence === c} className={`conf conf-${c}${confidence === c ? ' chosen' : ''}`} onClick={() => choose(c)}>
@@ -333,7 +325,6 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
               </button>
             ))}
           </div>
-          <p className="muted small center">{plan.listen === 'type' ? 'Then type your answer.' : 'Then the microphone opens: just talk.'}</p>
         </div>
       )}
 
@@ -356,14 +347,14 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
               </button>
             )}
           </div>
-          <p className="muted small hide-touch end-note">{plan.listen === 'type' ? <><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to check</> : <><kbd>Space</kbd> when you are done · <kbd>R</kbd> to hear it again</>}</p>
+          <p className="muted small hide-touch end-note">{plan.listen === 'type' ? <><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to check</> : <><kbd>Space</kbd> done · <kbd>R</kbd> repeat</>}</p>
         </div>
       )}
 
       {(step.at === 'marking' || step.at === 'probing' || mic.state === 'transcribing') && (
         <div className="viva-wait">
           <span className={`viva-orb ${speaking ? 'speaking' : 'thinking'}`} aria-hidden><Icon name={speaking ? 'speaker' : 'sparkle'} size={28} /></span>
-          <p className="muted">{mic.state === 'transcribing' ? 'Writing down what you said…' : step.at === 'probing' ? 'The examiner is thinking of a follow-up…' : 'Marking what you said…'}</p>
+          <p className="muted">{mic.state === 'transcribing' ? 'Transcribing…' : step.at === 'probing' ? 'Preparing a follow-up…' : 'Marking…'}</p>
         </div>
       )}
 
@@ -382,7 +373,7 @@ function Exchange({ uid, card, deck, settings, hybrid, plan, last, onAnswered, o
 
           <ul className="points">
             {g.covered.map((p) => <li key={p} className="hit"><Icon name="check" size={15} /> {p}</li>)}
-            {(g.prompted ?? []).map((p) => <li key={p} className="prompted"><Icon name="bulb" size={15} /> {p} <span className="muted small">after the follow-up · half</span></li>)}
+            {(g.prompted ?? []).map((p) => <li key={p} className="prompted"><Icon name="bulb" size={15} /> {p} <span className="muted small">after follow-up · half</span></li>)}
             {g.missing.map((p) => <li key={p} className="miss"><Icon name="x" size={15} /> {p}</li>)}
           </ul>
 
@@ -431,9 +422,9 @@ function MicPanel({ listen, state, level, seconds, text, error }: { listen: List
         <span className="mic-time small muted">{on ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}` : ''}</span>
       </div>
       <p className={`mic-text${text ? '' : ' muted'}`} aria-live="polite">
-        {error ?? (text || (on ? (listen === 'device' ? 'Listening… your words appear here as you speak.' : 'Recording… press “I’m done” when you finish.') : 'Press “Start talking” when you are ready.'))}
+        {error ?? (text || (on ? (listen === 'device' ? 'Listening…' : 'Recording…') : ''))}
       </p>
-      <span className="muted small mic-where"><Icon name={listen === 'device' ? 'device' : 'cloud'} size={13} /> {listen === 'device' ? 'Heard on this device' : 'Transcribed by Gemini when you stop'}</span>
+      <span className="muted small mic-where"><Icon name={listen === 'device' ? 'device' : 'cloud'} size={13} /> {listen === 'device' ? 'On this device' : 'Transcribed by Gemini'}</span>
     </div>
   );
 }

@@ -1001,8 +1001,6 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .hero-actions .btn { margin-top: 0; }
 .qcard-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .qcard-head .icon-btn { margin: -6px -10px -6px 0; }
-.viva-voice { display: inline-flex; align-items: center; gap: 6px; padding: 0 32px 18px; margin-top: -18px; }
-@media (max-width: 560px) { .viva-voice { padding: 0 22px 16px; } }
 
 .viva-lobby { align-items: center; text-align: center; padding-top: 24px; max-width: 620px; margin: 0 auto; }
 .viva-lobby h1 { margin: 0; }

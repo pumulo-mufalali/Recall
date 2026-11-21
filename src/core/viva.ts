@@ -124,21 +124,21 @@ export function voicePlan(c: VoiceConditions): VoicePlan {
   const listen: Listen = c.speechOnDevice ? 'device' : c.canRecord && cloudOk ? 'cloud' : 'type';
   const listenReason =
     listen === 'device'
-      ? 'Your voice is turned into text on this device: it never leaves it.'
+      ? 'On this device. Your voice never leaves it.'
       : listen === 'cloud'
-        ? 'This browser cannot recognise speech on the device, so Gemini transcribes your recording in the cloud.'
+        ? 'Gemini transcribes your recording in the cloud.'
         : !c.canRecord
-          ? 'This browser cannot record a microphone: type your answers instead.'
+          ? 'No microphone access in this browser.'
           : c.policy === 'private'
-            ? 'Private mode, and this browser cannot recognise speech on the device: type your answers instead.'
-            : 'Offline, and this browser cannot recognise speech on the device: type your answers instead.';
+            ? 'Private mode, and no on-device speech recognition.'
+            : 'Offline, and no on-device speech recognition.';
   const speakQuestion: Speak = c.online ? 'cloud' : 'device';
   const speakReply: Speak = c.online && c.policy !== 'private' ? 'cloud' : 'device';
   const speakReason = !c.online
-    ? 'Offline: this device’s own voice reads aloud.'
+    ? 'This device’s voice (offline).'
     : c.policy === 'private'
-      ? 'Questions are read by Gemini’s voice; anything written from your answers is read by this device, in private mode.'
-      : 'Read aloud by Gemini’s text-to-speech voice.';
+      ? 'Gemini reads questions; this device reads replies (private mode).'
+      : 'Gemini text-to-speech.';
   return { listen, listenReason, speakQuestion, speakReply, speakReason };
 }
 
