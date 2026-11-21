@@ -24,8 +24,9 @@ export default defineConfig({
         display: 'standalone',
         icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
+      // Firebase's sign-in pages (/__/auth/...) must reach the network, never the cached app.
       // sw-notify.js (in public/) adds what happens when a session reminder is clicked.
-      workbox: { navigateFallback: '/index.html', globPatterns: ['**/*.{js,css,html,svg}', '**/roboto-latin-*.woff2'], importScripts: ['sw-notify.js'] },
+      workbox: { navigateFallback: '/index.html', navigateFallbackDenylist: [/^\/__\//], globPatterns: ['**/*.{js,css,html,svg}', '**/roboto-latin-*.woff2'], importScripts: ['sw-notify.js'] },
     }),
   ],
 });

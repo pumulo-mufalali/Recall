@@ -15,10 +15,11 @@ import { DEFAULT_LIMITS, type Limits } from '../core/route';
 const config = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG || import.meta.env.FIREBASE_CONFIG || '{}');
 if (!config.apiKey) throw new Error('VITE_FIREBASE_CONFIG (or FIREBASE_CONFIG) is missing: copy .env.example to .env.local and fill it in.');
 
-// On Firebase Hosting, sign-in runs on the app's own domain (Hosting serves /__/auth/ there).
-// Otherwise phone browsers, which partition storage between sites, lose the sign-in result on
-// its way back from the separate firebaseapp.com domain.
-if (/\.(web\.app|firebaseapp\.com)$/.test(location.hostname)) config.authDomain = location.host;
+// Sign-in runs on the app's own domain wherever it is deployed: Firebase Hosting serves its
+// /__/auth/ pages itself, and vercel.json proxies them to firebaseapp.com. Otherwise phone
+// browsers, which partition storage between sites, lose the sign-in result on its way back
+// from the separate firebaseapp.com domain. Local development keeps firebaseapp.com.
+if (location.protocol === 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) config.authDomain = location.host;
 
 export const app = initializeApp(config);
 
