@@ -49,8 +49,8 @@ remote.defaultConfig = {
   check_model: 'gemini-3.8-flash',
   cloud_fallback_models: 'gemini-3.8-flash,gemini-4-hydrogen',
   new_cards_per_session: 10,
-  tts_model: 'gemini-2.5-flash-preview-tts',
-  tts_voice: 'Kore',
+  tts_model: 'gemini-3.8-flash-tts',
+  tts_voice: 'Sulafat', // "warm"; Kore, the docs' example, is "firm"
 };
 
 /** Routing limits and settings from Remote Config (defaults offline or before the first fetch). */

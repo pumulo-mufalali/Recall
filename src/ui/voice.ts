@@ -4,7 +4,7 @@
  * recording that Gemini transcribes when the device cannot), with a live microphone level.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { speech, transcribe } from '../services/engine';
+import { cachedSpeech, speechStream, transcribe } from '../services/engine';
 import type { Settings } from '../services/firebase';
 import { downsample, floatToPcm16, pcmToWav, type Listen, type Speak } from '../core/speech';
 
@@ -62,47 +62,127 @@ export const canRecord = () => typeof MediaRecorder !== 'undefined' && !!navigat
 // ----- Speaking -----
 
 let playing: HTMLAudioElement | null = null;
+let streaming: AudioContext | null = null;
+/** Each call to say() takes a turn: a newer one, or hush(), ends an older one. */
+let turn = 0;
 
-/** Stops whatever is being read aloud. */
+/** Stops whatever is being read aloud (and any reading still on its way). */
 export function hush(): void {
+  turn++;
   playing?.pause();
   playing = null;
+  void streaming?.close().catch(() => {});
+  streaming = null;
   if ('speechSynthesis' in globalThis) speechSynthesis.cancel();
 }
 
 /**
- * Reads text aloud: Gemini's voice when asked and reachable, else the device's. Resolves with
- * the voice that read it, once it has finished (or was stopped).
+ * Reads text aloud: Gemini's voice when asked and reachable (streamed, so it starts in about a
+ * second), else the device's most natural one. `onStart` runs when the sound begins. Resolves
+ * with the voice that read it, once it has finished or was stopped; null if it never played.
  */
-export async function say(text: string, voice: Speak, settings: Settings): Promise<Speak | null> {
+export async function say(text: string, voice: Speak, settings: Settings, onStart?: () => void): Promise<Speak | null> {
   hush();
+  const mine = ++turn;
   if (voice === 'cloud') {
-    try {
-      const wav = await speech(text, settings);
-      const url = URL.createObjectURL(wav);
-      const audio = new Audio(url);
-      playing = audio;
-      await new Promise<void>((done) => {
-        audio.onended = audio.onpause = audio.onerror = () => done();
-        audio.play().catch(() => done());
-      });
-      URL.revokeObjectURL(url);
+    const cached = cachedSpeech(text, settings);
+    if (cached) {
+      await playBlob(cached, onStart);
       return 'cloud';
+    }
+    try {
+      if (await playStream(text, settings, () => mine === turn, onStart)) return 'cloud';
     } catch (e) {
       console.warn('[recall] cloud voice unavailable; using the device voice', e);
     }
+    if (mine !== turn) return null;
   }
   if (!('speechSynthesis' in globalThis)) return null;
   const u = new SpeechSynthesisUtterance(text);
   u.lang = LANG;
-  u.rate = 0.98;
-  const voices = speechSynthesis.getVoices().filter((v) => v.lang.startsWith('en'));
-  u.voice = voices.find((v) => v.localService && /natural|enhanced|premium/i.test(v.name)) ?? voices.find((v) => v.localService) ?? voices[0] ?? null;
+  u.voice = deviceVoice(navigator.onLine);
   await new Promise<void>((done) => {
+    u.onstart = () => onStart?.();
     u.onend = u.onerror = () => done();
     speechSynthesis.speak(u);
   });
   return 'device';
+}
+
+/** Plays a finished reading. */
+async function playBlob(wav: Blob, onStart?: () => void): Promise<void> {
+  const url = URL.createObjectURL(wav);
+  const audio = new Audio(url);
+  playing = audio;
+  await new Promise<void>((done) => {
+    audio.onended = audio.onpause = audio.onerror = () => done();
+    audio.onplaying = () => onStart?.();
+    audio.play().catch(() => done());
+  });
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Plays Gemini's reading as it streams in: each PCM chunk is scheduled right after the one
+ * before, with a short lead so a late chunk does not leave a gap. Resolves true once it has
+ * played (or was stopped after starting), false if no audio ever came; throws if none could.
+ */
+async function playStream(text: string, settings: Settings, current: () => boolean, onStart?: () => void): Promise<boolean> {
+  const ctx = new AudioContext();
+  streaming = ctx;
+  const closed = new Promise<void>((done) => (ctx.onstatechange = () => ctx.state === 'closed' && done()));
+  let at = 0;
+  let ended: Promise<void> = Promise.resolve();
+  let carry: Uint8Array | null = null; // a byte left over when a chunk splits a sample
+  try {
+    for await (const { pcm, rate } of speechStream(text, settings)) {
+      if (!current()) return at > 0;
+      const bytes: Uint8Array = carry ? concatBytes(carry, pcm) : pcm;
+      const even = bytes.length - (bytes.length % 2);
+      carry = even < bytes.length ? bytes.slice(even) : null;
+      if (!even) continue;
+      const buffer = ctx.createBuffer(1, even / 2, rate);
+      const samples = buffer.getChannelData(0);
+      const view = new DataView(bytes.buffer, bytes.byteOffset, even);
+      for (let i = 0; i < samples.length; i++) samples[i] = view.getInt16(i * 2, true) / 32768;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      if (!at) {
+        await ctx.resume();
+        at = ctx.currentTime + 0.12;
+        onStart?.();
+      }
+      at = Math.max(at, ctx.currentTime + 0.03);
+      source.start(at);
+      at += buffer.duration;
+      ended = new Promise<void>((done) => (source.onended = () => done()));
+    }
+    if (at && current()) await Promise.race([ended, closed]);
+    return at > 0;
+  } finally {
+    if (streaming === ctx) streaming = null;
+    void ctx.close().catch(() => {});
+  }
+}
+
+const concatBytes = (a: Uint8Array, b: Uint8Array) => {
+  const out = new Uint8Array(a.length + b.length);
+  out.set(a);
+  out.set(b, a.length);
+  return out;
+};
+
+/**
+ * The most natural English voice the browser has. Neural voices (Edge's "Online (Natural)",
+ * Chrome's "Google" voices, Apple's enhanced and premium ones) sound far less robotic than the
+ * system defaults; the online ones need a connection, so offline only voices on the device count.
+ */
+function deviceVoice(online: boolean): SpeechSynthesisVoice | null {
+  const voices = speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('en') && (online || v.localService));
+  const rank = (v: SpeechSynthesisVoice) =>
+    (/natural|neural|premium|enhanced/i.test(v.name) ? 4 : 0) + (/^google/i.test(v.name) ? 2 : 0) + (v.lang === LANG ? 1 : 0);
+  return voices.sort((a, b) => rank(b) - rank(a))[0] ?? null;
 }
 
 // ----- Listening -----

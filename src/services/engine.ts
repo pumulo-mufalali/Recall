@@ -439,39 +439,71 @@ export async function explain(question: string, answer: string, missing: string[
 
 // ----- Speech -----
 
+/**
+ * Gemini TTS models, best first, after the configured one. Each has its own requests-per-minute
+ * quota (on the free tier, a handful), so when one is used up the next reads instead of the
+ * device's flatter voice.
+ */
+const TTS_MODELS = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-2.5-flash-preview-tts'];
+/** How the question is spoken: the style goes beside the text, so it is never read out itself. */
+const TTS_STYLE = 'warm, natural and clear, like a friendly tutor asking a question; relaxed pace';
+
+/** Models resting until a time (ms): out of quota for a minute, or retired for the session. */
+const ttsResting = new Map<string, number>();
+/** Finished readings as WAV, so a question read twice costs one request. */
 const voiceCache = new Map<string, Blob>();
+const voiceKey = (text: string, s: Settings) => `${s.ttsVoice}|${text}`;
+
+/** A reading already made for this text, if any. */
+export const cachedSpeech = (text: string, settings: Settings): Blob | undefined => voiceCache.get(voiceKey(text, settings));
 
 /**
- * A question read aloud by Gemini's text-to-speech, through Firebase AI Logic, as a playable
- * WAV. Cached per text, so a deck read twice costs nothing the second time. Throws when the
- * cloud voice cannot be had; the caller then uses the device's own voice.
+ * A question read aloud by Gemini's text-to-speech through Firebase AI Logic, streamed: raw
+ * 16-bit PCM chunks arrive while the rest is still being made, so playback can start in about
+ * a second rather than after the whole reading. When a model cannot start (out of quota,
+ * retired), the next one is tried; once audio has begun, an error ends the reading. The whole
+ * reading is cached when it completes. Throws when no model can read it.
  */
-export async function speech(text: string, settings: Settings): Promise<Blob> {
-  const key = `${settings.ttsModel}|${settings.ttsVoice}|${text}`;
-  const hit = voiceCache.get(key);
-  if (hit) return hit;
-  const model = getGenerativeModel(ai, {
-    model: settings.ttsModel,
-    generationConfig: {
-      responseModalities: [ResponseModality.AUDIO],
-      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: settings.ttsVoice } } },
-    },
-  });
-  let last: unknown;
-  for (let attempt = 0; attempt <= 1; attempt++) {
+export async function* speechStream(text: string, settings: Settings): AsyncGenerator<{ pcm: Uint8Array; rate: number }> {
+  const now = Date.now();
+  const all = unique([settings.ttsModel, ...TTS_MODELS]);
+  const awake = all.filter((m) => (ttsResting.get(m) ?? 0) <= now);
+  let last: unknown = new Error('every voice model is resting');
+  for (const name of awake.length ? awake : all) {
+    const model = getGenerativeModel(ai, {
+      model: name,
+      generationConfig: {
+        responseModalities: [ResponseModality.AUDIO],
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: settings.ttsVoice } } },
+      },
+    });
+    const parts: Uint8Array[] = [];
+    let rate = 24_000;
     try {
-      const result = await model.generateContent(`Say clearly and warmly, like a teacher asking a question: ${text}`);
-      const audio = result.response.inlineDataParts()?.find((p) => p.inlineData.mimeType.startsWith('audio/'))?.inlineData;
-      if (!audio) throw new Error('no audio in the reply');
-      const raw = Uint8Array.from(atob(audio.data), (ch) => ch.charCodeAt(0));
-      const wav = /L16|pcm/i.test(audio.mimeType) ? new Blob([pcmToWav(raw, rateOf(audio.mimeType))], { type: 'audio/wav' }) : new Blob([raw], { type: audio.mimeType });
+      const result = await model.generateContentStream([{ type: 'text', text, speechMetadata: { style: TTS_STYLE } }]);
+      for await (const chunk of result.stream) {
+        for (const p of chunk.inlineDataParts() ?? []) {
+          if (!p.inlineData.mimeType.startsWith('audio/')) continue;
+          let pcm = Uint8Array.from(atob(p.inlineData.data), (ch) => ch.charCodeAt(0));
+          // Streamed audio is raw PCM (audio/l16); should a chunk come as WAV, drop its header.
+          if (/wav/i.test(p.inlineData.mimeType) && String.fromCharCode(...pcm.slice(0, 4)) === 'RIFF') pcm = pcm.slice(44);
+          else rate = rateOf(p.inlineData.mimeType);
+          parts.push(pcm);
+          yield { pcm, rate };
+        }
+      }
+      if (!parts.length) throw new Error('no audio in the reply');
+      const whole = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+      parts.reduce((at, p) => (whole.set(p, at), at + p.length), 0);
       if (voiceCache.size > 60) voiceCache.delete(voiceCache.keys().next().value!);
-      voiceCache.set(key, wav);
-      return wav;
+      voiceCache.set(voiceKey(text, settings), new Blob([pcmToWav(whole, rate)], { type: 'audio/wav' }));
+      return;
     } catch (e) {
+      if (parts.length) throw e; // mid-sentence: no switching voices now
       last = e;
-      if (!isBusy(e)) break;
-      await sleep(PAUSES_MS[0]);
+      console.warn(`[recall] voice ${name} unavailable`, e);
+      // Out of quota: rest for a minute. Retired or refused: rest for this session.
+      ttsResting.set(name, isBusy(e) ? Date.now() + 60_000 : Infinity);
     }
   }
   throw last;
