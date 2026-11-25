@@ -752,6 +752,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .mic-btn.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; box-shadow: 0 0 0 calc(3px + var(--lvl) * 12px) color-mix(in srgb, var(--accent) 20%, transparent); }
 .mic-btn.busy { cursor: default; }
 @media (prefers-reduced-motion: reduce) { .mic-btn { transition: none; } }
+.read-aloud.speaking { color: var(--accent); background: var(--accent-soft); }
 .voice-note { display: flex; align-items: center; gap: 6px; margin: -2px 0 0; }
 .voice-note.error { color: var(--danger-text); }
 .confidence { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }

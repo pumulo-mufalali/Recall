@@ -253,7 +253,7 @@ function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech
       <div className="qcard">
         <div className="qcard-head">
           <p className="eyebrow">{deck ?? 'Question'}</p>
-          <button className="icon-btn" onClick={() => void say(card.prompt, plan.speakQuestion, settings)} aria-label="Read the question aloud" title="Read aloud"><Icon name="speaker" size={18} /></button>
+          <ReadAloud text={card.prompt} voice={plan.speakQuestion} settings={settings} />
         </div>
         <h1 className="question">{card.prompt}</h1>
       </div>
@@ -384,6 +384,37 @@ function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech
         </div>
       )}
     </div>
+  );
+}
+
+/** The speaker on a question: loading while Gemini's voice arrives, then speaking; press again to stop. */
+function ReadAloud({ text, voice, settings }: { text: string; voice: VoicePlan['speakQuestion']; settings: Settings }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'speaking'>('idle');
+  const run = useRef(0);
+  useEffect(() => () => void run.current++, []);
+
+  const press = async () => {
+    if (state !== 'idle') {
+      run.current++;
+      hush();
+      return setState('idle');
+    }
+    const mine = ++run.current;
+    setState('loading');
+    await say(text, voice, settings, () => mine === run.current && setState('speaking'));
+    if (mine === run.current) setState('idle');
+  };
+
+  return (
+    <button
+      className={`icon-btn read-aloud ${state}`}
+      onClick={() => void press()}
+      aria-label={state === 'idle' ? 'Read the question aloud' : 'Stop reading'}
+      aria-pressed={state !== 'idle'}
+      title={state === 'idle' ? 'Read aloud' : 'Stop'}
+    >
+      {state === 'loading' ? <span className="spinner sm" /> : <Icon name={state === 'speaking' ? 'stop' : 'speaker'} size={18} />}
+    </button>
   );
 }
 
