@@ -37,6 +37,7 @@ import type { Audit } from '../core/audit';
 import type { Session } from '../core/plan';
 import type { GauntletRun } from '../core/gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
+import { isAttempt, isCard, isDeck, keepValid } from '../core/valid';
 import { db } from './firebase';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
@@ -47,20 +48,23 @@ const audits = (uid: string) => collection(db, 'users', uid, 'audits');
 const sessions = (uid: string) => collection(db, 'users', uid, 'sessions');
 const gauntlets = (uid: string) => collection(db, 'users', uid, 'gauntlets');
 
+/** Logs a listener that failed (no permission, App Check, a missing index): otherwise the app would just look empty. */
+const failed = (what: string) => (e: Error) => console.error(`[recall] could not load ${what}`, e);
+
 /** Logs a write that the server later refused (offline writes are retried on their own). */
 const settle = (p: Promise<unknown>) => void p.catch((e) => console.error('[recall] write failed', e));
 
 export function watchDecks(uid: string, on: (decks: Deck[]) => void): Unsubscribe {
-  return onSnapshot(query(decks(uid), orderBy('createdAt', 'desc')), (s) => on(s.docs.map((d) => d.data() as Deck)));
+  return onSnapshot(query(decks(uid), orderBy('createdAt', 'desc')), (s) => on(keepValid(s.docs.map((d) => d.data()), isDeck, 'decks')), failed('decks'));
 }
 
 /** Every card the learner has, across decks (one listener, for due counts and sessions). */
 export function watchCards(uid: string, on: (cards: Card[]) => void): Unsubscribe {
-  return onSnapshot(query(collectionGroup(db, 'cards'), where('owner', '==', uid)), (s) => on(s.docs.map((d) => d.data() as Card)));
+  return onSnapshot(query(collectionGroup(db, 'cards'), where('owner', '==', uid)), (s) => on(keepValid(s.docs.map((d) => d.data()), isCard, 'cards')), failed('cards'));
 }
 
 export function watchAttempts(uid: string, on: (attempts: Attempt[]) => void): Unsubscribe {
-  return onSnapshot(query(attempts(uid), orderBy('at', 'desc')), (s) => on(s.docs.map((d) => d.data() as Attempt)));
+  return onSnapshot(query(attempts(uid), orderBy('at', 'desc')), (s) => on(keepValid(s.docs.map((d) => d.data()), isAttempt, 'answers')), failed('answers'));
 }
 
 export function saveDeck(uid: string, title: string, source: Deck['source'], drafts: DraftCard[], madeBy: Engine): string {
@@ -106,7 +110,7 @@ export function recordAudit(uid: string, audit: Omit<Audit, 'id' | 'at'>): void 
 }
 
 export function watchAudits(uid: string, on: (audits: Audit[]) => void): Unsubscribe {
-  return onSnapshot(query(audits(uid), orderBy('at', 'desc')), (s) => on(s.docs.map((d) => d.data() as Audit)));
+  return onSnapshot(query(audits(uid), orderBy('at', 'desc')), (s) => on(s.docs.map((d) => d.data() as Audit)), failed('audits'));
 }
 
 export function editCard(uid: string, card: Card, change: Partial<Pick<Card, 'prompt' | 'answer' | 'keyPoints'>>): void {
@@ -140,7 +144,7 @@ export interface QueuedJob {
 export const QUEUE_MAX_FILE = 700_000;
 
 export function watchQueue(uid: string, on: (jobs: QueuedJob[]) => void): Unsubscribe {
-  return onSnapshot(query(queue(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as QueuedJob)));
+  return onSnapshot(query(queue(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as QueuedJob)), failed('waiting material'));
 }
 
 export function enqueue(uid: string, job: Omit<QueuedJob, 'id' | 'at'>): void {
@@ -153,7 +157,7 @@ export function dequeue(uid: string, id: string): void {
 }
 
 export function watchSessions(uid: string, on: (sessions: Session[]) => void): Unsubscribe {
-  return onSnapshot(query(sessions(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as Session)));
+  return onSnapshot(query(sessions(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as Session)), failed('planned sessions'));
 }
 
 export function saveSession(uid: string, session: Omit<Session, 'id' | 'createdAt'>): Session {
@@ -170,7 +174,7 @@ export function removeSession(uid: string, id: string): void {
 const prefsDoc = (uid: string) => doc(db, 'users', uid, 'prefs', 'study');
 
 export function watchPrefs(uid: string, on: (prefs: StudyPrefs) => void): Unsubscribe {
-  return onSnapshot(prefsDoc(uid), (d) => on({ ...DEFAULT_STUDY_PREFS, ...(d.data() as Partial<StudyPrefs> | undefined) }));
+  return onSnapshot(prefsDoc(uid), (d) => on({ ...DEFAULT_STUDY_PREFS, ...(d.data() as Partial<StudyPrefs> | undefined) }), failed('study preferences'));
 }
 
 export function savePrefs(uid: string, change: Partial<StudyPrefs>): void {
@@ -198,7 +202,7 @@ export async function deleteAllData(uid: string): Promise<void> {
 }
 
 export function watchGauntlets(uid: string, on: (runs: GauntletRun[]) => void): Unsubscribe {
-  return onSnapshot(query(gauntlets(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as GauntletRun)));
+  return onSnapshot(query(gauntlets(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as GauntletRun)), failed('gauntlet runs'));
 }
 
 export function saveGauntlet(uid: string, run: Omit<GauntletRun, 'id'>): void {
