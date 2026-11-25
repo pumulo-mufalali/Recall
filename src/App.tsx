@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { dueCards } from './core/schedule';
 import type { Attempt, Card, Deck } from './core/types';
@@ -6,27 +6,30 @@ import { cardsFromFile, cardsFromText, Queued } from './services/engine';
 import { auth, loadSettings, type Settings } from './services/firebase';
 import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, watchPrefs, watchGauntlets, type QueuedJob } from './services/store';
 import type { GauntletRun } from './core/gauntlet';
-import { Gauntlet } from './ui/Gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from './core/prefs';
 import type { Session } from './core/plan';
 import { trustFrom, type Audit } from './core/audit';
 import { usePolicy } from './ui/usePolicy';
-import { Add } from './ui/Add';
 import { reviewOf, type Review } from './services/review';
-import { Insights } from './ui/Insights';
-import { Study } from './ui/Study';
-import { Viva } from './ui/Viva';
 import { useConditions, type LiveConditions } from './ui/useConditions';
 import { Today } from './ui/Today';
-import { Plan } from './ui/Plan';
 import { sessionText } from './ui/sessions';
 import { useReminders } from './ui/reminders';
-import { Library, DeckView } from './ui/Library';
-import { EnginePage } from './ui/EnginePage';
 import { SignIn } from './ui/SignIn';
 import { Icon, type IconName } from './ui/Icon';
 import { Logo } from './ui/Logo';
-import { Settings as SettingsPage } from './ui/Settings';
+
+// Screens other than Today load when first opened, so the app starts with less to download.
+const Add = lazy(() => import('./ui/Add').then((m) => ({ default: m.Add })));
+const Insights = lazy(() => import('./ui/Insights').then((m) => ({ default: m.Insights })));
+const Study = lazy(() => import('./ui/Study').then((m) => ({ default: m.Study })));
+const Viva = lazy(() => import('./ui/Viva').then((m) => ({ default: m.Viva })));
+const Gauntlet = lazy(() => import('./ui/Gauntlet').then((m) => ({ default: m.Gauntlet })));
+const Plan = lazy(() => import('./ui/Plan').then((m) => ({ default: m.Plan })));
+const Library = lazy(() => import('./ui/Library').then((m) => ({ default: m.Library })));
+const DeckView = lazy(() => import('./ui/Library').then((m) => ({ default: m.DeckView })));
+const EnginePage = lazy(() => import('./ui/EnginePage').then((m) => ({ default: m.EnginePage })));
+const SettingsPage = lazy(() => import('./ui/Settings').then((m) => ({ default: m.Settings })));
 import { useConfirm } from './ui/Dialog';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { go, href, useRoute, type Route } from './ui/router';
@@ -259,7 +262,9 @@ function Signed({ user }: { user: User }) {
         )}
         <div className="screen" key={active}>
           {/* Keyed by the full route, so moving to another screen clears a crash. */}
-          <ErrorBoundary key={href(route)}>{screen}</ErrorBoundary>
+          <ErrorBoundary key={href(route)}>
+            <Suspense fallback={<div className="screen-loading" role="status" aria-label="Loading"><span className="spinner" /></div>}>{screen}</Suspense>
+          </ErrorBoundary>
         </div>
       </main>
       {!focus && (

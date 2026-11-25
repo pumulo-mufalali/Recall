@@ -1161,3 +1161,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .crash-icon { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--bad-soft); color: var(--bad); }
 .crash-details { margin-top: 6px; max-width: 60ch; }
 .crash-details summary { cursor: pointer; color: var(--muted); }
+
+/* A screen loading on demand: a short pause, then a spinner (fast loads show nothing). */
+.screen-loading { display: grid; place-items: center; min-height: 40vh; animation: screen-loading-in .2s ease .3s both; }
+@keyframes screen-loading-in { from { opacity: 0; } to { opacity: 1; } }

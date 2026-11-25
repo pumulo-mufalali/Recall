@@ -5,6 +5,17 @@ import { VitePWA } from 'vite-plugin-pwa';
 // The app shell is cached by a service worker, so Recall opens with no connection;
 // the learner's data comes from Firestore's own offline cache.
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // Firebase and React change far less often than the app: their own files stay cached across deploys.
+        manualChunks(id: string) {
+          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) return 'firebase';
+          if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) return 'react';
+        },
+      },
+    },
+  },
   // Shown in Settings > About.
   define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)) },
   // The two public Firebase values may also be set without the VITE_ prefix: Vercel refuses
