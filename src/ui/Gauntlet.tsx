@@ -81,8 +81,10 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
   }, [ref]);
 
   const start = async () => {
-    setCounted(!playedToday(runs, new Date()));
-    setXpBefore(totalXp(attempts, runs));
+    // The run just saved (by "Play again") may not be in `runs` yet: count it in by hand.
+    const finished = saved.current || latest.current.phase === 'done';
+    setCounted(!finished && !playedToday(runs, new Date()));
+    setXpBefore(totalXp(attempts, runs) + (finished && latest.current.counted ? Math.max(0, latest.current.points) * 2 : 0));
     setFailure(null);
     setPhase('writing');
     try {
@@ -117,9 +119,12 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
     [statements.length, withdrawn],
   );
 
+  // One answer per statement, even if two clicks or key repeats land before the screen updates.
+  const answered = useRef(-1);
   const answer = useCallback(
     (choice: boolean | null) => {
-      if (feedback || phase !== 'play') return;
+      if (feedback || phase !== 'play' || answered.current === index) return;
+      answered.current = index;
       const s = statements[index];
       const a: Answer = { choice, sure, points: pointsFor(choice === null ? null : choice === s.truth, sure) };
       setAnswers((m) => new Map(m).set(index, a));
@@ -132,7 +137,10 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
     [feedback, phase, statements, index, sure, next],
   );
 
-  // The timer: a fresh countdown per statement; running out counts as no answer.
+  // The timer: a fresh countdown per statement; running out counts as no answer. It restarts only
+  // for a new statement: toggling "I'm sure" or the referee's ruling must not reset the clock.
+  const answerRef = useRef(answer);
+  answerRef.current = answer;
   useEffect(() => {
     if (phase !== 'play' || feedback) return;
     setLeft(SECONDS_PER_STATEMENT);
@@ -142,11 +150,11 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
       setLeft(Math.max(0, remaining));
       if (remaining <= 0) {
         clearInterval(t);
-        answer(null);
+        answerRef.current(null);
       }
     }, 100);
     return () => clearInterval(t);
-  }, [phase, index, feedback, answer]);
+  }, [phase, index, feedback]);
 
   // A statement withdrawn while on screen: move on.
   useEffect(() => {
@@ -157,6 +165,8 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
   useEffect(() => {
     if (phase !== 'play') return;
     const key = (e: KeyboardEvent) => {
+      // Browser shortcuts (Ctrl+F, Cmd+T...) and held keys are not answers.
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       if (e.key === 't' || e.key === 'T') answer(true);
       else if (e.key === 'f' || e.key === 'F') answer(false);
       else if (e.key === 's' || e.key === 'S') setSure((v) => !v);
@@ -165,28 +175,37 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
     return () => removeEventListener('keydown', key);
   }, [phase, answer]);
 
-  // Save the run once the referee has ruled (or after a short wait for it).
+  // Saving the run. `latest` always holds what a save needs, so a save can happen from anywhere:
+  // at the end, when leaving (also mid-game, so quitting a bad run cannot re-roll today's), and
+  // before "Play again" (so the next run cannot count as today's first as well).
+  const latest = useRef({ phase, answers, withdrawn, points, statements, counted });
+  latest.current = { phase, answers, withdrawn, points, statements, counted };
+  const flush = useCallback(() => {
+    const s = latest.current;
+    if (saved.current || !(s.phase === 'done' || (s.phase === 'play' && s.answers.size > 0))) return;
+    saved.current = true;
+    const scored = [...s.answers].filter(([i]) => !s.withdrawn.has(i));
+    saveGauntlet(uid, {
+      at: new Date().toISOString(),
+      points: s.points,
+      right: scored.filter(([i, a]) => a.choice === s.statements[i].truth).length,
+      answered: scored.length,
+      withdrawn: s.withdrawn.size,
+      // A run with nothing left to score (every statement withdrawn) does not use up today's XP.
+      counted: s.counted && scored.length > 0,
+    });
+  }, [uid]);
+
+  // At the end: once the referee has ruled, or after a short wait for it.
   useEffect(() => {
     if (phase !== 'done' || saved.current) return;
-    const save = () => {
-      if (saved.current) return;
-      saved.current = true;
-      const scored = [...answers].filter(([i]) => !withdrawn.has(i));
-      saveGauntlet(uid, {
-        at: new Date().toISOString(),
-        points,
-        right: scored.filter(([i, a]) => a.choice === statements[i].truth).length,
-        answered: scored.length,
-        withdrawn: withdrawn.size,
-        counted,
-      });
-    };
-    if (ref.state !== 'checking') save();
-    else {
-      const t = setTimeout(save, 10_000);
-      return () => clearTimeout(t);
-    }
-  }, [phase, ref, answers, withdrawn, points, statements, uid, counted]);
+    if (ref.state !== 'checking') return flush();
+    const t = setTimeout(flush, 10_000);
+    return () => clearTimeout(t);
+  }, [phase, ref, flush]);
+
+  // Leaving the screen, at any point after the first answer.
+  useEffect(() => () => flush(), [flush]);
 
   const gained = phase === 'done' && counted ? Math.max(0, points) * 2 : 0;
 
@@ -262,7 +281,9 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
           xpBefore={xpBefore}
           gained={gained}
           onAgain={() => {
+            flush();
             saved.current = false;
+            answered.current = -1;
             void start();
           }}
           onDone={onDone}
