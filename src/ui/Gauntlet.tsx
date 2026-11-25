@@ -15,6 +15,7 @@ import { saveGauntlet } from '../services/store';
 import { EngineBadge } from './EngineBadge';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
+import { LevelBar } from './LevelBar';
 
 interface Props {
   uid: string;
@@ -324,20 +325,6 @@ function RefereeChip({ referee, withdrawn }: { referee: Referee; withdrawn: numb
   if (referee.state === 'done') return <span className="ref-chip done"><Icon name="shield" size={14} /> Referee: {withdrawn ? `${withdrawn} withdrawn as unfair` : 'all fair'}</span>;
   if (referee.state === 'off') return <span className="ref-chip off" title={referee.reason}><Icon name="shield" size={14} /> No referee: {referee.reason.replace(/^[^:]*:\s*/, '')}</span>;
   return <span className="ref-chip off"><Icon name="shield" size={14} /> Referee unavailable: every statement stands</span>;
-}
-
-export function LevelBar({ xp }: { xp: number }) {
-  const lvl = levelOf(xp);
-  return (
-    <div className="level">
-      <span className="level-badge" aria-hidden>{lvl.level}</span>
-      <div className="level-body">
-        <strong>Level {lvl.level} · {lvl.title}</strong>
-        <span className="level-track"><span style={{ width: `${(lvl.into / lvl.need) * 100}%` }} /></span>
-        <span className="muted small">{lvl.into} / {lvl.need} XP to level {lvl.level + 1}</span>
-      </div>
-    </div>
-  );
 }
 
 function Results(p: {

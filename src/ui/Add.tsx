@@ -6,11 +6,9 @@
  * a card learned wrong is worse than no card.
  */
 import { useEffect, useMemo, useState } from 'react';
-import type { DraftCard } from '../core/prompts';
 import { route, type Route, type Task } from '../core/route';
-import type { Engine } from '../core/types';
-import type { CardCheck } from '../core/verify';
-import { Queued, cardsFromFile, cardsFromText, verifyCards, type Material } from '../services/engine';
+import { Queued, cardsFromFile, cardsFromText, type Material } from '../services/engine';
+import { reviewOf, type Draft, type Review } from '../services/review';
 import type { Settings } from '../services/firebase';
 import { QUEUE_MAX_FILE, dequeue, enqueue, saveDeck, type QueuedJob } from '../services/store';
 import { EngineBadge } from './EngineBadge';
@@ -20,22 +18,6 @@ import { Plain, friendly, type Friendly } from '../core/errors';
 import type { LiveConditions } from './useConditions';
 
 /** A card under review: its check, and whether the learner has dealt with a flag. */
-export interface Draft extends DraftCard {
-  check: CardCheck;
-  resolved: boolean;
-}
-
-export interface Review {
-  title: string;
-  source: 'text' | 'image' | 'pdf';
-  material: Material;
-  drafts: Draft[];
-  madeBy: Engine;
-  madeRoute: Route;
-  checkedBy: Engine;
-  checkRoute: Route;
-}
-
 interface Props {
   uid: string;
   settings: Settings;
@@ -296,21 +278,6 @@ function Working({ stage, plan }: { stage: Stage; plan: Route | null }) {
 }
 
 /** Writes nothing: checks drafts and packages them for review. */
-export async function reviewOf(title: string, material: Material, drafts: DraftCard[], madeBy: Engine, madeRoute: Route, settings: Settings): Promise<Review> {
-  const checked = await verifyCards(drafts, material, settings);
-  const source = material.kind === 'text' ? 'text' : material.file.type === 'application/pdf' ? 'pdf' : 'image';
-  return {
-    title,
-    source,
-    material,
-    drafts: drafts.map((d, i) => ({ ...d, check: checked.value[i], resolved: checked.value[i].status !== 'flagged' })),
-    madeBy,
-    madeRoute,
-    checkedBy: checked.engine,
-    checkRoute: checked.route,
-  };
-}
-
 function ReviewView({ review, setReview, settings, online, onBack, onSave }: {
   review: Review;
   setReview: (r: Review) => void;
@@ -444,7 +411,7 @@ function ReviewView({ review, setReview, settings, online, onBack, onSave }: {
 const firstLine = (t: string) => t.trim().split('\n')[0].slice(0, 60) || 'Notes';
 const size = (n: number) => (n < 1_000_000 ? `${Math.round(n / 1000)} KB` : `${(n / 1_000_000).toFixed(1)} MB`);
 
-export async function base64(file: Blob): Promise<string> {
+async function base64(file: Blob): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   let s = '';
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));

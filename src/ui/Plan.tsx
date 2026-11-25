@@ -12,6 +12,7 @@ import type { StudyPrefs } from '../core/prefs';
 import { removeSession, saveSession } from '../services/store';
 import { Icon } from './Icon';
 import { useNotifyPermission } from './reminders';
+import { sessionText } from './sessions';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const time = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -19,16 +20,6 @@ const time = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', min
 const chipTime = (d: Date) => d.toLocaleTimeString(undefined, d.getMinutes() ? { hour: 'numeric', minute: '2-digit' } : { hour: 'numeric' });
 const longDay = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
-/** What a session is called, says and opens; shared with the reminders in App. */
-export function sessionText(s: Session, decks: Deck[]): { title: string; body: string; hash: string } {
-  const deck = s.deckId ? decks.find((d) => d.id === s.deckId) : undefined;
-  const what = deck ? deck.title : 'Your due cards';
-  return {
-    title: `Recall: ${what}`,
-    body: `${s.minutes}-minute study session at ${time(new Date(s.at))}`,
-    hash: deck ? `#/study/${deck.id}` : '#/study',
-  };
-}
 
 function downloadIcs(s: Session, decks: Deck[]) {
   const t = sessionText(s, decks);

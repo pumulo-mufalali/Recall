@@ -11,7 +11,7 @@ import { REMIND_OPTIONS, SESSION_LENGTHS } from '../core/plan';
 import type { Attempt, Card, Deck } from '../core/types';
 import { auth } from '../services/firebase';
 import { deleteAllData, savePrefs } from '../services/store';
-import { askDownload, ModelState } from './EnginePage';
+import { askDownload, ModelState } from './ModelState';
 import { Icon, type IconName } from './Icon';
 import { useNotifyPermission } from './reminders';
 import { ThemeSwitch } from './ThemeSwitch';
