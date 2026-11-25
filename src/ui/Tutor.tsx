@@ -42,7 +42,8 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
     const text = message.trim();
     if (!text || pending) return;
     const history = turns;
-    const withQuestion: TutorTurn[] = [...history, { role: 'user', text: deeper ? 'Go deeper' : text }];
+    // A "go deeper" request is marked by its flag (not by its words), so typing "Go deeper" is just a message.
+    const withQuestion: TutorTurn[] = [...history, { role: 'user', text, ...(deeper ? { deeper: true } : {}) }];
     setTurns(withQuestion);
     setDraft('');
     setError(null);
@@ -55,9 +56,12 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
         policy,
         onText: (soFar) => setPending({ text: soFar, deeper }),
       });
+      if (!reply.text) throw new Error('The tutor did not reply. Try asking again.');
       setTurns([...withQuestion, { role: 'model', text: reply.text, engine: reply.engine, deeper }]);
     } catch (e) {
       setTurns(history);
+      // Give back what the learner typed, so a failed send does not lose it.
+      if (!deeper) setDraft((d) => d || text);
       if (e instanceof Queued) setBlocked(e.route.reason);
       else {
         console.error('[recall] tutor failed', e);
@@ -91,7 +95,7 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
         )}
         {turns.map((t, i) =>
           t.role === 'user' ? (
-            t.text === 'Go deeper' ? (
+            t.deeper ? (
               <p key={i} className="tutor-handoff"><Icon name="cloud" size={14} /> Handed to a larger cloud model, with the conversation so far</p>
             ) : (
               <p key={i} className="tutor-msg mine">{t.text}</p>
