@@ -41,6 +41,8 @@ export type Task =
   | { kind: 'generate'; source: 'image'; mime: string; bytes: number }
   | { kind: 'generate'; source: 'pdf'; bytes: number }
   | { kind: 'explain' }
+  /** A conversation with the tutor about a missed card. */
+  | { kind: 'tutor' }
   /** An oral exam's follow-up question, written from what the learner said. */
   | { kind: 'probe' }
   /** Reading a question aloud in an oral exam. */
@@ -114,6 +116,12 @@ export function route(task: Task, c: Conditions, limits: Limits = DEFAULT_LIMITS
     case 'speak':
       if (c.online) return model('only_in_cloud', 'Read aloud by Gemini’s text-to-speech voice.');
       return { run: 'local', reason: 'Offline: this device’s own voice reads it.' };
+
+    case 'tutor':
+      // A conversation built from the learner's answer: on the device when it can be, like marking.
+      if (ready(c)) return model(c.online ? 'prefer_on_device' : 'only_on_device', 'On this device: instant, and the conversation stays private.');
+      if (c.online && limits.cloudGrading) return model('only_in_cloud', 'This device has no built-in model, so the cloud tutors you.');
+      return { run: 'local', reason: 'The tutor needs the built-in AI, or a connection.' };
 
     case 'explain':
       if (c.online) return model('prefer_in_cloud', 'A full explanation from the cloud model.');

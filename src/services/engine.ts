@@ -42,7 +42,7 @@ interface LanguageModelStatic {
 }
 const languageModel = (): LanguageModelStatic | undefined => (globalThis as unknown as { LanguageModel?: LanguageModelStatic }).LanguageModel;
 
-const TEXT_IO = {
+export const TEXT_IO = {
   expectedInputs: [{ type: 'text', languages: ['en'] }],
   expectedOutputs: [{ type: 'text', languages: ['en'] }],
 };
@@ -119,7 +119,7 @@ const CARDS_FORMAT: Format = {
 };
 
 /** A model set up the same way for both engines: instructions, and JSON output when given. */
-function build(mode: Mode, system: string, format: Format | null, io: object, cloudModel: string): GenerativeModel {
+export function build(mode: Mode, system: string, format: Format | null, io: object, cloudModel: string): GenerativeModel {
   return getGenerativeModel(ai, {
     mode,
     inCloudParams: {
@@ -175,7 +175,7 @@ async function call(spec: Spec, request: Parameters<GenerativeModel['generateCon
   throw last;
 }
 
-const engineOf = (source: string | undefined): Engine => (source === InferenceSource.ON_DEVICE ? 'on-device' : 'cloud');
+export const engineOf = (source: string | undefined): Engine => (source === InferenceSource.ON_DEVICE ? 'on-device' : 'cloud');
 
 // ----- Tasks -----
 
@@ -516,7 +516,7 @@ export async function transcribe(wav: Blob, settings: Settings): Promise<string>
 }
 
 /** Cloud models for writing and marking: the configured one, then the backups. */
-const writers = (s: Settings) => unique([s.cloudModel, ...s.fallbackModels]);
+export const writers = (s: Settings) => unique([s.cloudModel, ...s.fallbackModels]);
 /** Cloud models for fact-checking: the larger checker first, then the rest. */
 const checkers = (s: Settings) => unique([s.checkModel, ...s.fallbackModels, s.cloudModel]);
 const unique = (list: string[]) => [...new Set(list.filter(Boolean))];

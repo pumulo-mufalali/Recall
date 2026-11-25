@@ -15,6 +15,7 @@ import type { Settings } from '../services/firebase';
 import { recordAnswer, recordAudit, reviseAnswer } from '../services/store';
 import { agrees } from '../core/audit';
 import { EngineBadge } from './EngineBadge';
+import { Tutor } from './Tutor';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
 import { Ring } from './charts';
@@ -38,7 +39,10 @@ export function Study({ uid, cards, decks, settings, hybrid, onDone }: Props) {
   const deckName = new Map(decks.map((d) => [d.id, d.title]));
 
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('dialog[open]') && onDone();
+    const esc = (e: KeyboardEvent) => {
+      const typing = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
+      if (e.key === 'Escape' && !typing && !document.querySelector('dialog[open]')) onDone();
+    };
     addEventListener('keydown', esc);
     return () => removeEventListener('keydown', esc);
   }, [onDone]);
@@ -100,6 +104,7 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
   const [second, setSecond] = useState<'running' | { agree: boolean; nano: number; cloud: number } | null>(null);
   const [help, setHelp] = useState<Outcome<string> | { queued: string } | { failed: Friendly } | null>(null);
   const [explaining, setExplaining] = useState(false);
+  const [tutoring, setTutoring] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
 
   const check = async () => {
@@ -246,10 +251,19 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
             <div><span className="muted small">Model answer</span><p>{card.answer}</p></div>
           </div>
 
-          {g.missing.length > 0 && !help && (
-            <button className="btn" onClick={askWhy} disabled={explaining}>
-              {explaining ? <><span className="spinner sm" /> Explaining…</> : <><Icon name="bulb" size={16} /> Explain this to me</>}
-            </button>
+          {g.missing.length > 0 && (!help || !tutoring) && (
+            <div className="actions">
+              {!help && (
+                <button className="btn" onClick={askWhy} disabled={explaining}>
+                  {explaining ? <><span className="spinner sm" /> Explaining…</> : <><Icon name="bulb" size={16} /> Explain this to me</>}
+                </button>
+              )}
+              {!tutoring && (
+                <button className="btn" onClick={() => setTutoring(true)}>
+                  <Icon name="chat" size={16} /> Talk it through
+                </button>
+              )}
+            </div>
           )}
           {help && 'queued' in help && <p className="muted"><Icon name="clock" size={14} /> {help.queued}</p>}
           {help && 'failed' in help && <ErrorNote error={help.failed} onRetry={askWhy} />}
@@ -258,6 +272,14 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
               <EngineBadge engine={help.engine} route={help.route} />
               <p>{help.value}</p>
             </div>
+          )}
+
+          {tutoring && (
+            <Tutor
+              ctx={{ card: { prompt: card.prompt, answer: card.answer, keyPoints: card.keyPoints }, said: result.attempt.answer, missing: g.missing }}
+              settings={settings}
+              policy={hybrid.policy}
+            />
           )}
 
           <div className="actions end">

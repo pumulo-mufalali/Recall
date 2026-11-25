@@ -23,6 +23,7 @@ const TASKS: { label: string; detail: string; task: Task }[] = [
   { label: 'Questions from a PDF', detail: 'Slides, a paper', task: { kind: 'generate', source: 'pdf', bytes: 2_000_000 } },
   { label: 'Fact-check new cards', detail: 'Against your notes', task: { kind: 'verify', source: 'text', chars: 4000 } },
   { label: 'Explain a missed card', detail: 'When you ask why', task: { kind: 'explain' } },
+  { label: 'Talk it through', detail: 'The tutor, after a miss', task: { kind: 'tutor' } },
   { label: 'Read a question aloud', detail: 'Oral exam', task: { kind: 'speak' } },
   { label: 'Ask a follow-up', detail: 'Oral exam, from what you said', task: { kind: 'probe' } },
 ];
