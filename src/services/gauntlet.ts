@@ -77,7 +77,8 @@ export async function writeTraps(cards: Card[], attempts: Attempt[], settings: S
     trapsPrompt(cards, misses),
   );
   const statements = toStatements(parseJson(result.response.text()), cards.length);
-  if (statements.length < 3) throw new Error('The model wrote too few usable statements.');
+  // Two per card are asked for; a one-card deck can still play with its two.
+  if (statements.length < Math.min(3, cards.length * 2)) throw new Error('The model wrote too few usable statements.');
   return { value: statements, engine: engineOf(result.response.inferenceSource), route: r };
 }
 
