@@ -4,7 +4,7 @@
  * Go offline or install the model and the table changes in front of you.
  */
 import { askDownload, ModelState } from './ModelState';
-import { POLICY_HELP, POLICY_LABEL, thresholds, type Audit, type Policy, type Trust } from '../core/audit';
+import { AUDIT_HISTORY, POLICY_HELP, POLICY_LABEL, auditStats, thresholds, type Audit, type Policy, type Trust } from '../core/audit';
 import { route, type Route, type Task } from '../core/route';
 import { Ring } from './charts';
 import { engineSplit } from '../core/stats';
@@ -143,10 +143,7 @@ export function EnginePage({ conditions: c, settings, attempts, audits, trust, p
  */
 function TrustPanel({ trust, audits, attempts, policy }: { trust: Trust; audits: Audit[]; attempts: Attempt[]; policy: Policy }) {
   const th = thresholds(trust, policy);
-  const escalated = audits.filter((a) => a.kind === 'escalated').length;
-  const spot = audits.filter((a) => a.kind === 'spot-check').length;
-  const left = attempts.filter((a) => a.grade.engine === 'cloud').length + spot;
-  const stayed = attempts.length ? Math.max(0, attempts.length - left) / attempts.length : null;
+  const { windowed, escalated, stayed } = auditStats(audits, attempts);
   const recent = audits.slice(0, 40).reverse();
   const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -179,8 +176,8 @@ function TrustPanel({ trust, audits, attempts, policy }: { trust: Trust; audits:
           <dl className="trust-stats">
             <div><dt>Escalate when doubt is above</dt><dd>{Number.isFinite(th.escalateAbove) ? pct(th.escalateAbove) : 'never'}</dd></div>
             <div><dt>Spot-check confident marks</dt><dd>{pct(th.auditRate)}</dd></div>
-            <div><dt>Escalated so far</dt><dd>{escalated}</dd></div>
-            <div><dt>Answers that never left this device</dt><dd className="tone-good">{stayed === null ? '–' : pct(stayed)}</dd></div>
+            <div><dt>{windowed ? `Escalated, last ${AUDIT_HISTORY} checks` : 'Escalated so far'}</dt><dd>{escalated}</dd></div>
+            <div><dt>{windowed ? 'Recent answers that never left this device' : 'Answers that never left this device'}</dt><dd className="tone-good">{stayed === null ? '–' : pct(stayed)}</dd></div>
           </dl>
 
           {recent.length > 0 && (

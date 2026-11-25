@@ -23,6 +23,7 @@ import {
   increment,
   onSnapshot,
   orderBy,
+  limit,
   query,
   setDoc,
   updateDoc,
@@ -33,7 +34,7 @@ import {
 import type { DraftCard } from '../core/prompts';
 import { newSrs, review } from '../core/schedule';
 import type { Attempt, Card, Confidence, Deck, Engine, Grade } from '../core/types';
-import type { Audit } from '../core/audit';
+import { AUDIT_HISTORY, type Audit } from '../core/audit';
 import type { Session } from '../core/plan';
 import type { GauntletRun } from '../core/gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
@@ -110,7 +111,8 @@ export function recordAudit(uid: string, audit: Omit<Audit, 'id' | 'at'>): void 
 }
 
 export function watchAudits(uid: string, on: (audits: Audit[]) => void): Unsubscribe {
-  return onSnapshot(query(audits(uid), orderBy('at', 'desc')), (s) => on(s.docs.map((d) => d.data() as Audit)), failed('audits'));
+  // Only the latest checks: the trust score uses 60, the AI engine page shows 40.
+  return onSnapshot(query(audits(uid), orderBy('at', 'desc'), limit(AUDIT_HISTORY)), (s) => on(s.docs.map((d) => d.data() as Audit)), failed('audits'));
 }
 
 export function editCard(uid: string, card: Card, change: Partial<Pick<Card, 'prompt' | 'answer' | 'keyPoints'>>): void {

@@ -16,7 +16,7 @@
  * Pure: the caller passes in the marks, the history and a random number.
  */
 import { RIGHT } from './calibration';
-import type { Grade } from './types';
+import type { Attempt, Grade } from './types';
 
 /** What the on-device model says about its own mark. */
 export type SelfConfidence = 'high' | 'medium' | 'low';
@@ -159,3 +159,21 @@ export function decide(d: Doubt, trust: Trust, policy: Policy, cloudReachable: b
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** How many of the latest audits are loaded: the trust score needs only the latest 60. */
+export const AUDIT_HISTORY = 300;
+
+/**
+ * The self-audit's counts for the AI engine page. `audits` are newest first and capped at
+ * AUDIT_HISTORY; when the cap is reached, the counts cover the same window (answers since the
+ * oldest loaded audit), so the privacy share is never flattered by spot-checks left out.
+ */
+export function auditStats(audits: Pick<Audit, 'kind' | 'at'>[], attempts: Pick<Attempt, 'at' | 'grade'>[], cap = AUDIT_HISTORY) {
+  const windowed = audits.length >= cap;
+  const since = windowed ? audits[audits.length - 1].at : null;
+  const answers = since ? attempts.filter((a) => a.at >= since) : attempts;
+  const escalated = audits.filter((a) => a.kind === 'escalated').length;
+  const spot = audits.filter((a) => a.kind === 'spot-check').length;
+  const left = answers.filter((a) => a.grade.engine === 'cloud').length + spot;
+  return { windowed, escalated, stayed: answers.length ? Math.max(0, answers.length - left) / answers.length : null };
+}

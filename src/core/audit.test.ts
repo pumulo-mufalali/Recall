@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agrees, decide, doubt, thresholds, trustFrom } from './audit';
+import { agrees, auditStats, decide, doubt, thresholds, trustFrom } from './audit';
 import type { Grade } from './types';
 
 const KP = ['light energy is captured', 'carbon dioxide is fixed', 'oxygen is released'];
@@ -85,5 +85,22 @@ describe('decide', () => {
     const mid = { value: 0.4, reasons: ['x'] };
     expect(decide(mid, fresh, 'accurate', true, 0.99).kind).toBe('escalate');
     expect(decide(mid, trusted, 'balanced', true, 0.99).kind).toBe('keep');
+  });
+});
+
+describe('auditStats', () => {
+  const answer = (at: string, engine: 'on-device' | 'cloud') => ({ at, grade: { score: 1, covered: [], missing: [], feedback: '', engine } });
+  const audit = (at: string, kind: 'escalated' | 'spot-check') => ({ at, kind });
+  it('counts all of a short history', () => {
+    const s = auditStats([audit('2026-11-03', 'escalated'), audit('2026-11-02', 'spot-check')], [answer('2026-11-01', 'on-device'), answer('2026-11-02', 'on-device'), answer('2026-11-03', 'cloud'), answer('2026-11-04', 'on-device')], 300);
+    expect(s).toEqual({ windowed: false, escalated: 1, stayed: 2 / 4 });
+  });
+  it('when the history is capped, measures answers since its oldest audit', () => {
+    // Cap of 2: the window starts at the oldest loaded audit (11-02); the 11-01 answer is outside it.
+    const s = auditStats([audit('2026-11-03', 'spot-check'), audit('2026-11-02', 'spot-check')], [answer('2026-11-01', 'cloud'), answer('2026-11-02', 'on-device'), answer('2026-11-03', 'on-device'), answer('2026-11-04', 'on-device')], 2);
+    expect(s).toEqual({ windowed: true, escalated: 0, stayed: 1 / 3 });
+  });
+  it('has no share without answers', () => {
+    expect(auditStats([], [], 300).stayed).toBeNull();
   });
 });
