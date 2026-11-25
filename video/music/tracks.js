@@ -6,8 +6,6 @@
  */
 /* global Tone */
 
-const NOTE = (n) => Tone.Frequency(n).toFrequency();
-
 /** Shared building blocks, all routed to `out`. */
 function kit(out) {
   const kick = new Tone.MembraneSynth({ pitchDecay: 0.045, octaves: 7, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.42, sustain: 0, release: 0.1 } }).connect(out);
@@ -103,7 +101,7 @@ const TRACKS = {
 
   /** Bright tech: punchy four-on-the-floor, claps, pumping supersaw chords, a sparkling arpeggio. */
   bright: { bpm: 108, build(ctx) {
-    const { out, seconds, beat, bars } = ctx;
+    const { out, beat, bars } = ctx;
     const k = kit(out);
     const synthBus = new Tone.Gain(1).connect(out);
     const verb = new Tone.Reverb({ decay: 2.6, wet: 0.3 }).connect(synthBus);

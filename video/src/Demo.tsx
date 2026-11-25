@@ -219,13 +219,12 @@ function captionChunks(text: string): string[] {
 const Subtitles: React.FC<{ seg: Placed }> = ({ seg }) => {
   const f = useCurrentFrame();
   const chunks = captionChunks(seg.text);
-  const total = chunks.reduce((n, c) => n + c.length + 8, 0);
-  let acc = 0;
+  // Each chunk gets a share of the segment by its length; ends[i] is where chunk i stops (0..1).
+  const weights = chunks.map((c) => c.length + 8);
+  const total = weights.reduce((n, w) => n + w, 0);
+  const ends = weights.map((_, i) => weights.slice(0, i + 1).reduce((n, w) => n + w, 0) / total);
   const t = sec(f) / seg.seconds;
-  const i = chunks.findIndex((c) => {
-    acc += c.length + 8;
-    return t < acc / total;
-  });
+  const i = ends.findIndex((end) => t < end);
   const text = chunks[i < 0 ? chunks.length - 1 : i];
   const onDiagram = seg.id === 'close';
   return (
