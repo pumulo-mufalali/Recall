@@ -35,7 +35,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           const res = await model.generateContent([{ type: 'text', text: ${JSON.stringify(seg.text)}, speechMetadata: { style: ${JSON.stringify(script.style)} } }]);
           const a = res.response.inlineDataParts().find((p) => p.inlineData.mimeType.startsWith('audio/')).inlineData;
           return { ok: true, mime: a.mimeType, data: a.data };
-        } catch (e) { return { ok: false, error: String(e && e.message || e).replace(/^.*?:streamGenerateContent\S*|^.*?:generateContent\S*/, '').slice(0, 700) }; }
+        } catch (e) { return { ok: false, error: String(e && e.message || e).replace(/^.*?:streamGenerateContent\\S*|^.*?:generateContent\\S*/, '').slice(0, 700) }; }
       })()` });
       const v = r.result?.value;
       if (v?.ok) {
