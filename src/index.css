@@ -1087,3 +1087,61 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .tutor-form .btn { flex: none; padding-inline: 14px; }
 .tutor-deeper { align-self: flex-start; }
 .tutor-blocked { margin: 0; display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Levels and the Trap Gauntlet ---------- */
+.level { display: flex; align-items: center; gap: 14px; }
+.level-badge {
+  flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
+  font: 600 1.35rem/1 var(--sans); color: var(--on-solid); background: linear-gradient(145deg, var(--warm), color-mix(in srgb, var(--warm) 70%, #000));
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.2), var(--shadow-sm);
+}
+.level-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.level-track { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.level-track span { display: block; height: 100%; border-radius: 99px; background: var(--warm); transition: width .6s ease; }
+
+.gauntlet { max-width: 760px; margin: 0 auto; }
+.gauntlet-intro { display: flex; flex-direction: column; gap: 14px; }
+.gauntlet-intro h1 { margin: 0; }
+.gauntlet-intro .lede { margin: 0; }
+.gauntlet-rules { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.gauntlet-writing { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 64px 0; }
+.gauntlet-play { display: flex; flex-direction: column; gap: 14px; }
+.gauntlet-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ref-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: var(--cloud-soft); color: var(--cloud); }
+.ref-chip.done { background: var(--good-soft); color: var(--good); }
+.ref-chip.off { background: var(--inset); color: var(--subtle); }
+.gauntlet-notice { margin: 0; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 8px; background: var(--cloud-soft); color: var(--ink); animation: rise .25s ease; }
+.gauntlet-notice .icon { color: var(--cloud); }
+/* The statement, on a card with a draining timer along its top edge. */
+.trap-card { position: relative; overflow: hidden; padding: 30px 28px 26px; border-radius: var(--r); background: var(--panel); border: 2px solid var(--line); box-shadow: var(--shadow); transition: border-color .2s, background .2s; }
+.trap-card.right { border-color: var(--good); background: color-mix(in srgb, var(--good-soft) 50%, var(--panel)); }
+.trap-card.wrong { border-color: var(--bad); background: color-mix(in srgb, var(--bad-soft) 50%, var(--panel)); animation: trap-shake .35s ease; }
+@keyframes trap-shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.trap-timer { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--track); }
+.trap-timer span { display: block; height: 100%; background: var(--warm); transition: width .1s linear; }
+.trap-text { font: 600 1.45rem/1.35 var(--sans); margin: 6px 0 0; }
+@media (max-width: 560px) { .trap-text { font-size: 1.2rem; } .trap-card { padding: 24px 18px 20px; } }
+.trap-feedback { margin-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+.trap-feedback p { margin: 0; }
+.trap-points { display: inline-block; margin-left: 8px; font-weight: 600; color: var(--warm); }
+.trap-controls { display: flex; flex-direction: column; gap: 12px; }
+.trap-sure { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.trap-sure input { width: 20px; height: 20px; accent-color: var(--solid); }
+.trap-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.trap-buttons .btn { justify-content: center; color: var(--on-solid); }
+.trap-buttons kbd { margin-left: 4px; }
+/* Fixed solid colours in both themes, so white text stays readable. */
+.trap-buttons .trap-true { background: #15803d; border-color: #15803d; }
+.trap-buttons .trap-false { background: var(--danger); border-color: var(--danger); }
+.trap-buttons .btn:hover:not(:disabled) { filter: brightness(1.08); }
+@media (pointer: coarse) { .trap-buttons kbd { display: none; } }
+.gauntlet-results { display: flex; flex-direction: column; gap: 18px; }
+.trap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.trap-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+.trap-list li.right .trap-mark { color: var(--good); }
+.trap-list li.wrong .trap-mark { color: var(--bad); }
+.trap-list li.struck { opacity: .75; }
+.trap-list li.struck .trap-item > span:first-child { text-decoration: line-through; }
+.trap-mark { flex: none; width: 18px; font-weight: 600; }
+.trap-item { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.trap-ruling { color: var(--cloud); display: inline-flex; gap: 6px; align-items: center; }

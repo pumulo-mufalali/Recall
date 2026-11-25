@@ -13,6 +13,7 @@ export type Route =
   | { name: 'study'; deckId?: string; all?: boolean }
   | { name: 'viva'; deckId?: string; all?: boolean }
   | { name: 'plan' }
+  | { name: 'gauntlet' }
   | { name: 'insights' }
   | { name: 'engine' }
   | { name: 'settings' };
@@ -34,6 +35,8 @@ export function parse(hash: string): Route {
       return { name: 'viva', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
     case 'plan':
       return { name: 'plan' };
+    case 'gauntlet':
+      return { name: 'gauntlet' };
     case 'insights':
       return { name: 'insights' };
     case 'engine':

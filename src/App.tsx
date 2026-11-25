@@ -4,7 +4,9 @@ import { dueCards } from './core/schedule';
 import type { Attempt, Card, Deck } from './core/types';
 import { cardsFromFile, cardsFromText, Queued } from './services/engine';
 import { auth, loadSettings, type Settings } from './services/firebase';
-import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, watchPrefs, type QueuedJob } from './services/store';
+import { dequeue, removeDeck, watchAttempts, watchAudits, watchCards, watchDecks, watchQueue, watchSessions, watchPrefs, watchGauntlets, type QueuedJob } from './services/store';
+import type { GauntletRun } from './core/gauntlet';
+import { Gauntlet } from './ui/Gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from './core/prefs';
 import type { Session } from './core/plan';
 import { trustFrom, type Audit } from './core/audit';
@@ -83,7 +85,7 @@ const NAV: { route: Route; label: string; icon: IconName }[] = [
 ];
 
 /** Which nav item a screen belongs to. */
-const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' || r.name === 'viva' ? 'today' : r.name);
+const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' || r.name === 'viva' || r.name === 'gauntlet' ? 'today' : r.name);
 
 function Signed({ user }: { user: User }) {
   const uid = user.uid;
@@ -96,6 +98,7 @@ function Signed({ user }: { user: User }) {
   const [jobs, setJobs] = useState<QueuedJob[]>([]);
   const [audits, setAudits] = useState<Audit[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [runs, setRuns] = useState<GauntletRun[]>([]);
   const [prefs, setPrefs] = useState<StudyPrefs>(DEFAULT_STUDY_PREFS);
   const [policy, setPolicy] = usePolicy();
   const [ready, setReady] = useState<Record<string, Review>>({});
@@ -108,6 +111,7 @@ function Signed({ user }: { user: User }) {
   useEffect(() => watchQueue(uid, setJobs), [uid]);
   useEffect(() => watchAudits(uid, setAudits), [uid]);
   useEffect(() => watchSessions(uid, setSessions), [uid]);
+  useEffect(() => watchGauntlets(uid, setRuns), [uid]);
   useEffect(() => watchPrefs(uid, setPrefs), [uid]);
   const trust = useMemo(() => trustFrom(audits), [audits]);
   const hybrid = useMemo(() => ({ trust, policy }), [trust, policy]);
@@ -138,7 +142,7 @@ function Signed({ user }: { user: User }) {
 
   if (!settings) return <Splash />;
 
-  const focus = route.name === 'study' || route.name === 'viva';
+  const focus = route.name === 'study' || route.name === 'viva' || route.name === 'gauntlet';
   const active = section(route);
 
   let screen;
@@ -182,6 +186,9 @@ function Signed({ user }: { user: User }) {
       screen = <Viva key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} online={conditions.online} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
       break;
     }
+    case 'gauntlet':
+      screen = <Gauntlet uid={uid} cards={cards} attempts={attempts} runs={runs} settings={settings} policy={policy} onDone={() => (history.length > 1 ? history.back() : go({ name: 'today' }))} />;
+      break;
     case 'plan':
       screen = <Plan uid={uid} cards={cards} decks={decks} sessions={sessions} prefs={prefs} />;
       break;
