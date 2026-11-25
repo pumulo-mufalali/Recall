@@ -40,7 +40,7 @@ The rule of thumb: **what happens often and touches your own words stays on the 
 | Write the Trap Gauntlet | `only_on_device` (structured output) | `only_in_cloud` | device (needs Gemini Nano) |
 | Referee the gauntlet | cloud (a larger model) | cloud | no referee: statements stand |
 | Hear a spoken answer | Chrome's on-device speech recognition | Gemini transcribes the recording | type instead |
-| Read a question aloud | Gemini TTS (cloud) | Gemini TTS | the device's own voice |
+| Read a question aloud | Gemini TTS, streamed (`generateContentStream`) | Gemini TTS, streamed | the device's most natural voice |
 | Explain a missed card | `prefer_in_cloud` | cloud | device, short, else queued |
 
 The **AI engine** page in the app shows this table live for the current device and connection: go offline or install the model and the routes change in front of you.
