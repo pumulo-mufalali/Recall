@@ -11,7 +11,6 @@ export type Route =
   | { name: 'add' }
   | { name: 'review'; jobId: string }
   | { name: 'study'; deckId?: string; all?: boolean }
-  | { name: 'viva'; deckId?: string; all?: boolean }
   | { name: 'plan' }
   | { name: 'gauntlet' }
   | { name: 'insights' }
@@ -30,9 +29,8 @@ export function parse(hash: string): Route {
     case 'review':
       return b ? { name: 'review', jobId: b } : { name: 'today' };
     case 'study':
+    case 'viva': // the old oral exam: speaking is now part of every study session
       return { name: 'study', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
-    case 'viva':
-      return { name: 'viva', ...(b ? { deckId: b } : {}), ...(c === 'all' ? { all: true } : {}) };
     case 'plan':
       return { name: 'plan' };
     case 'gauntlet':
@@ -58,8 +56,6 @@ export function href(r: Route): string {
       return `#/review/${r.jobId}`;
     case 'study':
       return `#/study${r.deckId ? `/${r.deckId}${r.all ? '/all' : ''}` : ''}`;
-    case 'viva':
-      return `#/viva${r.deckId ? `/${r.deckId}${r.all ? '/all' : ''}` : ''}`;
     default:
       return `#/${r.name}`;
   }

@@ -23,7 +23,6 @@ import { Logo } from './ui/Logo';
 const Add = lazy(() => import('./ui/Add').then((m) => ({ default: m.Add })));
 const Insights = lazy(() => import('./ui/Insights').then((m) => ({ default: m.Insights })));
 const Study = lazy(() => import('./ui/Study').then((m) => ({ default: m.Study })));
-const Viva = lazy(() => import('./ui/Viva').then((m) => ({ default: m.Viva })));
 const Gauntlet = lazy(() => import('./ui/Gauntlet').then((m) => ({ default: m.Gauntlet })));
 const Plan = lazy(() => import('./ui/Plan').then((m) => ({ default: m.Plan })));
 const Library = lazy(() => import('./ui/Library').then((m) => ({ default: m.Library })));
@@ -91,7 +90,7 @@ const NAV: { route: Route; label: string; icon: IconName }[] = [
 ];
 
 /** Which nav item a screen belongs to. */
-const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' || r.name === 'viva' || r.name === 'gauntlet' ? 'today' : r.name);
+const section = (r: Route): Route['name'] => (r.name === 'deck' ? 'library' : r.name === 'review' ? 'add' : r.name === 'study' || r.name === 'gauntlet' ? 'today' : r.name);
 
 function Signed({ user }: { user: User }) {
   const uid = user.uid;
@@ -150,7 +149,7 @@ function Signed({ user }: { user: User }) {
 
   if (!settings) return <Splash />;
 
-  const focus = route.name === 'study' || route.name === 'viva' || route.name === 'gauntlet';
+  const focus = route.name === 'study' || route.name === 'gauntlet';
   const active = section(route);
 
   let screen;
@@ -187,11 +186,6 @@ function Signed({ user }: { user: User }) {
     case 'study': {
       const pick = route.deckId ? (route.all ? cards.filter((c) => c.deckId === route.deckId) : dueCards(cards.filter((c) => c.deckId === route.deckId), new Date(), newPerSession)) : due;
       screen = <Study key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} online={conditions.online} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
-      break;
-    }
-    case 'viva': {
-      const pick = route.deckId ? (route.all ? cards.filter((c) => c.deckId === route.deckId) : dueCards(cards.filter((c) => c.deckId === route.deckId), new Date(), newPerSession)) : due;
-      screen = <Viva key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} online={conditions.online} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
       break;
     }
     case 'gauntlet':

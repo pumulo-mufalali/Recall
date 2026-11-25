@@ -97,9 +97,6 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
                 <a className="btn primary lg" href={href({ name: 'study' })}>
                   <Icon name="play" size={18} /> Start session
                 </a>
-                <a className="btn lg" href={href({ name: 'viva' })} title="Answer out loud, with follow-up questions">
-                  <Icon name="mic" size={18} /> Oral exam
-                </a>
               </div>
             </>
           ) : (
