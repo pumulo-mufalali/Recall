@@ -70,7 +70,7 @@ export async function downloadDeviceModel(onProgress: (fraction: number) => void
 // ----- Output formats -----
 
 /** Each format twice: as Firebase's Schema (cloud) and as plain JSON Schema (Chrome's Prompt API). */
-interface Format {
+export interface Format {
   cloud: Schema;
   device: object;
 }
@@ -137,7 +137,7 @@ export function build(mode: Mode, system: string, format: Format | null, io: obj
 // ----- Calling a model, resiliently -----
 
 /** A request's set-up: where it may run, its instructions and format, and its cloud models in order. */
-interface Spec {
+export interface Spec {
   mode: Mode;
   system: string;
   format: Format | null;
@@ -156,7 +156,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms + Math.random(
  * then, if the cloud stays busy and the request fits, the on-device model. Errors that are not
  * "busy" (a bad request, App Check) fail at once.
  */
-async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
+export async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
   let last: unknown;
   for (const model of spec.models) {
     for (let attempt = 0; attempt <= PAUSES_MS.length; attempt++) {
@@ -518,7 +518,7 @@ export async function transcribe(wav: Blob, settings: Settings): Promise<string>
 /** Cloud models for writing and marking: the configured one, then the backups. */
 export const writers = (s: Settings) => unique([s.cloudModel, ...s.fallbackModels]);
 /** Cloud models for fact-checking: the larger checker first, then the rest. */
-const checkers = (s: Settings) => unique([s.checkModel, ...s.fallbackModels, s.cloudModel]);
+export const checkers = (s: Settings) => unique([s.checkModel, ...s.fallbackModels, s.cloudModel]);
 const unique = (list: string[]) => [...new Set(list.filter(Boolean))];
 
 function dedupe(cards: DraftCard[]): DraftCard[] {
