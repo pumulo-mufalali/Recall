@@ -4,7 +4,7 @@
 
 Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: every piece of AI work is routed between **Gemini Nano on the device** (Chrome's built-in model) and **Gemini in the cloud**, and the app shows, for every result, where it ran and why.
 
-> **Live app:** _add the production URL here_ · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
+> **Live app:** <https://recall-three-rust.vercel.app/> · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
 
 ## The problem
 
