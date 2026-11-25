@@ -132,6 +132,8 @@ function Signed({ user }: { user: User }) {
   // Recomputed when cards change or the screen changes (so returning shows fresh due counts).
   // The learner's own choice (Settings), else the app default from Remote Config.
   const newPerSession = prefs.newPerSession ?? settings?.newPerSession ?? 10;
+  // `route` is a deliberate extra dependency: due counts refresh when the learner changes screens.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   const due = useMemo(() => dueCards(cards, new Date(), newPerSession), [cards, newPerSession, route]);
 
   const deleteDeck = async (d: Deck) => {

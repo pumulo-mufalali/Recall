@@ -78,7 +78,8 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
       `Referee withdrew ${struck.length} unfair ${struck.length === 1 ? 'statement' : 'statements'}` +
         (answered.length ? `, and gave back ${-answered.reduce((s, r) => s + answers.get(r.statement)!.points, 0)} points.` : '.'),
     );
-    // Only when the ruling arrives, not on every answer.
+    // Only when the ruling arrives, not on every answer, so `answers` is left out on purpose.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
 
   const start = async () => {
@@ -140,8 +141,11 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
 
   // The timer: a fresh countdown per statement; running out counts as no answer. It restarts only
   // for a new statement: toggling "I'm sure" or the referee's ruling must not reset the clock.
+  // Refs are updated after each render (not during it), as React requires.
   const answerRef = useRef(answer);
-  answerRef.current = answer;
+  useEffect(() => {
+    answerRef.current = answer;
+  });
   useEffect(() => {
     if (phase !== 'play' || feedback) return;
     setLeft(SECONDS_PER_STATEMENT);
@@ -180,7 +184,9 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
   // at the end, when leaving (also mid-game, so quitting a bad run cannot re-roll today's), and
   // before "Play again" (so the next run cannot count as today's first as well).
   const latest = useRef({ phase, answers, withdrawn, points, statements, counted });
-  latest.current = { phase, answers, withdrawn, points, statements, counted };
+  useEffect(() => {
+    latest.current = { phase, answers, withdrawn, points, statements, counted };
+  });
   const flush = useCallback(() => {
     const s = latest.current;
     if (saved.current || !(s.phase === 'done' || (s.phase === 'play' && s.answers.size > 0))) return;
