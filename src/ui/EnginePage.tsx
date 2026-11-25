@@ -25,8 +25,7 @@ const TASKS: { label: string; detail: string; task: Task }[] = [
   { label: 'Talk it through', detail: 'The tutor, after a miss', task: { kind: 'tutor' } },
   { label: 'Write the Trap Gauntlet', detail: 'True-or-false traps from your mistakes', task: { kind: 'gauntlet' } },
   { label: 'Referee the gauntlet', detail: 'Checks every statement is fair', task: { kind: 'referee' } },
-  { label: 'Read a question aloud', detail: 'Oral exam', task: { kind: 'speak' } },
-  { label: 'Ask a follow-up', detail: 'Oral exam, from what you said', task: { kind: 'probe' } },
+  { label: 'Read a question aloud', detail: 'The speaker on each question', task: { kind: 'speak' } },
 ];
 
 export function EnginePage({ conditions: c, settings, attempts, audits, trust, policy }: {

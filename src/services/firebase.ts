@@ -62,7 +62,7 @@ export interface Settings extends Limits {
   /** Tried in turn when a model is busy. */
   fallbackModels: string[];
   newPerSession: number;
-  /** Reads questions aloud in an oral exam (a Gemini text-to-speech model). */
+  /** Reads questions aloud (a Gemini text-to-speech model). */
   ttsModel: string;
   /** One of its prebuilt voices. */
   ttsVoice: string;

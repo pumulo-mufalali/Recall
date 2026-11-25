@@ -47,9 +47,7 @@ export type Task =
   | { kind: 'gauntlet' }
   /** The gauntlet's referee: a larger model checks each statement. */
   | { kind: 'referee' }
-  /** An oral exam's follow-up question, written from what the learner said. */
-  | { kind: 'probe' }
-  /** Reading a question aloud in an oral exam. */
+  /** Reading a question aloud. */
   | { kind: 'speak' }
   /** Fact-checking cards against the material they came from. */
   | { kind: 'verify'; source: 'text'; chars: number }
@@ -110,12 +108,6 @@ export function route(task: Task, c: Conditions, limits: Limits = DEFAULT_LIMITS
         }
       }
       return { run: 'queue', reason: 'Not fact-checked yet: that needs a connection.' };
-
-    case 'probe':
-      // Written from the learner's own words, so like marking it stays on the device if it can.
-      if (ready(c)) return model('only_on_device', 'Written on this device from what you said: it stays private.');
-      if (c.online && limits.cloudGrading) return model('only_in_cloud', 'This device has no built-in model, so the cloud writes the follow-up.');
-      return { run: 'local', reason: 'An open follow-up that needs no model.' };
 
     case 'speak':
       if (c.online) return model('only_in_cloud', 'Read aloud by Gemini’s text-to-speech voice.');

@@ -5,7 +5,7 @@
  * every card into a small, honest check of what you actually know.
  *
  * Answers can be typed or spoken, in the same box: the microphone writes what it hears into it
- * (on this device when Chrome can, else transcribed by Gemini; see voicePlan in core/viva.ts),
+ * (on this device when Chrome can, else transcribed by Gemini; see voicePlan in core/speech.ts),
  * and the speaker reads the question aloud.
  *
  * Keyboard: 1–4 pick a confidence, Ctrl/Cmd+Enter checks, Enter goes to the next card, Esc leaves.
@@ -24,7 +24,7 @@ import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
 import { Ring } from './charts';
 import { friendly, type Friendly } from '../core/errors';
-import { voicePlan, type VoicePlan } from '../core/viva';
+import { voicePlan, type VoicePlan } from '../core/speech';
 import { canRecord, hush, installSpeechOnDevice, say, speechOnDevice, useMic, type SpeechOnDevice } from './voice';
 
 interface Props {
@@ -476,8 +476,7 @@ export function Summary({ results, onDone }: { results: { card: Card; attempt: A
     const claimed = results.reduce((s, r) => s + CONFIDENCE_CLAIM[r.attempt.confidence], 0) / n;
     const right = results.filter((r) => r.attempt.grade.score >= RIGHT).length / n;
     const onDevice = results.filter((r) => r.attempt.grade.engine === 'on-device').length;
-    const prompted = results.reduce((s, r) => s + (r.attempt.grade.prompted?.length ?? 0), 0);
-    return { claimed, right, onDevice, prompted };
+    return { claimed, right, onDevice };
   }, [results]);
   const gap = stats.claimed - stats.right;
 
@@ -519,9 +518,6 @@ export function Summary({ results, onDone }: { results: { card: Card; attempt: A
         ))}
       </ul>
 
-      {stats.prompted > 0 && (
-        <p className="nudge calm"><Icon name="bulb" size={16} /> {stats.prompted} {stats.prompted === 1 ? 'point' : 'points'} came back only after a follow-up. They count for half, and those cards return sooner.</p>
-      )}
       <p className="private-note"><Icon name="shield" size={16} /> {stats.onDevice} of {results.length} answers were marked on this device and never left it.</p>
       <div className="actions center">
         <a className="btn" href="#/insights">See insights</a>

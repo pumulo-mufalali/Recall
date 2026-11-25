@@ -17,10 +17,7 @@ import {
   explainPrompt,
   gradePrompt,
   parseJson,
-  PROBE_SYSTEM,
   TRANSCRIBE_PROMPT,
-  probePrompt,
-  toProbe,
   toCards,
   toGrade,
   toSelfConfidence,
@@ -28,7 +25,7 @@ import {
 } from '../core/prompts';
 import { isBusy } from '../core/busy';
 import { localGrade } from '../core/localGrade';
-import { cleanProbe, fallbackProbe, pcmToWav, rateOf } from '../core/viva';
+import { pcmToWav, rateOf } from '../core/speech';
 import { agrees, decide, doubt, type Decision, type Doubt, type Policy, type Trust } from '../core/audit';
 import { VERIFY_SYSTEM, judge, toChecks, verifyPrompt, type CardCheck } from '../core/verify';
 import { chunkText, route, type Conditions, type DeviceModel, type Mode, type Route, type Task } from '../core/route';
@@ -440,33 +437,7 @@ export async function explain(question: string, answer: string, missing: string[
   return { value: result.response.text().trim(), engine: engineOf(result.response.inferenceSource), route: r };
 }
 
-// ----- The oral exam -----
-
-/**
- * An examiner's follow-up to a partial spoken answer. Written on the device when it can (it is
- * made from the learner's words); in the cloud only when the policy allows; otherwise an open
- * question. Every reply goes through the leak guard, so a follow-up never gives the answer away.
- */
-export async function probe(question: string, said: string, missing: string[], settings: Settings, policy: Policy): Promise<Outcome<string>> {
-  const c = await conditions();
-  let r = route({ kind: 'probe' }, c, settings);
-  if (r.run === 'model' && r.mode === 'only_in_cloud' && policy === 'private') r = { run: 'local', reason: 'Private mode: an open follow-up, so nothing you said leaves this device.' };
-  const fallback = (reason: string): Outcome<string> => ({ value: fallbackProbe(question), engine: 'local', route: { run: 'local', reason } });
-  if (r.run !== 'model') return fallback(r.reason);
-  const spec: Spec = { mode: r.mode, system: PROBE_SYSTEM, format: null, io: TEXT_IO, models: writers(settings), deviceCan: true };
-  // Two tries: a small model sometimes blurts the answer; the guard catches it and asks again.
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const result = await call(spec, probePrompt(question, said, missing));
-      const clean = cleanProbe(toProbe(result.response.text()), question, missing);
-      if (clean) return { value: clean, engine: engineOf(result.response.inferenceSource), route: r };
-    } catch (e) {
-      console.warn('[recall] follow-up failed', e);
-      break;
-    }
-  }
-  return fallback('The model’s follow-up gave too much away, so an open one is asked instead.');
-}
+// ----- Speech -----
 
 const voiceCache = new Map<string, Blob>();
 
@@ -489,7 +460,7 @@ export async function speech(text: string, settings: Settings): Promise<Blob> {
   let last: unknown;
   for (let attempt = 0; attempt <= 1; attempt++) {
     try {
-      const result = await model.generateContent(`Say clearly and warmly, like a teacher in an oral exam: ${text}`);
+      const result = await model.generateContent(`Say clearly and warmly, like a teacher asking a question: ${text}`);
       const audio = result.response.inlineDataParts()?.find((p) => p.inlineData.mimeType.startsWith('audio/'))?.inlineData;
       if (!audio) throw new Error('no audio in the reply');
       const raw = Uint8Array.from(atob(audio.data), (ch) => ch.charCodeAt(0));

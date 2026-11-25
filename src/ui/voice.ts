@@ -1,12 +1,12 @@
 /**
- * The browser side of the oral exam: speaking (Gemini's voice through Firebase AI Logic, or the
+ * The browser side of speech in a study session: speaking (Gemini's voice through Firebase AI Logic, or the
  * device's own speech synthesis) and listening (Chrome's on-device speech recognition, or a
  * recording that Gemini transcribes when the device cannot), with a live microphone level.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { speech, transcribe } from '../services/engine';
 import type { Settings } from '../services/firebase';
-import { downsample, floatToPcm16, pcmToWav, type Listen, type Speak } from '../core/viva';
+import { downsample, floatToPcm16, pcmToWav, type Listen, type Speak } from '../core/speech';
 
 // ----- Speech recognition (typed loosely: not in TypeScript's DOM library everywhere) -----
 

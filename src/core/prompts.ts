@@ -125,35 +125,7 @@ export function toCards(reply: unknown): DraftCard[] {
   return out;
 }
 
-// ----- The oral exam -----
-
-export const PROBE_SYSTEM =
-  'You are a kind oral examiner. The student has answered out loud and left part of the answer out. ' +
-  'Ask ONE short follow-up question, under 25 words, that makes them think toward the missing idea. ' +
-  'Never state the missing idea, its key words or the answer; never ask a yes-or-no question; do not praise or repeat the original question. ' +
-  'Speak naturally, as you would in the room.';
-
-export function probePrompt(question: string, said: string, missing: string[]): string {
-  return [
-    `Question: ${question}`,
-    `What the student said: ${said.trim() || '(nothing)'}`,
-    'What they left out (do NOT reveal any of it):',
-    ...missing.map((m, i) => `${i + 1}. ${m}`),
-    'Your follow-up question:',
-  ].join('\n');
-}
-
-/** The follow-up from a model reply ({followUp} JSON, or plain text). */
-export function toProbe(reply: string): string {
-  try {
-    const j = parseJson(reply) as { followUp?: unknown; question?: unknown };
-    const v = j && typeof j === 'object' ? (j.followUp ?? j.question) : undefined;
-    if (typeof v === 'string') return v;
-  } catch {
-    // Plain text: use it as it is.
-  }
-  return reply;
-}
+// ----- Speech -----
 
 export const TRANSCRIBE_PROMPT =
   'Transcribe this recording of a student answering a study question, word for word, in English. ' +
