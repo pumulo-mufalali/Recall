@@ -17,6 +17,7 @@ Recall does both with AI, and adds the piece most study apps leave out: **calibr
 - **Make questions** from pasted notes, a photo of a textbook page, or a PDF. A second, larger model **fact-checks every card** against the source before you study it: it must quote the supporting passage, and plain code then checks that every number in a card appears in that evidence.
 - **Study** by answering in your own words, after choosing a confidence level (No idea, Unsure, Fairly sure, Certain). Answers are marked against the card's key points, with feedback on what you missed.
 - **Talk it through:** after a miss, a tutor that knows the card, your answer and what you missed explains it, gives analogies or quizzes you, as a streamed conversation (see below).
+- **The Trap Gauntlet:** a daily true-or-false game against the clock, built from your own mistakes. Gemini Nano writes a true statement and a "trap" (a plausible misconception, often your own) for each card you recently got wrong; a cloud referee checks every statement while you play. Scoring rewards honest confidence, and earns XP and levels.
 - **Oral exam:** questions are read aloud, you answer by voice, and an examiner's follow-up nudges you toward a missed point without giving it away.
 - **Spaced repetition (FSRS):** each card comes back just before you would forget it. The rating comes from how well you were marked, adjusted by your confidence: a confident miss comes back soonest.
 - **Insights:** calibration per confidence level, the trend over time, and your "certain but wrong" cards.
@@ -36,6 +37,8 @@ The rule of thumb: **what happens often and touches your own words stays on the 
 | Questions from a PDF | `only_in_cloud` | `only_in_cloud` | queued until online |
 | Fact-check new cards | cloud (a larger model) | cloud | device, part by part, else queued |
 | Talk it through (tutor) | `prefer_on_device`, streamed | `only_in_cloud` | device (needs Gemini Nano) |
+| Write the Trap Gauntlet | `only_on_device` (structured output) | `only_in_cloud` | device (needs Gemini Nano) |
+| Referee the gauntlet | cloud (a larger model) | cloud | no referee: statements stand |
 | Examiner's follow-up (oral exam) | `only_on_device` | `only_in_cloud` | a fixed open question |
 | Read a question aloud | Gemini TTS (cloud) | Gemini TTS | the device's own voice |
 | Explain a missed card | `prefer_in_cloud` | cloud | device, short, else queued |
@@ -46,6 +49,7 @@ The **AI engine** page in the app shows this table live for the current device a
 
 - **Self-auditing marking: Nano earns trust.** Every on-device mark is weighed for doubt from free signals: Nano's own confidence, agreement with a plain word-matching marker, how close the score is to the line between right and wrong, and credit given to a near-empty answer. Doubtful marks are **escalated to the larger cloud model before you see them**; a random sample of confident marks is **spot-checked by the cloud in the background**. The agreement rate becomes Nano's **trust score** on your material, and the more it is trusted, the less is sent to the cloud. Privacy is earned, measured and shown (`src/core/audit.ts`).
 - **A conversation that moves between engines.** The tutor is a Firebase AI Logic **chat session with streaming** (`sendMessageStream`). It runs on Nano when it can, replies stream in word by word, and each is badged with where it ran (`inferenceSource`). **"Ask a bigger model"** hands the conversation so far to the larger cloud model; a divider marks the handoff. Each message starts a session seeded with the recent turns, so the thread survives the move, and only the last eight turns are sent to fit Nano's small context (`src/services/tutor.ts`).
+- **A game the hybrid makes possible: the Trap Gauntlet.** Nano writes the questions on the device from your wrong answers, so they are instant and your mistakes stay private. A larger cloud model **referees in parallel** while you play, ruling each statement fair or not against the card's model answer; an unfair one is **withdrawn live** and any points it cost are given back. Speed and privacy from the device, correctness from the cloud (`src/core/gauntlet.ts`, `src/services/gauntlet.ts`).
 - **Privacy modes the router respects.** Private, Balanced or Accuracy first. In Private mode the tutor and follow-ups use `only_on_device` rather than `prefer_on_device`, which could silently fall back to the cloud.
 - **One request, two engines, same meaning.** Instructions and structured output are configured for both: `systemInstruction` and `responseSchema` in the cloud, `initialPrompts` and `responseConstraint` on the device (`src/services/engine.ts`).
 - **Resilience.** Busy cloud models are retried with growing pauses, then backup models are tried in turn, and finally Nano takes the request when it fits. Long material is split into parts Nano can read one by one when offline.
@@ -104,7 +108,7 @@ npm run build      # production build in dist/, with the offline service worker
 
 **Deploy:** `vercel.json` is set up for Vercel (it also proxies Firebase's sign-in pages through the app's own domain, so sign-in works on phones); `firebase.json` works for Firebase Hosting.
 
-**Try the hybrid behaviour:** open the **AI engine** page, then go offline (or download Gemini Nano) and watch the routes change; answer a card wrongly and open **Talk it through**; set **Settings › AI and privacy** to Private and see Recall keep your answers and tutor conversations on the device.
+**Try the hybrid behaviour:** open the **AI engine** page, then go offline (or download Gemini Nano) and watch the routes change; answer a card wrongly and open **Talk it through**; play the **Trap Gauntlet** from Today and watch the referee rule; set **Settings › AI and privacy** to Private and see Recall keep your answers and tutor conversations on the device.
 
 ## License
 
