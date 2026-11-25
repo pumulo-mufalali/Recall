@@ -1,32 +1,111 @@
-# React + TypeScript + Vite
+# Recall
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Know what you actually know.** Recall turns your notes, a photo of a page or a PDF into questions, asks you to answer from memory and say how sure you are, marks the answer with AI, and shows the honest gap between feeling ready and being ready.
 
-Currently, two official plugins are available:
+Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: every piece of AI work is routed between **Gemini Nano on the device** (Chrome's built-in model) and **Gemini in the cloud**, and the app shows, for every result, where it ran and why.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> **Live app:** _add the production URL here_ · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
 
-## React Compiler
+## The problem
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Re-reading notes makes material feel familiar, and familiar feels known. Students walk into exams overconfident about exactly the things they cannot recall. Active recall (answering from memory) and spaced repetition fix this, but making good questions is tedious and marking free-text answers needs judgement.
 
-## Expanding the Oxlint configuration
+Recall does both with AI, and adds the piece most study apps leave out: **calibration**. Before each answer you say how sure you are; Recall then shows where your confidence and your results disagree. Confident mistakes are the most valuable thing to study.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## What it does
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+- **Make questions** from pasted notes, a photo of a textbook page, or a PDF. A second, larger model **fact-checks every card** against the source before you study it: it must quote the supporting passage, and plain code then checks that every number in a card appears in that evidence.
+- **Study** by answering in your own words, after choosing a confidence level (No idea, Unsure, Fairly sure, Certain). Answers are marked against the card's key points, with feedback on what you missed.
+- **Talk it through:** after a miss, a tutor that knows the card, your answer and what you missed explains it, gives analogies or quizzes you, as a streamed conversation (see below).
+- **Oral exam:** questions are read aloud, you answer by voice, and an examiner's follow-up nudges you toward a missed point without giving it away.
+- **Spaced repetition (FSRS):** each card comes back just before you would forget it. The rating comes from how well you were marked, adjusted by your confidence: a confident miss comes back soonest.
+- **Insights:** calibration per confidence level, the trend over time, and your "certain but wrong" cards.
+- **Plan:** a study calendar that shows how many cards come due each day, with sessions you can add to Google or Apple calendars (so your phone reminds you, with no server).
+- **Works offline** as an installable app: studying continues with no connection, and work that needs the cloud waits in a queue.
+
+## The hybrid design
+
+The rule of thumb: **what happens often and touches your own words stays on the device; what is rare and heavy goes to the cloud.** A router (`src/core/route.ts`, pure and unit-tested) decides per task from what is known right now (online or not, Gemini Nano ready or not), and every decision carries a plain-language reason that the app shows.
+
+| Task | Gemini Nano ready | No on-device model | Offline |
+|---|---|---|---|
+| Mark an answer | `prefer_on_device` | `only_in_cloud` | device, or Recall's own key-point marker |
+| Questions from short notes | `prefer_on_device` | `prefer_in_cloud` | device, else queued |
+| Questions from a long chapter | `prefer_in_cloud` (sees it whole) | `prefer_in_cloud` | device, split into parts it can read, else queued |
+| Questions from a photo (JPEG/PNG) | `prefer_on_device` (image input) | `only_in_cloud` | device, else queued |
+| Questions from a PDF | `only_in_cloud` | `only_in_cloud` | queued until online |
+| Fact-check new cards | cloud (a larger model) | cloud | device, part by part, else queued |
+| Talk it through (tutor) | `prefer_on_device`, streamed | `only_in_cloud` | device (needs Gemini Nano) |
+| Examiner's follow-up (oral exam) | `only_on_device` | `only_in_cloud` | a fixed open question |
+| Read a question aloud | Gemini TTS (cloud) | Gemini TTS | the device's own voice |
+| Explain a missed card | `prefer_in_cloud` | cloud | device, short, else queued |
+
+The **AI engine** page in the app shows this table live for the current device and connection: go offline or install the model and the routes change in front of you.
+
+### Hybrid techniques worth a look
+
+- **Self-auditing marking: Nano earns trust.** Every on-device mark is weighed for doubt from free signals: Nano's own confidence, agreement with a plain word-matching marker, how close the score is to the line between right and wrong, and credit given to a near-empty answer. Doubtful marks are **escalated to the larger cloud model before you see them**; a random sample of confident marks is **spot-checked by the cloud in the background**. The agreement rate becomes Nano's **trust score** on your material, and the more it is trusted, the less is sent to the cloud. Privacy is earned, measured and shown (`src/core/audit.ts`).
+- **A conversation that moves between engines.** The tutor is a Firebase AI Logic **chat session with streaming** (`sendMessageStream`). It runs on Nano when it can, replies stream in word by word, and each is badged with where it ran (`inferenceSource`). **"Ask a bigger model"** hands the conversation so far to the larger cloud model; a divider marks the handoff. Each message starts a session seeded with the recent turns, so the thread survives the move, and only the last eight turns are sent to fit Nano's small context (`src/services/tutor.ts`).
+- **Privacy modes the router respects.** Private, Balanced or Accuracy first. In Private mode the tutor and follow-ups use `only_on_device` rather than `prefer_on_device`, which could silently fall back to the cloud.
+- **One request, two engines, same meaning.** Instructions and structured output are configured for both: `systemInstruction` and `responseSchema` in the cloud, `initialPrompts` and `responseConstraint` on the device (`src/services/engine.ts`).
+- **Resilience.** Busy cloud models are retried with growing pauses, then backup models are tried in turn, and finally Nano takes the request when it fits. Long material is split into parts Nano can read one by one when offline.
+- **The model download, handled honestly.** Gemini Nano is a few gigabytes. Recall asks before downloading it (`initializeDeviceModel`, with progress), holds the download back on mobile data unless you allow it (where the browser reports the connection type), and tells you when Chrome is downloading it on its own.
+
+### Firebase features used
+
+- **Firebase AI Logic** (Gemini Developer API): hybrid inference in all four modes, structured output, image input on the device, chat sessions, streaming, Gemini text-to-speech, and transcription.
+- **Firebase App Check** with reCAPTCHA Enterprise, required by AI Logic, using limited-use tokens.
+- **Remote Config:** model names, fallback models and routing limits, tunable without a release.
+- **Firebase Authentication** (Google sign-in) and **Cloud Firestore** with its persistent offline cache.
+
+## Architecture
+
+```
+src/
+  core/      Pure logic, no Firebase: routing, marking, the self-audit, scheduling (FSRS),
+             calibration, fact-checking, the tutor's prompts, plans. Unit-tested.
+  services/  Firebase: AI Logic calls (engine.ts, tutor.ts), Firestore (store.ts), set-up (firebase.ts).
+  ui/        React screens: Today, Library, Add, Study (with the tutor), Plan, Insights, AI engine, Settings.
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Stack: React 19, TypeScript, Vite, `firebase` 13 (`firebase/ai`), `ts-fsrs`, `vite-plugin-pwa`, Vitest.
+
+## Run it
+
+**You need:** Node.js 22+, a Firebase project, and (for on-device AI) Chrome on desktop with the built-in Prompt API and Gemini Nano available. Without Gemini Nano, Recall still works fully with cloud AI.
+
+1. **Firebase project.** In the [Firebase console](https://console.firebase.google.com):
+   - Add a **Web app** and copy its config.
+   - **AI Logic:** enable it with the Gemini Developer API.
+   - **Authentication:** enable the Google provider, and add your deployed domain under *Settings › Authorized domains* (`localhost` is allowed by default).
+   - **Firestore:** create a database, then deploy the rules: `npx firebase-tools deploy --only firestore`.
+   - **App Check:** register the web app with **reCAPTCHA Enterprise** and add your domains to the key. For local development, register a debug token (see step 3).
+2. **Configure.** Copy `.env.example` to `.env.local` and fill in:
+   ```
+   VITE_FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}
+   VITE_RECAPTCHA_ENTERPRISE_KEY=your-site-key
+   VITE_APPCHECK_DEBUG_TOKEN=optional-fixed-debug-token
+   ```
+   The config may also be given as `FIREBASE_CONFIG` and `RECAPTCHA_ENTERPRISE_KEY` (useful on hosts that refuse `VITE_`-prefixed variables).
+3. **Install and run.**
+   ```
+   npm install
+   npm run dev
+   ```
+   In development, App Check uses a debug token: the first run prints one in the browser console; register it under *App Check › Apps › Manage debug tokens* (or set `VITE_APPCHECK_DEBUG_TOKEN`).
+4. **Optional: Remote Config** keys (defaults are built in): `cloud_model`, `check_model`, `cloud_fallback_models`, `tts_model`, `tts_voice`, `new_cards_per_session`, `cloud_grading`, `device_max_chars`, `device_max_image_bytes`.
+
+**Test, check and build:**
+```
+npm test           # unit tests (routing, marking, self-audit, scheduling, tutor, ...)
+npm run typecheck
+npm run build      # production build in dist/, with the offline service worker
+```
+
+**Deploy:** `vercel.json` is set up for Vercel (it also proxies Firebase's sign-in pages through the app's own domain, so sign-in works on phones); `firebase.json` works for Firebase Hosting.
+
+**Try the hybrid behaviour:** open the **AI engine** page, then go offline (or download Gemini Nano) and watch the routes change; answer a card wrongly and open **Talk it through**; set **Settings › AI and privacy** to Private and see Recall keep your answers and tutor conversations on the device.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
