@@ -26,6 +26,7 @@ import { Icon, type IconName } from './ui/Icon';
 import { Logo } from './ui/Logo';
 import { Settings as SettingsPage } from './ui/Settings';
 import { useConfirm } from './ui/Dialog';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import { go, href, useRoute, type Route } from './ui/router';
 
 /** Where to go after signing in, when someone arrived signed out at a deep link. */
@@ -254,7 +255,10 @@ function Signed({ user }: { user: User }) {
             </div>
           </header>
         )}
-        <div className="screen" key={active}>{screen}</div>
+        <div className="screen" key={active}>
+          {/* Keyed by the full route, so moving to another screen clears a crash. */}
+          <ErrorBoundary key={href(route)}>{screen}</ErrorBoundary>
+        </div>
       </main>
       {!focus && (
         <nav className="tabbar" aria-label="Main">

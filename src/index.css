@@ -1152,3 +1152,12 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .trap-mark { flex: none; width: 18px; font-weight: 600; }
 .trap-item { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .trap-ruling { color: var(--cloud); display: inline-flex; gap: 6px; align-items: center; }
+
+/* ---------- A screen that crashed (ErrorBoundary) ---------- */
+.crash { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 48px 20px; }
+.crash.full { min-height: 100vh; min-height: 100dvh; justify-content: center; }
+.crash h2 { margin: 0; }
+.crash p { margin: 0; max-width: 46ch; }
+.crash-icon { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--bad-soft); color: var(--bad); }
+.crash-details { margin-top: 6px; max-width: 60ch; }
+.crash-details summary { cursor: pointer; color: var(--muted); }
