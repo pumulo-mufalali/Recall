@@ -8,6 +8,8 @@ import { activity, dayKey, deckProgress, engineSplit, nextDue, perDay, relative,
 import { RIGHT } from '../core/calibration';
 import type { Attempt, Card, Deck } from '../core/types';
 import { current, upcoming, type Session } from '../core/plan';
+import { playedToday, totalXp, type GauntletRun } from '../core/gauntlet';
+import { LevelBar } from './Gauntlet';
 import { sessionText } from './Plan';
 import { saveDeck, type QueuedJob } from '../services/store';
 import type { Review } from './Add';
@@ -26,11 +28,12 @@ interface Props {
   jobs: QueuedJob[];
   ready: Record<string, Review>;
   sessions: Session[];
+  runs: GauntletRun[];
   conditions: LiveConditions;
   onDropJob: (j: QueuedJob) => void;
 }
 
-export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions, conditions, onDropJob }: Props) {
+export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions, runs, conditions, onDropJob }: Props) {
   const now = new Date();
   const stats = useMemo(() => {
     const week = attempts.filter((a) => Date.now() - Date.parse(a.at) < 7 * 86_400_000);
@@ -111,6 +114,8 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
         </div>
       </section>
 
+      <GameCard xp={totalXp(attempts, runs)} runs={runs} now={now} hasCards={cards.length > 0} />
+
       <section className="tiles">
         <Tile icon="flame" tone="warm" value={stats.streak} unit={stats.streak === 1 ? 'day' : 'days'} label="Streak">
           <span className="week-dots" role="img" aria-label={`Studied on ${stats.lastWeek.filter((d) => d.studied).length} of the last 7 days`}>
@@ -184,6 +189,23 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
         </section>
       </div>
     </div>
+  );
+}
+
+/** Your level, and today's Trap Gauntlet: played (with its score) or waiting. */
+function GameCard({ xp, runs, now, hasCards }: { xp: number; runs: GauntletRun[]; now: Date; hasCards: boolean }) {
+  const today = playedToday(runs, now) ? [...runs].reverse().find((r) => r.counted) : undefined;
+  return (
+    <section className="game-card">
+      <LevelBar xp={xp} />
+      <div className="game-cta">
+        <span className="game-title"><Icon name="flame" size={18} /> Trap Gauntlet</span>
+        <span className="muted small">{today ? `Today: ${today.points} points, ${today.right} of ${today.answered} right` : 'True or false, from your own mistakes. A cloud referee keeps it fair.'}</span>
+        <a className={`btn ${today ? '' : 'primary'}`} href={href({ name: 'gauntlet' })} aria-disabled={!hasCards}>
+          <Icon name="play" size={16} /> {today ? 'Practise' : "Play today's"}
+        </a>
+      </div>
+    </section>
   );
 }
 

@@ -148,7 +148,7 @@ function Signed({ user }: { user: User }) {
   let screen;
   switch (route.name) {
     case 'today':
-      screen = <Today user={user} due={due} decks={decks} cards={cards} attempts={attempts} jobs={jobs} ready={ready} sessions={sessions} conditions={conditions} onDropJob={(j) => dequeue(uid, j.id)} />;
+      screen = <Today user={user} due={due} decks={decks} cards={cards} attempts={attempts} jobs={jobs} ready={ready} sessions={sessions} runs={runs} conditions={conditions} onDropJob={(j) => dequeue(uid, j.id)} />;
       break;
     case 'library':
       screen = <Library decks={decks} cards={cards} attempts={attempts} onDelete={deleteDeck} />;
