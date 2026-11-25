@@ -186,7 +186,7 @@ function Signed({ user }: { user: User }) {
     }
     case 'study': {
       const pick = route.deckId ? (route.all ? cards.filter((c) => c.deckId === route.deckId) : dueCards(cards.filter((c) => c.deckId === route.deckId), new Date(), newPerSession)) : due;
-      screen = <Study key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
+      screen = <Study key={href(route)} uid={uid} cards={pick} decks={decks} settings={settings} hybrid={hybrid} online={conditions.online} onDone={() => history.length > 1 ? history.back() : go({ name: 'today' })} />;
       break;
     }
     case 'viva': {

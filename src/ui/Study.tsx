@@ -4,6 +4,10 @@
  * answer, and which engine marked it. Committing to a confidence first is the point: it turns
  * every card into a small, honest check of what you actually know.
  *
+ * Answers can be typed or spoken, in the same box: the microphone writes what it hears into it
+ * (on this device when Chrome can, else transcribed by Gemini; see voicePlan in core/viva.ts),
+ * and the speaker reads the question aloud.
+ *
  * Keyboard: 1–4 pick a confidence, Ctrl/Cmd+Enter checks, Enter goes to the next card, Esc leaves.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -20,6 +24,8 @@ import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
 import { Ring } from './charts';
 import { friendly, type Friendly } from '../core/errors';
+import { voicePlan, type VoicePlan } from '../core/viva';
+import { canRecord, hush, installSpeechOnDevice, say, speechOnDevice, useMic, type SpeechOnDevice } from './voice';
 
 interface Props {
   uid: string;
@@ -27,10 +33,11 @@ interface Props {
   decks: Deck[];
   settings: Settings;
   hybrid: Hybrid;
+  online: boolean;
   onDone: () => void;
 }
 
-export function Study({ uid, cards, decks, settings, hybrid, onDone }: Props) {
+export function Study({ uid, cards, decks, settings, hybrid, online, onDone }: Props) {
   // The session's cards are fixed when it starts; answering reschedules them underneath.
   const [session] = useState(cards);
   const [index, setIndex] = useState(0);
@@ -38,13 +45,28 @@ export function Study({ uid, cards, decks, settings, hybrid, onDone }: Props) {
   const card = session[index];
   const deckName = new Map(decks.map((d) => [d.id, d.title]));
 
+  // Whether Chrome can hear speech on this device decides where a spoken answer is heard.
+  const [speech, setSpeech] = useState<SpeechOnDevice | null>(null);
+  useEffect(() => void speechOnDevice().then(setSpeech), []);
+  const plan = voicePlan({ online, speechOnDevice: speech === 'available', canRecord: canRecord(), cloudGrading: settings.cloudGrading, policy: hybrid.policy });
+  const getSpeech = async () => {
+    await installSpeechOnDevice();
+    setSpeech(await speechOnDevice());
+  };
+
   useEffect(() => {
     const esc = (e: KeyboardEvent) => {
       const typing = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
-      if (e.key === 'Escape' && !typing && !document.querySelector('dialog[open]')) onDone();
+      if (e.key === 'Escape' && !typing && !document.querySelector('dialog[open]')) {
+        hush();
+        onDone();
+      }
     };
     addEventListener('keydown', esc);
-    return () => removeEventListener('keydown', esc);
+    return () => {
+      removeEventListener('keydown', esc);
+      hush();
+    };
   }, [onDone]);
 
   const done = !card;
@@ -75,6 +97,9 @@ export function Study({ uid, cards, decks, settings, hybrid, onDone }: Props) {
           deck={deckName.get(card.deckId)}
           settings={settings}
           hybrid={hybrid}
+          plan={plan}
+          speech={speech}
+          onGetSpeech={getSpeech}
           last={index === session.length - 1}
           onAnswered={(attempt) => setResults((r) => [...r, { card, attempt }])}
           onRevised={(attempt) => setResults((r) => r.map((x) => (x.attempt.id === attempt.id ? { ...x, attempt } : x)))}
@@ -85,12 +110,15 @@ export function Study({ uid, cards, decks, settings, hybrid, onDone }: Props) {
   );
 }
 
-function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevised, onNext }: {
+function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech, last, onAnswered, onRevised, onNext }: {
   uid: string;
   card: Card;
   deck?: string;
   settings: Settings;
   hybrid: Hybrid;
+  plan: VoicePlan;
+  speech: SpeechOnDevice | null;
+  onGetSpeech: () => Promise<void>;
   last: boolean;
   onAnswered: (a: Attempt) => void;
   onRevised: (a: Attempt) => void;
@@ -107,11 +135,54 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
   const [tutoring, setTutoring] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
 
+  // ----- Speaking the answer: the microphone writes into the same box -----
+  const mic = useMic(plan.listen, settings);
+  const listening = mic.state === 'listening';
+  const transcribing = mic.state === 'transcribing';
+  /** What was in the box when the microphone started: what is heard is added after it. */
+  const before = useRef('');
+  const spoke = useRef(false);
+  const [gettingSpeech, setGettingSpeech] = useState(false);
+
+  useEffect(() => {
+    if (listening) setAnswer(join(before.current, mic.text));
+  }, [listening, mic.text]);
+
+  const talk = async () => {
+    hush();
+    before.current = answer;
+    spoke.current = true;
+    await mic.start();
+  };
+  const stopTalking = async () => {
+    const heard = await mic.stop();
+    const full = join(before.current, heard);
+    setAnswer(full);
+    return full;
+  };
+  const getSpeech = async () => {
+    setGettingSpeech(true);
+    await onGetSpeech();
+    setGettingSpeech(false);
+  };
+
+  const checking = useRef(false);
   const check = async () => {
-    if (!confidence || !answer.trim() || marking) return;
+    if (!confidence || marking || transcribing || checking.current) return;
+    checking.current = true;
+    try {
+      const text = listening ? await stopTalking() : answer;
+      if (text.trim()) await mark(text, confidence);
+    } finally {
+      checking.current = false;
+    }
+  };
+
+  const mark = async (answer: string, confidence: Confidence) => {
+    hush();
     setMarking(true);
     const marked = await grade(card.prompt, card.keyPoints, answer, settings, hybrid);
-    const attempt = recordAnswer(uid, card, answer, confidence, marked.value);
+    const attempt = recordAnswer(uid, card, answer, confidence, marked.value, spoke.current ? 'oral' : 'typed');
     onAnswered(attempt);
     setResult({ attempt, route: marked.route, marked });
     setMarking(false);
@@ -180,21 +251,43 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
   return (
     <div className="study-body">
       <div className="qcard">
-        <div className="qcard-head"><p className="eyebrow">{deck ?? 'Question'}</p></div>
+        <div className="qcard-head">
+          <p className="eyebrow">{deck ?? 'Question'}</p>
+          <button className="icon-btn" onClick={() => void say(card.prompt, plan.speakQuestion, settings)} aria-label="Read the question aloud" title="Read aloud"><Icon name="speaker" size={18} /></button>
+        </div>
         <h1 className="question">{card.prompt}</h1>
       </div>
 
       {!result && (
         <div className="answer-area">
-          <textarea
-            autoFocus
-            rows={5}
-            className="answer-box"
-            placeholder="Answer in your own words, from memory."
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            disabled={marking}
-          />
+          <div className={`answer-wrap${listening ? ' listening' : ''}`}>
+            <textarea
+              autoFocus
+              rows={5}
+              className="answer-box"
+              placeholder={listening ? 'Listening…' : 'Answer in your own words, from memory: type it, or tap the microphone and say it.'}
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              readOnly={listening || transcribing}
+              disabled={marking}
+            />
+            <MicButton
+              plan={plan}
+              speech={speech}
+              state={mic.state}
+              level={mic.level}
+              getting={gettingSpeech}
+              disabled={marking}
+              onTalk={() => void talk()}
+              onStop={() => void stopTalking()}
+              onGetSpeech={() => void getSpeech()}
+            />
+          </div>
+          {(listening || transcribing || mic.error) && (
+            <p className={`voice-note small${mic.error ? ' error' : ' muted'}`} aria-live="polite">
+              {mic.error ?? (transcribing ? 'Writing down what you said…' : <><Icon name={plan.listen === 'device' ? 'device' : 'cloud'} size={13} /> {plan.listen === 'device' ? 'Listening on this device: your voice never leaves it.' : 'Recording: Gemini writes it down when you stop.'}</>)}
+            </p>
+          )}
           <p className="label">How sure are you? <span className="muted small">Decide before you check: it is what makes this honest.</span></p>
           <div className="confidence" role="radiogroup" aria-label="Confidence">
             {([1, 2, 3, 4] as Confidence[]).map((c) => (
@@ -214,7 +307,7 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
           </div>
           <div className="actions end">
             <span className="muted small hide-touch"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to check</span>
-            <button className="btn primary lg" onClick={check} disabled={!answer.trim() || !confidence || marking}>
+            <button className="btn primary lg" onClick={() => void check()} disabled={(!answer.trim() && !listening) || !confidence || marking || transcribing}>
               {marking ? <><span className="spinner sm" /> Marking…</> : 'Check my answer'}
             </button>
           </div>
@@ -291,6 +384,47 @@ function CardView({ uid, card, deck, settings, hybrid, last, onAnswered, onRevis
         </div>
       )}
     </div>
+  );
+}
+
+/** Two pieces of an answer, typed then spoken, as one. */
+const join = (a: string, b: string) => [a.trim(), b.trim()].filter(Boolean).join(' ');
+
+/** The microphone in the answer box: talk, stop, or why it cannot be used here. */
+function MicButton({ plan, speech, state, level, getting, disabled, onTalk, onStop, onGetSpeech }: {
+  plan: VoicePlan;
+  speech: SpeechOnDevice | null;
+  state: string;
+  level: number;
+  getting: boolean;
+  disabled: boolean;
+  onTalk: () => void;
+  onStop: () => void;
+  onGetSpeech: () => void;
+}) {
+  if (state === 'transcribing' || getting) {
+    return <span className="mic-btn busy" role="status" aria-label={getting ? 'Getting speech recognition' : 'Transcribing'}><span className="spinner sm" /></span>;
+  }
+  if (state === 'listening') {
+    return (
+      <button type="button" className="mic-btn on" style={{ ['--lvl' as string]: level }} onClick={onStop} aria-label="Stop listening" title="Stop">
+        <Icon name="stop" size={16} />
+      </button>
+    );
+  }
+  if (plan.listen === 'type') {
+    // Speech cannot be heard right now; offer Chrome's on-device recogniser when it can be downloaded.
+    const canGet = speech === 'downloadable';
+    return (
+      <button type="button" className="mic-btn" onClick={canGet ? onGetSpeech : undefined} disabled={disabled || !canGet} aria-label={canGet ? 'Get speech recognition for this device' : 'Speaking is unavailable'} title={canGet ? 'Get speech recognition on this device (a small download)' : plan.listenReason}>
+        <Icon name={canGet ? 'download' : 'mic'} size={18} />
+      </button>
+    );
+  }
+  return (
+    <button type="button" className="mic-btn" onClick={onTalk} disabled={disabled} aria-label="Answer out loud" title={`Answer out loud. ${plan.listenReason}`}>
+      <Icon name="mic" size={18} />
+    </button>
   );
 }
 

@@ -737,6 +737,23 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
   background: linear-gradient(to bottom, transparent calc(100% - 1px), var(--rule) 0) 0 16px / 100% var(--ruled) local var(--panel);
 }
 .answer-area .label { margin-top: 6px; }
+/* The microphone sits in the answer box, as in a chat: type or speak in the same place. */
+.answer-wrap { position: relative; }
+.answer-wrap .answer-box { width: 100%; padding-right: 66px; }
+.answer-wrap.listening .answer-box { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.mic-btn {
+  --lvl: 0;
+  position: absolute; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line);
+  display: grid; place-items: center; background: var(--panel); color: var(--ink); cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .08s linear;
+}
+.mic-btn:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.mic-btn:disabled { opacity: .45; cursor: not-allowed; }
+.mic-btn.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; box-shadow: 0 0 0 calc(3px + var(--lvl) * 12px) color-mix(in srgb, var(--accent) 20%, transparent); }
+.mic-btn.busy { cursor: default; }
+@media (prefers-reduced-motion: reduce) { .mic-btn { transition: none; } }
+.voice-note { display: flex; align-items: center; gap: 6px; margin: -2px 0 0; }
+.voice-note.error { color: var(--danger-text); }
 .confidence { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 @media (max-width: 560px) { .confidence { grid-template-columns: repeat(2, 1fr); } }
 .conf {
