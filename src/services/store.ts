@@ -7,6 +7,7 @@
  *   audits/{id}                  the cloud model's check of an on-device mark (see audit.ts)
  *   sessions/{id}                a planned study session (see plan.ts)
  *   prefs/study                  study preferences from Settings (see prefs.ts)
+ *   gauntlets/{id}               a finished Trap Gauntlet (see gauntlet.ts)
  *
  * Firestore's persistent cache makes all of it work offline: reads come from the cache, and
  * writes apply locally at once and sync when the connection returns. Offline, a write's promise
@@ -34,6 +35,7 @@ import { newSrs, review } from '../core/schedule';
 import type { Attempt, Card, Confidence, Deck, Engine, Grade } from '../core/types';
 import type { Audit } from '../core/audit';
 import type { Session } from '../core/plan';
+import type { GauntletRun } from '../core/gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
 import { db } from './firebase';
 
@@ -43,6 +45,7 @@ const attempts = (uid: string) => collection(db, 'users', uid, 'attempts');
 const queue = (uid: string) => collection(db, 'users', uid, 'queue');
 const audits = (uid: string) => collection(db, 'users', uid, 'audits');
 const sessions = (uid: string) => collection(db, 'users', uid, 'sessions');
+const gauntlets = (uid: string) => collection(db, 'users', uid, 'gauntlets');
 
 /** Logs a write that the server later refused (offline writes are retried on their own). */
 const settle = (p: Promise<unknown>) => void p.catch((e) => console.error('[recall] write failed', e));
@@ -185,11 +188,20 @@ export async function deleteAllData(uid: string): Promise<void> {
   for (const d of deckDocs.docs) {
     refs.push(...(await getDocs(cards(uid, d.id))).docs.map((c) => c.ref), d.ref);
   }
-  for (const col of [attempts(uid), audits(uid), sessions(uid), queue(uid)]) refs.push(...(await getDocs(col)).docs.map((d) => d.ref));
+  for (const col of [attempts(uid), audits(uid), sessions(uid), queue(uid), gauntlets(uid)]) refs.push(...(await getDocs(col)).docs.map((d) => d.ref));
   refs.push(prefsDoc(uid));
   for (let i = 0; i < refs.length; i += 400) {
     const batch = writeBatch(db);
     refs.slice(i, i + 400).forEach((r) => batch.delete(r));
     await batch.commit();
   }
+}
+
+export function watchGauntlets(uid: string, on: (runs: GauntletRun[]) => void): Unsubscribe {
+  return onSnapshot(query(gauntlets(uid), orderBy('at')), (s) => on(s.docs.map((d) => d.data() as GauntletRun)));
+}
+
+export function saveGauntlet(uid: string, run: Omit<GauntletRun, 'id'>): void {
+  const ref = doc(gauntlets(uid));
+  settle(setDoc(ref, { ...run, id: ref.id }));
 }
