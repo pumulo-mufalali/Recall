@@ -1,0 +1,22 @@
+{
+  "name": "recall-demo-video",
+  "private": true,
+  "description": "The Recall hackathon demo video: Remotion composition, narration and music.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Demo out/recall-demo.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.547",
+    "@remotion/media-utils": "4.0.547",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.547",
+    "tone": "15.1.22"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
