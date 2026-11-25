@@ -43,6 +43,10 @@ export type Task =
   | { kind: 'explain' }
   /** A conversation with the tutor about a missed card. */
   | { kind: 'tutor' }
+  /** The Trap Gauntlet: statements written from the learner's own mistakes. */
+  | { kind: 'gauntlet' }
+  /** The gauntlet's referee: a larger model checks each statement. */
+  | { kind: 'referee' }
   /** An oral exam's follow-up question, written from what the learner said. */
   | { kind: 'probe' }
   /** Reading a question aloud in an oral exam. */
@@ -122,6 +126,18 @@ export function route(task: Task, c: Conditions, limits: Limits = DEFAULT_LIMITS
       if (ready(c)) return model(c.online ? 'prefer_on_device' : 'only_on_device', 'On this device: instant, and the conversation stays private.');
       if (c.online && limits.cloudGrading) return model('only_in_cloud', 'This device has no built-in model, so the cloud tutors you.');
       return { run: 'local', reason: 'The tutor needs the built-in AI, or a connection.' };
+
+    case 'gauntlet':
+      // Built from the learner's wrong answers, and played against a timer: the device writes it
+      // instantly and privately when it can.
+      if (ready(c)) return model('only_on_device', 'Written on this device from your mistakes: instant, and they stay private.');
+      if (c.online && limits.cloudGrading) return model('only_in_cloud', 'This device has no built-in model, so the cloud writes your traps.');
+      return { run: 'local', reason: 'The gauntlet needs the built-in AI, or a connection.' };
+
+    case 'referee':
+      // A second, larger model checks the first one's work, as fact-checking new cards does.
+      if (c.online) return model('only_in_cloud', 'A larger cloud model referees every statement.');
+      return { run: 'local', reason: 'Offline: no referee, so every statement stands.' };
 
     case 'explain':
       if (c.online) return model('prefer_in_cloud', 'A full explanation from the cloud model.');
