@@ -7,7 +7,7 @@ The under-3-minute demo for the #BuildHybridAI 2026 submission, made in code:
 | Narration | Gemini TTS through Firebase AI Logic (`gemini-3.8-flash-tts`, voice Sulafat, style set in `speechMetadata`): the app's own voice | `narration/` → `public/narration/*.wav` |
 | Music | "Cinematic pulse", composed with Tone.js (drums, sub bass, pads, a piano-like motif, a synth pulse) and rendered offline | `music/` → `public/music.wav` |
 | Footage | The real app on a "film set": sign-in, the database and the model replies are scripted stand-ins, so every screen records with realistic data and timing | `harness/`, `capture/` → `public/clips/` |
-| Edit | Remotion: a browser frame, camera zooms onto what is being described, technique labels, subtitles, the music ducked under the voice | `src/` |
+| Edit | Remotion: the real interface, full frame, with camera zooms onto what is being described. The only additions are text: subtitles, and plain labels naming each technique. The music is ducked under the voice | `src/` |
 
 ## Honest note on the footage
 
@@ -41,10 +41,14 @@ node stills.mjs 6 23 49                   # stills at given seconds, from one bu
 npm run render                            # out/recall-demo.mp4
 ```
 
-Gemini's free tier allows 10 TTS requests a day per model: five segments were voiced by
-`gemini-3.8-flash-tts` and five by `gemini-3.8-flash-lite-tts` (same voice). To voice them all
-with one model, delete those five WAVs and run `node narration/tts.cjs` again the next day, or
-with billing enabled.
+Gemini's free tier allows 10 TTS requests a day per model, so some segments were voiced by
+`gemini-3.8-flash-lite-tts` (same voice) on a day the main model's quota ran out. To redo one,
+name it: `node narration/tts.cjs hook`.
 
 The edit lives in `src/timeline.ts`: for each narration segment, the stretch of footage under it
 (played at whatever speed fits the words), the camera's shots, and the technique labels.
+
+Those times were tuned against one set of recordings, kept in `src/anchors/` (when each click,
+mark and scroll happened). Re-recorded footage never runs at exactly the same pace, so the edit
+carries each time across to the new recording by matching those events. Re-record freely; if a
+scene's steps change, the edit says so, and its times and anchors need updating together.

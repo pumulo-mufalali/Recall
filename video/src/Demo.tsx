@@ -1,100 +1,66 @@
 /**
- * The Recall demo video. The app's footage plays in a browser frame while a camera glides in on
- * what the narrator describes; labels name each Firebase AI Logic technique as it appears;
- * subtitles follow the narration; the music dips under the voice.
+ * The Recall demo video: the app's real interface, full frame, with a camera that glides in on
+ * what the narrator describes. Nothing is drawn over the app except text: subtitles at the
+ * bottom, and plain labels above them naming each technique as it appears. The music dips under
+ * the voice.
  */
 import React from 'react';
-import { AbsoluteFill, Audio, Easing, OffthreadVideo, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
-import { END_CARD, FPS, GAP, LEAD_IN, PLACED, TOTAL_SECONDS, type Box, type Placed, type Shot, type Tag } from './timeline';
+import { AbsoluteFill, Audio, Easing, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame } from 'remotion';
+import { END_CARD, FPS, GAP, PLACED, TOTAL_SECONDS, type Box, type Placed, type Shot, type Tag } from './timeline';
 
+/** The recordings' CSS size; they fill the 1920 × 1080 frame exactly (2400 × 1350 device pixels). */
 const VIEW_W = 1600;
 const VIEW_H = 900;
-const BAR = 34;
-const WIN_X = (1920 - VIEW_W) / 2;
-const WIN_Y = 118;
+const FIT = 1920 / VIEW_W;
 const FONT = '"Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif';
 const MONO = '"Cascadia Code", Consolas, monospace';
+/** Crossfade between scenes, in seconds. */
+const BLEND = 0.3;
 
-const COLORS = {
-  device: { fg: '#0f766e', bg: '#ccfbf1', ring: '#14b8a6', label: 'ON DEVICE' },
-  cloud: { fg: '#6d28d9', bg: '#ede9fe', ring: '#8b5cf6', label: 'CLOUD' },
-  hybrid: { fg: '#1d4ed8', bg: '#dbeafe', ring: '#3b82f6', label: 'HYBRID' },
-  code: { fg: '#b45309', bg: '#fef3c7', ring: '#f59e0b', label: 'UNDER THE HOOD' },
+/** The label's small heading, coloured to match where the work runs. */
+const KINDS = {
+  device: { color: '#5eead4', label: 'On device' },
+  cloud: { color: '#c4b5fd', label: 'Cloud' },
+  hybrid: { color: '#93c5fd', label: 'Hybrid' },
+  code: { color: '#fcd34d', label: 'Under the hood' },
 };
 
 const ease = Easing.bezier(0.45, 0, 0.2, 1);
 const sec = (f: number) => f / FPS;
+const fade = (t: number, from: number, to: number, d = 0.25) =>
+  Math.min(interpolate(t, [from, from + d], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }), interpolate(t, [to - d, to], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }));
 
 export const Demo: React.FC = () => {
+  const scenes = PLACED.filter((s) => s.clip);
   return (
-    <AbsoluteFill style={{ fontFamily: FONT, background: '#0b1020' }}>
-      <Backdrop />
-      <Title />
-      {PLACED.filter((s) => s.clip).map((s, i, all) => {
-        const from = Math.round((s.start - (i === 0 ? 1.4 : 0)) * FPS);
-        const next = all[i + 1];
-        const until = next ? next.start : s.start + s.seconds + GAP;
+    <AbsoluteFill style={{ fontFamily: FONT, background: '#f5f6f8' }}>
+      {scenes.map((s, i) => {
+        // The first scene opens the video; each later one fades in over the end of the one before.
+        const lead = i === 0 ? s.start : BLEND;
+        const from = Math.round((s.start - lead) * FPS);
+        const next = scenes[i + 1];
+        const until = next ? next.start : TOTAL_SECONDS;
         return (
           <Sequence key={s.id} from={from} durationInFrames={Math.round(until * FPS) - from} name={s.id}>
-            <Scene seg={s} lead={i === 0 ? 1.4 : 0} />
+            <Scene seg={s} lead={lead} last={!next} />
           </Sequence>
         );
       })}
-      <Chapters />
       {PLACED.map((s) => (
         <Sequence key={`a-${s.id}`} from={Math.round(s.start * FPS)} durationInFrames={Math.ceil(s.seconds * FPS) + 2} name={`voice ${s.id}`}>
           <Audio src={staticFile(`narration/${s.id}.wav`)} volume={1} />
           <Subtitles seg={s} />
         </Sequence>
       ))}
-      <Closing />
+      <Sequence from={Math.round((TOTAL_SECONDS - END_CARD + 0.2) * FPS)} name="end">
+        <EndText />
+      </Sequence>
       <Music />
     </AbsoluteFill>
   );
 };
 
-// ----- Backdrop and title -----
-
-const Backdrop: React.FC = () => {
-  const f = useCurrentFrame();
-  const t = sec(f);
-  const blob = (x: number, y: number, r: number, c: string, phase: number) => (
-    <div style={{ position: 'absolute', left: x + Math.sin(t / 7 + phase) * 60, top: y + Math.cos(t / 9 + phase) * 40, width: r, height: r, borderRadius: '50%', background: c, filter: 'blur(110px)', opacity: 0.55 }} />
-  );
-  return (
-    <AbsoluteFill style={{ background: 'radial-gradient(120% 90% at 50% 0%, #17204a 0%, #0b1020 60%, #070a14 100%)', overflow: 'hidden' }}>
-      {blob(-120, 620, 620, '#1d4ed8', 0)}
-      {blob(1400, -160, 640, '#7c3aed', 2)}
-      {blob(1500, 760, 520, '#0d9488', 4)}
-      <AbsoluteFill style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-    </AbsoluteFill>
-  );
-};
-
-const Title: React.FC = () => {
-  const f = useCurrentFrame();
-  const out = interpolate(f, [2.4 * FPS, 3.1 * FPS], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  if (out <= 0) return null;
-  const rise = spring({ frame: f, fps: FPS, config: { damping: 18 } });
-  return (
-    <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', opacity: out }}>
-      <div style={{ transform: `translateY(${(1 - rise) * 30}px)`, opacity: rise, textAlign: 'center', color: 'white' }}>
-        <div style={{ fontSize: 150, fontWeight: 800, letterSpacing: -4 }}>Recall</div>
-        <div style={{ fontSize: 36, color: '#b8c4e6', marginTop: 6 }}>Know what you know · hybrid AI with Firebase AI Logic</div>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 34 }}>
-          <Pill kind="device" text="Gemini Nano, on device" />
-          <Pill kind="cloud" text="Gemini, in the cloud" />
-        </div>
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-const Pill: React.FC<{ kind: keyof typeof COLORS; text: string }> = ({ kind, text }) => (
-  <span style={{ padding: '10px 20px', borderRadius: 999, fontSize: 26, fontWeight: 600, color: COLORS[kind].fg, background: COLORS[kind].bg }}>{text}</span>
-);
-
-// ----- A scene: the browser frame, the camera on the footage, and the labels -----
+// ----- A scene: the footage, the camera on it, and the labels -----
 
 function cameraAt(shots: Shot[], t: number) {
   const target = (s: Shot) => {
@@ -116,85 +82,44 @@ function cameraAt(shots: Shot[], t: number) {
   return { z, tx, ty };
 }
 
-const Scene: React.FC<{ seg: Placed; lead: number }> = ({ seg, lead }) => {
+const Scene: React.FC<{ seg: Placed; lead: number; last: boolean }> = ({ seg, lead, last }) => {
   const f = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
   const [a, b] = seg.range!;
-  const span = seg.seconds + GAP;
+  // The last scene stretches over the end too, so the app stays on screen to the final frame.
+  const span = seg.seconds + (last ? END_CARD : GAP);
   const rate = (b - a) / span;
-  const local = Math.max(0, sec(f) - lead);
-  const clipT = a + local * rate;
+  const clipT = a + Math.max(0, sec(f) - lead) * rate;
   const cam = cameraAt(seg.shots ?? [{ at: a }], clipT);
-  const enter = seg.id === 'hook' ? spring({ frame: f - 0.4 * FPS, fps: FPS, config: { damping: 20 } }) : 1;
-  const fadeIn = interpolate(f, [0, 8], [0, 1], { extrapolateRight: 'clamp' });
-  const fadeOut = seg.id === 'engine' ? interpolate(f, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp' }) : 1;
-
+  const fadeIn = lead === BLEND ? interpolate(f, [0, BLEND * FPS], [0, 1], { extrapolateRight: 'clamp' }) : 1;
   return (
-    <AbsoluteFill style={{ opacity: Math.min(fadeIn, fadeOut) }}>
-      <div
-        style={{
-          position: 'absolute', left: WIN_X, top: WIN_Y, width: VIEW_W, height: VIEW_H + BAR, borderRadius: 18, overflow: 'hidden',
-          background: '#f5f6f8', boxShadow: '0 40px 120px -30px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.08)',
-          transform: `translateY(${(1 - enter) * 80}px) scale(${0.96 + 0.04 * enter})`, opacity: enter,
-        }}
-      >
-        <div style={{ height: BAR, background: '#e7e9ee', display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px', borderBottom: '1px solid #d7dbe3' }}>
-          {['#ff5f57', '#febc2e', '#28c840'].map((c) => <span key={c} style={{ width: 12, height: 12, borderRadius: 6, background: c }} />)}
-          <span style={{ marginLeft: 18, flex: 1, maxWidth: 520, height: 22, borderRadius: 11, background: '#fff', color: '#5b6472', fontSize: 14, display: 'flex', alignItems: 'center', padding: '0 12px', fontFamily: FONT }}>
-            🔒 recall-three-rust.vercel.app
-          </span>
-        </div>
-        <div style={{ position: 'relative', width: VIEW_W, height: VIEW_H, overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, width: VIEW_W, height: VIEW_H, transformOrigin: '0 0', transform: `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.z})` }}>
-            <OffthreadVideo src={staticFile(`clips/${seg.clip}.mp4`)} trimBefore={Math.round(a * FPS)} playbackRate={rate} muted style={{ width: VIEW_W, height: VIEW_H }} />
-          </div>
-        </div>
+    <AbsoluteFill style={{ opacity: fadeIn, overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, width: VIEW_W, height: VIEW_H, transformOrigin: '0 0', transform: `scale(${FIT}) translate(${cam.tx}px, ${cam.ty}px) scale(${cam.z})` }}>
+        <OffthreadVideo src={staticFile(`clips/${seg.clip}.mp4`)} trimBefore={Math.max(0, Math.round((a - lead * rate) * FPS))} playbackRate={rate} muted style={{ width: VIEW_W, height: VIEW_H }} />
       </div>
-      <Tags tags={seg.tags} seg={seg} lead={lead} />
+      <Labels tags={seg.tags} seg={seg} lead={lead} />
     </AbsoluteFill>
   );
 };
 
-const Tags: React.FC<{ tags: Tag[]; seg: Placed; lead: number }> = ({ tags, seg, lead }) => {
+/** Plain text on a dark band, top left, apart from the subtitles: clearly the video speaking, not the app. */
+const Labels: React.FC<{ tags: Tag[]; seg: Placed; lead: number }> = ({ tags, seg, lead }) => {
   const f = useCurrentFrame();
   const span = seg.seconds + GAP;
-  const p = (sec(f) - lead) / span;
-  const shown = tags.filter((t) => p >= t.from && p < (t.to ?? 1.01));
+  const t = sec(f) - lead;
+  const shown = tags.filter((x) => t >= x.from * span && t < (x.to ?? 1.02) * span);
   return (
-    <div style={{ position: 'absolute', right: WIN_X + 26, top: WIN_Y + BAR + 22, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-      {shown.map((t) => {
-        const start = Math.round((t.from * span + lead) * FPS);
-        const s = spring({ frame: f - start, fps: FPS, config: { damping: 16, stiffness: 140 } });
-        const c = COLORS[t.kind];
+    <div style={{ position: 'absolute', left: 56, top: 48, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+      {shown.map((x) => {
+        const k = KINDS[x.kind];
+        const code = /_|\(|·/.test(x.title) && x.kind !== 'hybrid';
         return (
-          <div key={t.title} style={{ transform: `translateX(${(1 - s) * 60}px)`, opacity: Math.min(1, s * 2.5), maxWidth: 560, background: '#ffffff', backdropFilter: 'blur(10px)', borderRadius: 16, padding: '14px 20px 16px', boxShadow: '0 18px 50px -18px rgba(15,23,42,.55)', borderLeft: `6px solid ${c.ring}` }}>
-            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: 1.6, color: c.fg }}>{c.label}</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: '#0f172a', fontFamily: /_|\(|·/.test(t.title) && t.kind !== 'hybrid' ? MONO : FONT, marginTop: 2, lineHeight: 1.2 }}>{t.title}</div>
-            {t.detail && <div style={{ fontSize: 21, color: '#475569', marginTop: 4, lineHeight: 1.35 }}>{t.detail}</div>}
+          <div key={x.title} style={{ opacity: fade(t, x.from * span, (x.to ?? 1.02) * span), background: 'rgba(15,20,32,.86)', padding: '12px 20px 14px', borderRadius: 4, maxWidth: 820 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: k.color }}>{k.label}</div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: '#fff', fontFamily: code ? MONO : FONT, lineHeight: 1.2, marginTop: 2 }}>{x.title}</div>
+            {x.detail && <div style={{ fontSize: 23, color: '#cbd5e1', marginTop: 4, lineHeight: 1.35 }}>{x.detail}</div>}
           </div>
         );
       })}
-    </div>
-  );
-};
-
-// ----- Chapters along the top -----
-
-const Chapters: React.FC = () => {
-  const f = useCurrentFrame();
-  const t = sec(f);
-  const end = TOTAL_SECONDS - END_CARD;
-  if (t < 2.6 || t > end) return null;
-  const now = [...PLACED].reverse().find((s) => s.start - 0.2 <= t) ?? PLACED[0];
-  const appear = interpolate(t, [2.6, 3.2], [0, 1], { extrapolateRight: 'clamp' });
-  const progress = Math.min(1, (t - LEAD_IN) / (end - LEAD_IN));
-  return (
-    <div style={{ position: 'absolute', left: WIN_X, top: 36, width: VIEW_W, opacity: appear * (now.id === 'close' ? 0 : 1), display: 'flex', alignItems: 'center', gap: 22, color: 'white' }}>
-      <span style={{ fontSize: 30, fontWeight: 800, letterSpacing: -0.5 }}>Recall</span>
-      <span style={{ fontSize: 26, color: '#b8c4e6', fontWeight: 600 }}>{now.chapter === 'Recall' ? 'Hybrid AI study app' : now.chapter}</span>
-      <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,.12)', overflow: 'hidden', marginLeft: 12 }}>
-        <div style={{ width: `${progress * 100}%`, height: '100%', background: 'linear-gradient(90deg, #14b8a6, #3b82f6, #8b5cf6)' }} />
-      </div>
     </div>
   );
 };
@@ -226,88 +151,23 @@ const Subtitles: React.FC<{ seg: Placed }> = ({ seg }) => {
   const t = sec(f) / seg.seconds;
   const i = ends.findIndex((end) => t < end);
   const text = chunks[i < 0 ? chunks.length - 1 : i];
-  const onDiagram = seg.id === 'close';
   return (
-    <div style={{ position: 'absolute', left: 0, right: 0, bottom: onDiagram ? 46 : 66, display: 'flex', justifyContent: 'center' }}>
-      <span style={{ maxWidth: 1320, textAlign: 'center', fontSize: 34, lineHeight: 1.35, fontWeight: 600, color: 'white', background: 'rgba(8,12,28,.78)', padding: '10px 22px', borderRadius: 12, boxShadow: '0 10px 30px -10px rgba(0,0,0,.6)' }}>{text}</span>
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 48, display: 'flex', justifyContent: 'center' }}>
+      <span style={{ maxWidth: 1400, textAlign: 'center', fontSize: 36, lineHeight: 1.35, fontWeight: 600, color: 'white', background: 'rgba(0,0,0,.74)', padding: '8px 20px', borderRadius: 6 }}>{text}</span>
     </div>
   );
 };
 
-// ----- The close: the hybrid split as a diagram, then the end card -----
+// ----- The end: the app stays on screen, with where to find it -----
 
-const Closing: React.FC = () => {
-  const close = PLACED.find((s) => s.id === 'close')!;
-  const from = Math.round((close.start - 0.2) * FPS);
-  const cardAt = Math.round((close.start + close.seconds + 0.2) * FPS);
-  return (
-    <>
-      <Sequence from={from} durationInFrames={cardAt - from + 12} name="diagram">
-        <Diagram />
-      </Sequence>
-      <Sequence from={cardAt} name="end card">
-        <EndCard />
-      </Sequence>
-    </>
-  );
-};
-
-const Diagram: React.FC = () => {
+const EndText: React.FC = () => {
   const f = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
-  const fade = Math.min(interpolate(f, [0, 10], [0, 1], { extrapolateRight: 'clamp' }), interpolate(f, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: 'clamp' }));
-  const col = (kind: 'device' | 'cloud', title: string, sub: string, items: string[], delay: number) => {
-    const s = spring({ frame: f - delay, fps: FPS, config: { damping: 18 } });
-    const c = COLORS[kind];
-    return (
-      <div style={{ width: 640, background: 'rgba(255,255,255,.97)', borderRadius: 24, padding: '30px 34px', transform: `translateY(${(1 - s) * 40}px)`, opacity: s, borderTop: `8px solid ${c.ring}` }}>
-        <div style={{ fontSize: 17, fontWeight: 800, letterSpacing: 2, color: c.fg }}>{c.label}</div>
-        <div style={{ fontSize: 42, fontWeight: 800, color: '#0f172a', marginTop: 4 }}>{title}</div>
-        <div style={{ fontSize: 23, color: '#64748b', marginBottom: 16 }}>{sub}</div>
-        {items.map((it, i) => {
-          const si = spring({ frame: f - delay - 8 - i * 5, fps: FPS, config: { damping: 20 } });
-          return (
-            <div key={it} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 25, color: '#1e293b', padding: '7px 0', opacity: si, transform: `translateX(${(1 - si) * 20}px)` }}>
-              <span style={{ width: 10, height: 10, borderRadius: 5, background: c.ring, flex: 'none' }} />
-              {it}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-  const mid = spring({ frame: f - 30, fps: FPS, config: { damping: 16 } });
+  const o = interpolate(f, [0, 10], [0, 1], { extrapolateRight: 'clamp' });
   return (
-    <AbsoluteFill style={{ opacity: fade, alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ display: 'flex', gap: 30, alignItems: 'center', marginTop: -60 }}>
-        {col('device', 'Gemini Nano', 'small · private · instant · offline', ['Marking every answer', 'Questions from notes and photos', 'The tutor, streamed', 'Writing the Trap Gauntlet', 'Hearing spoken answers'], 4)}
-        <div style={{ width: 300, textAlign: 'center', color: 'white', opacity: mid, transform: `scale(${0.85 + 0.15 * mid})` }}>
-          <div style={{ fontSize: 22, letterSpacing: 2, color: '#93c5fd', fontWeight: 800 }}>THE ROUTER</div>
-          <div style={{ fontSize: 31, fontWeight: 700, lineHeight: 1.3, marginTop: 8 }}>Firebase AI Logic hybrid inference</div>
-          <div style={{ fontSize: 22, color: '#b8c4e6', marginTop: 12, lineHeight: 1.4 }}>+ a self-audit that measures how far Nano can be trusted</div>
-          <div style={{ fontSize: 56, marginTop: 6 }}>⇄</div>
-        </div>
-        {col('cloud', 'Gemini', 'large · multimodal · rare, heavy work', ['PDFs and long chapters', 'Fact-checking every card', 'Escalations and spot-checks', 'Refereeing the gauntlet', 'Natural text-to-speech'], 14)}
-      </div>
-    </AbsoluteFill>
-  );
-};
-
-const EndCard: React.FC = () => {
-  const f = useCurrentFrame();
-  const s = spring({ frame: f, fps: FPS, config: { damping: 18 } });
-  return (
-    <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', color: 'white', textAlign: 'center' }}>
-      <div style={{ opacity: s, transform: `translateY(${(1 - s) * 24}px)` }}>
-        <div style={{ fontSize: 132, fontWeight: 800, letterSpacing: -4 }}>Recall</div>
-        <div style={{ fontSize: 36, color: '#b8c4e6', marginTop: 4 }}>The device does the small, private, instant work. The cloud does the rare, heavy work.</div>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', marginTop: 34, flexWrap: 'wrap' }}>
-          {['prefer_on_device', 'only_on_device', 'only_in_cloud', 'structured output', 'chat streaming', 'Gemini TTS', 'Remote Config', 'App Check'].map((t) => (
-            <span key={t} style={{ fontFamily: MONO, fontSize: 22, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.16)', color: '#dbe4ff' }}>{t}</span>
-          ))}
-        </div>
-        <div style={{ marginTop: 46, fontSize: 34, fontWeight: 700 }}>recall-three-rust.vercel.app</div>
-        <div style={{ marginTop: 8, fontSize: 24, color: '#94a3b8' }}>Built for #BuildHybridAI 2026 · Firebase AI Logic · Gemini Nano + Gemini</div>
+    <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 48, opacity: o }}>
+      <div style={{ background: 'rgba(15,20,32,.9)', color: 'white', padding: '18px 32px 20px', borderRadius: 4, textAlign: 'center' }}>
+        <div style={{ fontSize: 44, fontWeight: 700 }}>recall-three-rust.vercel.app</div>
+        <div style={{ fontSize: 24, color: '#cbd5e1', marginTop: 4 }}>Recall · built for #BuildHybridAI 2026 with Firebase AI Logic · Gemini Nano + Gemini</div>
       </div>
     </AbsoluteFill>
   );
@@ -334,3 +194,4 @@ const Music: React.FC = () => {
   };
   return <Audio src={staticFile('music.wav')} volume={volume} />;
 };
+
