@@ -1,19 +1,19 @@
 {
   "hook": {
-    "seconds": 13.99,
-    "text": "Re-reading your notes feels like studying. It isn't. Recall turns your notes into questions, marks your answers in your own words, and shows you what you really know. Its AI runs on your device and in the cloud, as a team."
+    "seconds": 18.2,
+    "text": "Re-reading your notes feels like studying. It isn't. Recall turns your material into cards, and each card is a question you answer from memory. It marks your answers, shows what you really know, and brings each card back before you forget it. Its AI runs on your device and in the cloud, as a team."
   },
   "add": {
-    "seconds": 21.55,
-    "text": "Paste your notes, snap a photo of a page, or drop in a PDF. Firebase AI Logic routes each job. Notes and photos go to Gemini Nano, built into Chrome, with prefer on device. A PDF goes to the cloud. One structured output format serves both: a response constraint on the device, a response schema in the cloud."
+    "seconds": 23.37,
+    "text": "It starts with your material: notes, a photo of a page, or a PDF. Firebase AI Logic routes each job. Notes and photos go to Gemini Nano, built into Chrome, with prefer on device. A PDF goes to the cloud. Either way, the cards come back in one structured format: a response constraint on the device, a response schema in the cloud."
   },
   "factcheck": {
     "seconds": 15.84,
     "text": "Then a second, larger cloud model fact-checks every card against your notes. It has to quote its evidence, and plain code checks every number. This card says fifty-nine percent. The notes say ninety-five. So it's flagged, with a fix."
   },
   "study": {
-    "seconds": 19.62,
-    "text": "Studying starts with a commitment: how sure are you? Then answer, typed or spoken. Chrome's on-device speech recognition writes your words into the box, so your voice never leaves the device. Gemini Nano marks the answer right here, with only on device: instant, free, private, and offline too."
+    "seconds": 20.49,
+    "text": "Now, study the cards. First, say how sure you are. Then answer, typed or spoken: Chrome's on-device speech recognition writes your words into the box, so your voice stays on the device. Gemini Nano marks the answer right here, with prefer on device: instant, free and private."
   },
   "audit": {
     "seconds": 19.01,
@@ -36,7 +36,7 @@
     "text": "The AI engine page shows the router, live. Go offline, and marking, tutoring and the gauntlet stay on the device, while PDFs wait in a queue. Private mode forces only on device. Models come from Remote Config, and App Check protects every cloud call."
   },
   "close": {
-    "seconds": 9.86,
-    "text": "Small, private, instant work on the device. Rare, heavy work in the cloud. And a measured line between them. That's Recall."
+    "seconds": 12.52,
+    "text": "Insights shows where your confidence and your results disagree, so you study what you only thought you knew. Small, private work on the device. Rare, heavy work in the cloud. That's Recall."
   }
 }
