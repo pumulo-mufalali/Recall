@@ -10,7 +10,8 @@ import { NEW_CARD_OPTIONS, type StudyPrefs } from '../core/prefs';
 import { REMIND_OPTIONS, SESSION_LENGTHS } from '../core/plan';
 import type { Attempt, Card, Deck } from '../core/types';
 import { auth } from '../services/firebase';
-import { deleteAllData, savePrefs } from '../services/store';
+import { deleteAllData, removeExample, savePrefs, seedExample } from '../services/store';
+import { exampleData } from '../core/example';
 import { askDownload, ModelState } from './ModelState';
 import { Icon, type IconName } from './Icon';
 import { useNotifyPermission } from './reminders';
@@ -192,8 +193,27 @@ function Notifications() {
 }
 
 function YourData({ user, data, prefs, ask, online }: { user: User; data: Props['data']; prefs: StudyPrefs; ask: Ask; online: boolean }) {
-  const [busy, setBusy] = useState<'' | 'data' | 'account'>('');
+  const [busy, setBusy] = useState<'' | 'data' | 'account' | 'example'>('');
   const [error, setError] = useState('');
+  const hasExample = data.decks.some((d) => d.example);
+
+  const removeExamples = async () => {
+    const yes = await ask({
+      title: 'Remove the example data?',
+      body: <p>This removes the example decks, their answer history, self-audit checks, gauntlet runs and planned session. Your own decks and answers stay.</p>,
+      confirm: 'Remove example data',
+    });
+    if (!yes) return;
+    setBusy('example');
+    setError('');
+    try {
+      await removeExample(user.uid);
+    } catch (e) {
+      setError(`Could not remove the example data: ${(e as Error).message}`);
+    } finally {
+      setBusy('');
+    }
+  };
 
   const exportAll = () => {
     const json = JSON.stringify({ app: 'Recall', exportedAt: new Date().toISOString(), account: user.email, ...data, prefs }, null, 2);
@@ -249,6 +269,20 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
 
   return (
     <Section icon="download" title="Your data">
+      <Row
+        label="Example data"
+        help={hasExample ? 'Example decks and ten weeks of history are loaded, to explore every feature. Removing them keeps your own work.' : 'Load three example decks and ten weeks of study history, to see insights, the self-audit and levels at once.'}
+      >
+        {hasExample ? (
+          <button className="btn sm" onClick={removeExamples} disabled={!!busy || !online}>
+            {busy === 'example' ? <><span className="spinner sm" /> Removing…</> : <><Icon name="trash" size={14} /> Remove</>}
+          </button>
+        ) : (
+          <button className="btn sm" onClick={() => seedExample(user.uid, exampleData(new Date()))} disabled={!!busy}>
+            <Icon name="sparkle" size={14} /> Load
+          </button>
+        )}
+      </Row>
       <Row label="Export" help={`Download ${counts} as a JSON file.`}>
         <button className="btn sm" onClick={exportAll}><Icon name="download" size={14} /> Export</button>
       </Row>
