@@ -11,12 +11,12 @@ import { current, upcoming, type Session } from '../core/plan';
 import { playedToday, totalXp, type GauntletRun } from '../core/gauntlet';
 import { LevelBar } from './LevelBar';
 import { sessionText } from './sessions';
-import { saveDeck, type QueuedJob } from '../services/store';
+import { seedExample, type QueuedJob } from '../services/store';
+import { exampleData } from '../core/example';
 import type { Review } from '../services/review';
 import { Icon } from './Icon';
 import { Heatmap, ProgressBar } from './charts';
 import { href } from './router';
-import { SAMPLE_CARDS, SAMPLE_TITLE } from './sample';
 import type { LiveConditions } from './useConditions';
 
 interface Props {
@@ -73,6 +73,13 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
           <h1>{greeting(now)}{first ? `, ${first}` : ''}.</h1>
         </div>
       </header>
+
+      {decks.some((d) => d.example) && (
+        <p className="example-note">
+          <Icon name="sparkle" size={15} />
+          <span>You are exploring <strong>example data</strong>: ten weeks of study, so every feature has something to show. Your own decks join it; remove the examples in <a href="#/settings">Settings</a>.</span>
+        </p>
+      )}
 
       <NextSession sessions={sessions} decks={decks} now={now} />
 
@@ -284,10 +291,10 @@ function Welcome({ uid, name, conditions }: { uid: string; name: string; conditi
           <p>Paste notes, snap a photo of a textbook page or upload a PDF. Recall writes the questions and fact-checks them against your material.</p>
           <span className="btn primary">Add material <Icon name="arrow" size={16} /></span>
         </a>
-        <button className="onboard-alt" onClick={() => saveDeck(uid, SAMPLE_TITLE, 'text', SAMPLE_CARDS, 'local')}>
+        <button className="onboard-alt" onClick={() => seedExample(uid, exampleData(new Date()))}>
           <span className="onboard-icon alt"><Icon name="sparkle" size={24} /></span>
-          <h3>Or try a sample deck</h3>
-          <p className="muted">Six questions on how vaccines work, ready to study now.</p>
+          <h3>Or explore with example data</h3>
+          <p className="muted">Three decks and ten weeks of study history, so insights, the AI self-audit, levels and the Trap Gauntlet all have something to show. Remove it any time in Settings.</p>
         </button>
       </section>
       <section className="how">
