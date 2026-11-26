@@ -1,16 +1,40 @@
-// Stand-in for src/services/store.ts: serves the fake data, writes go nowhere.
+// Stand-in for src/services/store.ts: the film data, kept in memory, so writes update the screen.
+// ?empty in the URL starts a brand-new account (no decks), to film or test the welcome screen.
 import { attempts, audits, cards, decks } from './data';
 
-const serve = <T,>(data: T) => (_uid: string, on: (d: T) => void) => {
-  setTimeout(() => on(data), 0);
-  return () => {};
-};
+type Listener<T> = (d: T) => void;
+function live<T>(initial: T) {
+  let value = initial;
+  const listeners = new Set<Listener<T>>();
+  return {
+    get: () => value,
+    set(next: T) { value = next; listeners.forEach((l) => l(value)); },
+    watch: (_uid: string, on: Listener<T>) => { listeners.add(on); setTimeout(() => on(value), 0); return () => { listeners.delete(on); }; },
+  };
+}
 
-export const watchDecks = serve(decks);
-export const watchCards = serve(cards);
-export const watchAttempts = serve(attempts);
-export const watchAudits = serve(audits);
-export const watchQueue = serve([]);
+const empty = location.search.includes('empty');
+const hour = 3_600_000;
+const inHours = (h: number) => { const d = new Date(Date.now() + h * hour); d.setMinutes(0, 0, 0); return d.toISOString(); };
+
+const deckStore = live<any[]>(empty ? [] : decks);
+const cardStore = live<any[]>(empty ? [] : cards);
+const attemptStore = live<any[]>(empty ? [] : attempts);
+const auditStore = live<any[]>(empty ? [] : audits);
+const sessionStore = live<any[]>(empty ? [] : [
+  { id: 's1', at: inHours(3), minutes: 25, deckId: 'd1', remind: 10, createdAt: '' },
+  { id: 's2', at: inHours(26), minutes: 45, deckId: null, remind: 30, createdAt: '' },
+  { id: 's3', at: inHours(98), minutes: 15, deckId: 'd3', remind: 0, createdAt: '' },
+]);
+const runStore = live<any[]>([]);
+
+export const watchDecks = deckStore.watch;
+export const watchCards = cardStore.watch;
+export const watchAttempts = (uid: string, on: Listener<any[]>) => attemptStore.watch(uid, (a) => on([...a].sort((x, y) => Date.parse(y.at) - Date.parse(x.at))));
+export const watchAudits = (uid: string, on: Listener<any[]>) => auditStore.watch(uid, (a) => on([...a].sort((x, y) => Date.parse(y.at) - Date.parse(x.at))));
+export const watchQueue = live<any[]>([]).watch;
+export const watchSessions = sessionStore.watch;
+export const watchGauntlets = runStore.watch;
 export const QUEUE_MAX_FILE = 700_000;
 export const saveDeck = () => 'd1';
 export const recordAnswer = (_uid: string, card: any, answer: string, confidence: any, grade: any) => ({ id: 'new', cardId: card.id, deckId: card.deckId, at: new Date().toISOString(), answer, confidence, grade });
@@ -21,30 +45,30 @@ export const removeCard = () => {};
 export const removeDeck = () => {};
 export const enqueue = () => {};
 export const dequeue = () => {};
-
-// Sessions: kept in memory so scheduling and removing update the screen.
-const hour = 3_600_000;
-const inHours = (h: number) => { const d = new Date(Date.now() + h * hour); d.setMinutes(0, 0, 0); return d.toISOString(); };
-let sessions: any[] = [
-  { id: 's1', at: inHours(3), minutes: 25, deckId: 'd1', remind: 10, createdAt: '' },
-  { id: 's2', at: inHours(26), minutes: 45, deckId: null, remind: 30, createdAt: '' },
-  { id: 's3', at: inHours(98), minutes: 15, deckId: 'd3', remind: 0, createdAt: '' },
-];
-const listeners = new Set<(s: any[]) => void>();
-const emit = () => listeners.forEach((l) => l([...sessions]));
-export const watchSessions = (_uid: string, on: (s: any[]) => void) => { listeners.add(on); setTimeout(() => on([...sessions]), 0); return () => listeners.delete(on); };
-export const saveSession = (_uid: string, s: any) => { const saved = { ...s, id: `s${Date.now()}`, createdAt: new Date().toISOString() }; sessions = [...sessions, saved]; emit(); return saved; };
-export const removeSession = (_uid: string, id: string) => { sessions = sessions.filter((s) => s.id !== id); emit(); };
+export const saveSession = (_uid: string, s: any) => { const saved = { ...s, id: `s${Date.now()}`, createdAt: new Date().toISOString() }; sessionStore.set([...sessionStore.get(), saved]); return saved; };
+export const removeSession = (_uid: string, id: string) => sessionStore.set(sessionStore.get().filter((s) => s.id !== id));
+export const saveGauntlet = (_uid: string, run: any) => runStore.set([...runStore.get(), { ...run, id: `g${Date.now()}` }]);
 
 // Study preferences: in memory, so changing a setting updates the screen.
-let prefs: any = { newPerSession: null, sessionMinutes: 25, remind: 10 };
-const prefListeners = new Set<(p: any) => void>();
-export const watchPrefs = (_uid: string, on: (p: any) => void) => { prefListeners.add(on); setTimeout(() => on({ ...prefs }), 0); return () => prefListeners.delete(on); };
-export const savePrefs = (_uid: string, change: any) => { prefs = { ...prefs, ...change }; prefListeners.forEach((l) => l({ ...prefs })); };
-export const deleteAllData = async () => {};
+const prefStore = live<any>({ newPerSession: null, sessionMinutes: 25, remind: 10 });
+export const watchPrefs = prefStore.watch;
+export const savePrefs = (_uid: string, change: any) => prefStore.set({ ...prefStore.get(), ...change });
 
-// Trap Gauntlet runs: in memory.
-let runs: any[] = [];
-const runListeners = new Set<(r: any[]) => void>();
-export const watchGauntlets = (_uid: string, on: (r: any[]) => void) => { runListeners.add(on); setTimeout(() => on([...runs]), 0); return () => runListeners.delete(on); };
-export const saveGauntlet = (_uid: string, run: any) => { runs = [...runs, { ...run, id: `g${Date.now()}` }]; runListeners.forEach((l) => l([...runs])); };
+export const deleteAllData = async () => {
+  for (const s of [deckStore, cardStore, attemptStore, auditStore, sessionStore, runStore]) s.set([]);
+};
+
+// The example data, as the real store writes it: every document marked example.
+export const seedExample = (_uid: string, data: any) => {
+  const mark = (xs: any[]) => xs.map((x) => ({ ...x, example: true }));
+  deckStore.set([...mark(data.decks), ...deckStore.get()]);
+  cardStore.set([...cardStore.get(), ...mark(data.cards)]);
+  attemptStore.set([...attemptStore.get(), ...mark(data.attempts)]);
+  auditStore.set([...auditStore.get(), ...mark(data.audits)]);
+  runStore.set([...runStore.get(), ...mark(data.runs)]);
+  sessionStore.set([...sessionStore.get(), ...mark(data.sessions)]);
+};
+export const removeExample = async () => {
+  await new Promise((r) => setTimeout(r, 900));
+  for (const s of [deckStore, cardStore, attemptStore, auditStore, sessionStore, runStore]) s.set(s.get().filter((x: any) => !x.example));
+};

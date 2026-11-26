@@ -60,7 +60,7 @@ const INJECT = `(() => {
   }
   FakeRecognition.available = async () => 'available';
   window.SpeechRecognition = FakeRecognition;
-  navigator.mediaDevices.getUserMedia = async () => {
+  if (navigator.mediaDevices) navigator.mediaDevices.getUserMedia = async () => {
     const ctx = new AudioContext();
     const o = ctx.createOscillator();
     const g = ctx.createGain();
