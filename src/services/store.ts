@@ -39,6 +39,7 @@ import type { Session } from '../core/plan';
 import type { GauntletRun } from '../core/gauntlet';
 import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
 import { isAttempt, isCard, isDeck, keepValid } from '../core/valid';
+import type { ExampleData } from '../core/example';
 import { db } from './firebase';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
@@ -199,6 +200,47 @@ export async function deleteAllData(uid: string): Promise<void> {
   for (let i = 0; i < refs.length; i += 400) {
     const batch = writeBatch(db);
     refs.slice(i, i + 400).forEach((r) => batch.delete(r));
+    await batch.commit();
+  }
+}
+
+// ----- Example data -----
+
+/** Most writes a Firestore batch may hold is 500; stay well under. */
+const BATCH = 400;
+
+/**
+ * Writes the example data (core/example.ts) into this learner's account, every document marked
+ * `example: true`. Like other writes it applies locally at once; the listeners show it straight
+ * away. Writing it twice overwrites the same documents.
+ */
+export function seedExample(uid: string, data: ExampleData): void {
+  const writes: [ReturnType<typeof doc>, object][] = [
+    ...data.decks.map((d): [ReturnType<typeof doc>, object] => [doc(decks(uid), d.id), { ...d, example: true }]),
+    ...data.cards.map((c): [ReturnType<typeof doc>, object] => [doc(cards(uid, c.deckId), c.id), { ...c, owner: uid, example: true }]),
+    ...data.attempts.map((a): [ReturnType<typeof doc>, object] => [doc(attempts(uid), a.id), { ...a, example: true }]),
+    ...data.audits.map((a): [ReturnType<typeof doc>, object] => [doc(audits(uid), a.id), { ...a, example: true }]),
+    ...data.runs.map((r): [ReturnType<typeof doc>, object] => [doc(gauntlets(uid), r.id), { ...r, example: true }]),
+    ...data.sessions.map((s): [ReturnType<typeof doc>, object] => [doc(sessions(uid), s.id), { ...s, example: true }]),
+  ];
+  for (let i = 0; i < writes.length; i += BATCH) {
+    const batch = writeBatch(db);
+    writes.slice(i, i + BATCH).forEach(([ref, value]) => batch.set(ref, value));
+    settle(batch.commit());
+  }
+}
+
+/** Removes the example data, and only it: the learner's own decks and answers stay. */
+export async function removeExample(uid: string): Promise<void> {
+  const refs = [];
+  const exampleOnly = (col: ReturnType<typeof collection>) => getDocs(query(col, where('example', '==', true)));
+  for (const d of (await exampleOnly(decks(uid))).docs) {
+    refs.push(...(await getDocs(cards(uid, d.id))).docs.map((c) => c.ref), d.ref);
+  }
+  for (const col of [attempts(uid), audits(uid), sessions(uid), gauntlets(uid)]) refs.push(...(await exampleOnly(col)).docs.map((d) => d.ref));
+  for (let i = 0; i < refs.length; i += BATCH) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + BATCH).forEach((r) => batch.delete(r));
     await batch.commit();
   }
 }

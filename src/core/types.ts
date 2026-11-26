@@ -25,6 +25,8 @@ export interface Deck {
   /** What the cards were made from. */
   source: 'text' | 'image' | 'pdf';
   cardCount: number;
+  /** Part of the example data (see core/example.ts), which can be removed on its own. */
+  example?: boolean;
 }
 
 /** Spaced-repetition state of one card (FSRS), serialisable. */
