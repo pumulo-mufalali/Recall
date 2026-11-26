@@ -14,6 +14,20 @@ describe('example data', () => {
     expect(exampleData(now)).toEqual(data);
   });
 
+  it('has no undefined values, which Firestore refuses to write', () => {
+    const undefinedAt = (v: unknown, path: string): string | null => {
+      if (v === undefined) return path;
+      if (v && typeof v === 'object') {
+        for (const [k, x] of Object.entries(v)) {
+          const found = undefinedAt(x, `${path}.${k}`);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    expect(undefinedAt(data, 'data')).toBeNull();
+  });
+
   it('passes the store’s shape checks', () => {
     expect(data.decks.every(isDeck)).toBe(true);
     expect(data.cards.every(isCard)).toBe(true);
