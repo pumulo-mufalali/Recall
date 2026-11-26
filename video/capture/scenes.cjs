@@ -239,9 +239,13 @@ const scenes = {
     await s.go('#/insights');
     await s.record();
     await s.mark('insights', '.page-head');
-    await s.sleep(1500);
-    await s.scroll(380, 1400);
-    await s.sleep(4500);
+    await s.sleep(3500);
+    await s.mark('claimed', 'h3', 'Claimed vs actual');
+    await s.scroll(380, 1600);
+    await s.sleep(5000);
+    await s.mark('wrong', 'h3', 'Certain, but wrong');
+    await s.scroll(420, 1600);
+    await s.sleep(9000);
     await s.finish();
   },
 };

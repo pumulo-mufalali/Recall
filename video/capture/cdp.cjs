@@ -12,14 +12,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Page-side helpers, installed before the app loads. */
 const INJECT = `(() => {
-  // A cursor and click ripples, drawn above everything (headless has no pointer of its own).
+  // An ordinary arrow cursor, drawn above everything (headless has no pointer of its own).
   const css = document.createElement('style');
   css.textContent = \`
     #film-cursor { position: fixed; left: 0; top: 0; width: 26px; height: 26px; z-index: 2147483647; pointer-events: none;
       transform: translate(-200px, -200px); transition: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
-    .film-ripple { position: fixed; z-index: 2147483646; pointer-events: none; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
-      background: rgba(59,107,224,.28); border: 2px solid rgba(59,107,224,.65); animation: film-ripple .55s ease-out forwards; }
-    @keyframes film-ripple { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
     ::-webkit-scrollbar { display: none; }
     html { scrollbar-width: none; scroll-behavior: smooth; }
   \`;
@@ -31,14 +28,6 @@ const INJECT = `(() => {
     c.innerHTML = svg;
     document.body.appendChild(c);
     addEventListener('mousemove', (e) => (c.style.transform = 'translate(' + (e.clientX - 3) + 'px,' + (e.clientY - 2) + 'px)'), true);
-    addEventListener('mousedown', (e) => {
-      const r = document.createElement('div');
-      r.className = 'film-ripple';
-      r.style.left = e.clientX + 'px';
-      r.style.top = e.clientY + 'px';
-      document.body.appendChild(r);
-      setTimeout(() => r.remove(), 600);
-    }, true);
   };
   if (document.body) place(); else addEventListener('DOMContentLoaded', place);
 
