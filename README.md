@@ -5,6 +5,8 @@
 Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: every piece of AI work is routed between **Gemini Nano on the device** (Chrome's built-in model) and **Gemini in the cloud**, and the app shows, for every result, where it ran and why.
 
 > **Live app:** <https://recall-three-rust.vercel.app/> · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
+>
+> **Trying it out?** Sign in with Google, then choose **"Or explore with example data"**: three decks and ten weeks of study history load into your own account, so Insights, the AI self-audit, levels and the Trap Gauntlet all have something to show straight away. Remove it any time in Settings → Your data.
 
 ## The problem
 
