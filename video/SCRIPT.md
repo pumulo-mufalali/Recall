@@ -25,9 +25,9 @@ the footage under each part, and the highlights.
 and the Trap Gauntlet card, the "Marked privately on device" tile, the "Online · On-device AI"
 status at the bottom left.
 
-**Narration** (54 words):
+**Narration** (45 words):
 
-You've read your notes three times. But could you answer a question on them without looking? Recall finds out. It turns your notes into questions, marks your answers, and brings each card back before you'd forget it. And what you write is saved only on your device, so it's safe to get things wrong.
+Nobody likes getting things wrong, especially in front of an AI. With Recall, you don't have to worry: your answers are saved only on your device. Recall turns your notes into questions, marks every answer, and brings each card back just before you'd forget it.
 
 **Highlights:**
 
