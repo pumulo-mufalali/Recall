@@ -294,7 +294,7 @@ function Welcome({ uid, name, conditions }: { uid: string; name: string; conditi
         <button className="onboard-alt" onClick={() => seedExample(uid, exampleData(new Date()))}>
           <span className="onboard-icon alt"><Icon name="sparkle" size={24} /></span>
           <h3>Or explore with example data</h3>
-          <p className="muted">Three decks and ten weeks of study history, so insights, the AI self-audit, levels and the Trap Gauntlet all have something to show. Remove it any time in Settings.</p>
+          <p className="muted">Three decks and ten weeks of study history, so insights, levels and the Trap Gauntlet all have something to show. Remove it any time in Settings.</p>
         </button>
       </section>
       <section className="how">

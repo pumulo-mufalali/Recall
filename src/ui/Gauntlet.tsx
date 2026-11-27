@@ -235,7 +235,7 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
       {phase === 'writing' && (
         <div className="gauntlet-writing">
           <div className="spinner lg" />
-          <h2>{where?.run === 'model' && where.mode === 'only_on_device' ? 'Gemini Nano is writing your traps on this device…' : 'Writing your traps…'}</h2>
+          <h2>Writing your traps…</h2>
           <p className="muted">From the cards you recently got wrong: one true statement and one trap for each.</p>
         </div>
       )}
@@ -314,7 +314,7 @@ function Intro({ source, where, xp, counted, failure, onStart }: { source: Card[
         <li>{counted ? 'Your first run today earns XP (points × 2).' : 'You have played today: this run is practice, with no XP.'}</li>
         <li>Built from {source.length} {source.length === 1 ? 'card' : 'cards'}{source.length ? `: ${source.map((c) => `“${c.prompt.length > 40 ? c.prompt.slice(0, 40) + '…' : c.prompt}”`).join(', ')}` : ''}.</li>
       </ul>
-      {where && <p className="muted small"><Icon name={where.run === 'model' && where.mode.includes('device') ? 'device' : 'cloud'} size={14} /> {where.reason}</p>}
+      {where && where.run !== 'model' && <p className="muted small">{where.reason}</p>}
       {typeof failure === 'string' && <p className="muted"><Icon name="clock" size={14} /> {failure}</p>}
       {failure && typeof failure !== 'string' && <ErrorNote error={failure} onRetry={onStart} />}
       {!source.length && <p className="muted">Add a deck first: the gauntlet is built from your cards.</p>}

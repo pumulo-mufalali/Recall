@@ -75,10 +75,10 @@ export function SignIn() {
 
       <section className="welcome-steps">
         <Step icon="device" title="Private, instant marking">
-          Your answers are marked by Gemini Nano inside Chrome. They never leave the device, and it works on a plane.
+          Your answers are marked by AI built into Chrome. They never leave the device, and it works on a plane.
         </Step>
         <Step icon="cloud" title="The cloud for heavy lifting">
-          Long chapters and PDFs go to Gemini in the cloud, and a second, larger model fact-checks every card before you learn it.
+          Long chapters and PDFs go to AI in the cloud, and a second AI fact-checks every card before you learn it.
         </Step>
         <Step icon="insights" title="Confidence, measured">
           Rate how sure you are after each answer, before it is marked. Recall shows where you are overconfident, which is where re-reading fools you.

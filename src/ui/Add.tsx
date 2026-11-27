@@ -1,12 +1,11 @@
 /**
- * Adding material: paste notes, or choose a photo or a PDF. Before anything runs, Recall says
- * where it will run and why. Then it writes the cards, fact-checks every one against the
+ * Adding material: paste notes, or choose a photo or a PDF. Then Recall writes the cards, fact-checks every one against the
  * material, and shows the review: verified cards, and flagged ones with what is off, the
  * supporting passage and a suggested correction. Flagged cards must be resolved before saving:
  * a card learned wrong is worse than no card.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { route, type Route, type Task } from '../core/route';
+import { route, type Task } from '../core/route';
 import { Queued, cardsFromFile, cardsFromText, type Material } from '../services/engine';
 import { reviewOf, type Draft, type Review } from '../services/review';
 import type { Settings } from '../services/firebase';
@@ -103,9 +102,7 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
     );
   }
 
-  if (busy) return <Working stage={stage} plan={plan} />;
-
-  const onDevice = plan?.run === 'model' && plan.mode.includes('device');
+  if (busy) return <Working stage={stage} />;
 
   return (
     <div className="stack narrow">
@@ -157,22 +154,18 @@ export function Add({ uid, settings, conditions, ready, onDone }: Props) {
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <span className="field-foot muted small">
-              {text.length.toLocaleString()} characters
-              {text.length > settings.deviceMaxChars && ` · longer than the device takes at once (${settings.deviceMaxChars.toLocaleString()})`}
-            </span>
           </label>
         ) : (
           <Drop kind={source} file={file} onFile={setFile} />
         )}
       </section>
 
-      {plan && (
-        <section className={`plan plan-${plan.run === 'queue' ? 'queue' : onDevice ? 'device' : 'cloud'}`}>
-          <span className="plan-icon"><Icon name={plan.run === 'queue' ? 'clock' : onDevice ? 'device' : 'cloud'} size={20} /></span>
+      {plan?.run === 'queue' && (
+        <section className="plan plan-queue">
+          <span className="plan-icon"><Icon name="clock" size={20} /></span>
           <div>
-            <strong>{plan.run === 'queue' ? 'Will wait for a connection' : onDevice ? 'Runs on this device' : 'Runs in the cloud'}</strong>
-            <p>{plan.reason}{plan.run === 'model' && ' Then a second model fact-checks every card.'}</p>
+            <strong>Will wait for a connection</strong>
+            <p>Recall keeps it and makes the questions when you are back online.</p>
           </div>
         </section>
       )}
@@ -231,7 +224,7 @@ function Drop({ kind, file, onFile }: { kind: 'image' | 'pdf'; file: File | null
         <>
           <span className="drop-icon"><Icon name={kind === 'pdf' ? 'pdf' : 'image'} size={30} /></span>
           <p><strong>{kind === 'pdf' ? 'Drop a PDF here' : 'Drop a photo of a page here'}</strong></p>
-          <p className="muted small">{kind === 'pdf' ? 'Lecture slides, a paper, a chapter.' : 'A textbook page, a whiteboard, handwritten notes. JPEG or PNG reads on this device.'}</p>
+          <p className="muted small">{kind === 'pdf' ? 'Lecture slides, a paper, a chapter.' : 'A textbook page, a whiteboard, handwritten notes.'}</p>
           <div className="actions center">
             <label className="btn">
               <Icon name="upload" size={16} /> Choose {kind === 'pdf' ? 'a file' : 'a photo'}
@@ -250,11 +243,10 @@ function Drop({ kind, file, onFile }: { kind: 'image' | 'pdf'; file: File | null
   );
 }
 
-function Working({ stage, plan }: { stage: Stage; plan: Route | null }) {
-  const onDevice = plan?.run === 'model' && plan.mode.includes('device');
+function Working({ stage }: { stage: Stage }) {
   const steps: [Stage, string, string][] = [
-    ['writing', 'Writing questions', onDevice ? 'Gemini Nano, on this device' : 'Gemini, in the cloud'],
-    ['checking', 'Fact-checking every answer', 'A second, larger model checks each one against your material'],
+    ['writing', 'Writing questions', 'From your material'],
+    ['checking', 'Fact-checking every answer', 'Against your material'],
   ];
   const at = steps.findIndex(([s]) => s === stage);
   return (

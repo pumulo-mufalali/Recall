@@ -109,13 +109,13 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
             label="Privacy mode"
           />
         </Row>
-        <Row label="Built-in AI" help="Gemini Nano in Chrome marks answers on this device: instant, private, offline.">
+        <Row label="Built-in AI" help="AI built into Chrome marks your answers on this device: instantly, privately, even offline.">
           <ModelState c={conditions} onGet={() => askDownload(ask, conditions)} />
         </Row>
         <Row label="Download on mobile data" help="The built-in AI is a few GB. By default Recall only downloads it on Wi-Fi.">
           <Choice value={useAllowMobileData()} options={[[false, 'Wi-Fi only'], [true, 'Allow']]} onChange={setAllowMobileData} label="Download on mobile data" />
         </Row>
-        <p className="small"><a href="#/engine">See how Recall's AI works <Icon name="arrow" size={13} /></a></p>
+        <p className="small"><a href="#/engine">See where Recall's AI works <Icon name="arrow" size={13} /></a></p>
       </Section>
 
       <YourData user={user} data={data} prefs={prefs} ask={ask} online={conditions.online} />
@@ -200,7 +200,7 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
   const removeExamples = async () => {
     const yes = await ask({
       title: 'Remove the example data?',
-      body: <p>This removes the example decks, their answer history, self-audit checks, gauntlet runs and planned session. Your own decks and answers stay.</p>,
+      body: <p>This removes the example decks, their answer history, gauntlet runs and planned session. Your own decks and answers stay.</p>,
       confirm: 'Remove example data',
     });
     if (!yes) return;
@@ -271,7 +271,7 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
     <Section icon="download" title="Your data">
       <Row
         label="Example data"
-        help={hasExample ? 'Example decks and ten weeks of history are loaded, to explore every feature. Removing them keeps your own work.' : 'Load three example decks and ten weeks of study history, to see insights, the self-audit and levels at once.'}
+        help={hasExample ? 'Example decks and ten weeks of history are loaded, to explore every feature. Removing them keeps your own work.' : 'Load three example decks and ten weeks of study history, to see insights and levels at once.'}
       >
         {hasExample ? (
           <button className="btn sm" onClick={removeExamples} disabled={!!busy || !online}>

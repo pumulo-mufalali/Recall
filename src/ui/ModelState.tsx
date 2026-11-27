@@ -12,9 +12,9 @@ export async function askDownload(ask: (a: { title: string; body?: ReactNode; co
     title: 'Download the built-in AI?',
     body: (
       <>
-        <p>Chrome will download Gemini Nano, a one-time download of a few gigabytes that every site shares. Chrome needs plenty of free disk space.</p>
+        <p>Chrome will download its built-in AI: a one-time download of a few gigabytes, so it needs plenty of free disk space.</p>
         <p><b>Use Wi-Fi, not mobile data or a limited bundle.</b> Recall holds the download back on mobile data unless you allow it in Settings.</p>
-        <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, Recall marks answers in the cloud, which uses very little data.</p>
+        <p>Once it is in, your answers are marked on this device: instantly, privately and offline. Until then, your answers are marked in the cloud, which uses very little data.</p>
       </>
     ),
     confirm: 'Download',
@@ -51,5 +51,5 @@ export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void 
         </p>
       </div>
     );
-  return <p className="state off">Not available in this browser. Recall uses the cloud, or the offline marker.</p>;
+  return <p className="state off">Not available in this browser. Your answers are marked in the cloud instead.</p>;
 }

@@ -198,7 +198,7 @@ function Signed({ user }: { user: User }) {
       screen = <Insights attempts={attempts} cards={cards} decks={decks} />;
       break;
     case 'engine':
-      screen = <EnginePage conditions={conditions} settings={settings} attempts={attempts} audits={audits} trust={trust} policy={policy} />;
+      screen = <EnginePage conditions={conditions} settings={settings} attempts={attempts} policy={policy} />;
       break;
     case 'settings':
       screen = (

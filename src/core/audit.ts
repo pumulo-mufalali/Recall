@@ -123,9 +123,9 @@ export type Policy = 'private' | 'balanced' | 'accurate';
 
 export const POLICY_LABEL: Record<Policy, string> = { private: 'Private', balanced: 'Balanced', accurate: 'Accuracy first' };
 export const POLICY_HELP: Record<Policy, string> = {
-  private: 'Answers never leave this device. Nano’s marks stand as they are.',
-  balanced: 'Doubtful marks go to the cloud; a few others are spot-checked. Fewer as Nano earns trust.',
-  accurate: 'Escalates more readily and spot-checks more often, for the most reliable marks.',
+  private: 'Your answers never leave this device.',
+  balanced: 'Marks that look uncertain are double-checked in the cloud.',
+  accurate: 'More marks are double-checked in the cloud, for the most reliable results.',
 };
 
 export interface Thresholds {

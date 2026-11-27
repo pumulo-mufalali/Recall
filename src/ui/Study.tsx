@@ -285,7 +285,7 @@ function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech
           </div>
           {(listening || transcribing || mic.error) && (
             <p className={`voice-note small${mic.error ? ' error' : ' muted'}`} aria-live="polite">
-              {mic.error ?? (transcribing ? 'Writing down what you said…' : <><Icon name={plan.listen === 'device' ? 'device' : 'cloud'} size={13} /> {plan.listen === 'device' ? 'Listening on this device: your voice never leaves it.' : 'Recording: Gemini writes it down when you stop.'}</>)}
+              {mic.error ?? (transcribing ? 'Writing down what you said…' : <><Icon name={plan.listen === 'device' ? 'device' : 'cloud'} size={13} /> {plan.listen === 'device' ? 'Listening on this device: your voice never leaves it.' : 'Recording: your words appear when you stop.'}</>)}
             </p>
           )}
           <p className="label">How sure are you? <span className="muted small">Decide before you check: it is what makes this honest.</span></p>
@@ -459,42 +459,22 @@ function MicButton({ plan, speech, state, level, getting, disabled, onTalk, onSt
   );
 }
 
-/** What the self-audit did with this mark: escalated it, is spot-checking it, or revised it. */
+/** What the second check did with this mark, in plain words: double-checked first, or changed after. */
 function AuditNote({ marked, second }: { marked: Marked; second: 'running' | { agree: boolean; nano: number; cloud: number } | null }) {
   const pct = (v: number) => `${Math.round(v * 100)}%`;
-  const check = marked.value.check;
-  if (check?.kind === 'escalated') {
+  if (marked.value.check?.kind === 'escalated') {
     return (
       <div className="audit-note escalated">
         <Icon name="cloud" size={16} />
-        <div>
-          <strong>Escalated to the cloud.</strong> Nano marked this {pct(check.nano)}, but {marked.doubt?.reasons[0]?.toLowerCase() ?? 'the mark was doubtful'}. The larger model marked it {pct(check.cloud)}
-          {check.agree ? ', so Nano was right this time.' : ', and its mark is the one that counts.'}
-        </div>
+        <div><strong>Double-checked.</strong> A second AI checked this mark before showing it to you.</div>
       </div>
     );
   }
-  if (second === 'running') {
-    return (
-      <div className="audit-note">
-        <span className="spinner sm" />
-        <div>The cloud model is spot-checking Nano’s mark in the background. Carry on.</div>
-      </div>
-    );
-  }
-  if (second && second.agree) {
-    return (
-      <div className="audit-note agreed">
-        <Icon name="check" size={16} />
-        <div><strong>Spot-check agreed.</strong> The cloud model marked it {pct(second.cloud)} too. Nano’s trust goes up.</div>
-      </div>
-    );
-  }
-  if (second && !second.agree) {
+  if (second && second !== 'running' && !second.agree) {
     return (
       <div className="audit-note revised">
         <Icon name="warn" size={16} />
-        <div><strong>Spot-check revised the mark</strong> from {pct(second.nano)} (Nano) to {pct(second.cloud)} (cloud). Your schedule was updated, and Nano’s trust goes down.</div>
+        <div><strong>Mark updated</strong> from {pct(second.nano)} to {pct(second.cloud)} after a second check. Your schedule was updated too.</div>
       </div>
     );
   }

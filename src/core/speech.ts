@@ -41,12 +41,12 @@ export function voicePlan(c: VoiceConditions): VoicePlan {
     listen === 'device'
       ? 'On this device. Your voice never leaves it.'
       : listen === 'cloud'
-        ? 'Gemini transcribes your recording in the cloud.'
+        ? 'Your recording is written down in the cloud.'
         : !c.canRecord
           ? 'No microphone access in this browser.'
           : c.policy === 'private'
-            ? 'Private mode, and no on-device speech recognition.'
-            : 'Offline, and no on-device speech recognition.';
+            ? 'Speaking is not available in Private mode in this browser.'
+            : 'Speaking needs a connection in this browser.';
   const speakQuestion: Speak = c.online ? 'cloud' : 'device';
   return { listen, listenReason, speakQuestion };
 }

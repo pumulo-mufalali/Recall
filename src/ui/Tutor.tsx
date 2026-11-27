@@ -23,14 +23,12 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
   const [pending, setPending] = useState<{ text: string; deeper: boolean } | null>(null);
   const [error, setError] = useState<{ friendly: Friendly; retry: () => void } | null>(null);
   const [blocked, setBlocked] = useState('');
-  const [where, setWhere] = useState<Route | null>(null);
   const [deeperRoute, setDeeperRoute] = useState<Route | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Where replies will be written, shown before the first message; and whether going deeper is possible.
+  // Whether going deeper (a bigger model) is possible right now.
   useEffect(() => {
-    void tutorRoute(settings, policy, false).then(setWhere);
     void tutorRoute(settings, policy, true).then(setDeeperRoute);
   }, [settings, policy, turns.length]);
 
@@ -79,7 +77,6 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
     <section className="tutor" aria-label="Talk it through with the tutor">
       <div className="tutor-head">
         <h3><Icon name="chat" size={18} /> Talk it through</h3>
-        {where && <span className="muted small">{where.reason}</span>}
       </div>
 
       <div className="tutor-log" ref={logRef} aria-live="polite">
@@ -96,7 +93,7 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
         {turns.map((t, i) =>
           t.role === 'user' ? (
             t.deeper ? (
-              <p key={i} className="tutor-handoff"><Icon name="cloud" size={14} /> Handed to a larger cloud model, with the conversation so far</p>
+              <p key={i} className="tutor-handoff"><Icon name="cloud" size={14} /> A bigger model takes over, with your conversation so far</p>
             ) : (
               <p key={i} className="tutor-msg mine">{t.text}</p>
             )
@@ -134,7 +131,7 @@ export function Tutor({ ctx, settings, policy }: { ctx: TutorContext; settings: 
           className="btn sm ghost tutor-deeper"
           onClick={() => void send(DEEPER_ASK, true)}
           disabled={!canDeepen || !!pending}
-          title={deeperRoute?.run === 'model' ? 'A larger cloud model answers, with the conversation so far' : deeperRoute?.reason}
+          title={deeperRoute?.run === 'model' ? 'A bigger model answers, with your conversation so far' : deeperRoute?.reason}
         >
           <Icon name="cloud" size={15} /> Ask a bigger model
           {!canDeepen && deeperRoute && deeperRoute.run !== 'model' && <span className="muted small"> · {deeperRoute.reason}</span>}

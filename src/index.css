@@ -862,6 +862,7 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .routes li { display: grid; grid-template-columns: minmax(180px, 1.1fr) 140px 2fr; gap: 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
 .routes li:first-child { border-top: none; }
 .route-task { display: flex; flex-direction: column; }
+.routes.plain li { grid-template-columns: minmax(0, 1fr) auto; }
 @media (max-width: 700px) { .routes li { grid-template-columns: 1fr auto; } .route-why { grid-column: 1 / -1; } }
 .rchip { display: inline-flex; align-items: center; gap: 6px; justify-self: start; font-size: 0.8rem; font-weight: 600; padding: 4px 11px; border-radius: 999px; transition: background .3s, color .3s; }
 .rchip-device { background: var(--device-soft); color: var(--device); }
