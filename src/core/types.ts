@@ -25,8 +25,12 @@ export interface Deck {
   /** What the cards were made from. */
   source: 'text' | 'image' | 'pdf';
   cardCount: number;
-  /** Part of the example data (see core/example.ts), which can be removed on its own. */
+  /** A starter deck (see core/starter.ts), which can be removed on its own. */
+  starter?: boolean;
+  /** Earlier versions' made-up example data: still recognised, so it can be removed. */
   example?: boolean;
+  /** The public document a starter deck was made from. */
+  origin?: { title: string; publisher: string; url: string };
 }
 
 /** Spaced-repetition state of one card (FSRS), serialisable. */

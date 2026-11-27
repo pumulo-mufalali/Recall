@@ -121,6 +121,11 @@ export function DeckView({ uid, deck, cards, attempts, newPerSession, ask, onDel
         <div className="deck-hero-copy">
           <p className="eyebrow"><Icon name={SOURCE_ICON[deck.source]} size={14} /> {SOURCE_LABEL[deck.source]}</p>
           <h1>{deck.title}</h1>
+          {deck.origin && (
+            <p className="small muted">
+              Made by Recall from <a href={deck.origin.url} target="_blank" rel="noreferrer">{deck.origin.title}</a>, {deck.origin.publisher}.
+            </p>
+          )}
           <p className="muted">
             {p.total} cards · {p.known} known · {p.learning} learning · {p.fresh} new
             {p.accuracy !== null && ` · ${Math.round(p.accuracy * 100)}% right so far`}

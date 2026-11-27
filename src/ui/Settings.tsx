@@ -11,8 +11,7 @@ import { NEW_CARD_OPTIONS, type StudyPrefs } from '../core/prefs';
 import { REMIND_OPTIONS, SESSION_LENGTHS } from '../core/plan';
 import type { Attempt, Card, Deck } from '../core/types';
 import { auth } from '../services/firebase';
-import { deleteAllData, removeExample, savePrefs, seedExample } from '../services/store';
-import { exampleData } from '../core/example';
+import { deleteAllData, removeStarter, savePrefs, seedStarter } from '../services/store';
 import { askDownload, ModelState } from './ModelState';
 import { Icon, type IconName } from './Icon';
 import { useNotifyPermission } from './reminders';
@@ -263,21 +262,21 @@ function Notifications() {
 function YourData({ user, data, prefs, ask, online }: { user: User; data: Props['data']; prefs: StudyPrefs; ask: Ask; online: boolean }) {
   const [busy, setBusy] = useState<'' | 'data' | 'account' | 'example'>('');
   const [error, setError] = useState('');
-  const hasExample = data.decks.some((d) => d.example);
+  const hasExample = data.decks.some((d) => d.starter || d.example);
 
   const removeExamples = async () => {
     const yes = await ask({
-      title: 'Remove the example data?',
-      body: <p>This removes the example decks, their answer history, gauntlet runs and planned session. Your own decks and answers stay.</p>,
-      confirm: 'Remove example data',
+      title: 'Remove the starter decks?',
+      body: <p>This removes the starter decks and the answers you gave on them. Your own decks and answers stay.</p>,
+      confirm: 'Remove starter decks',
     });
     if (!yes) return;
     setBusy('example');
     setError('');
     try {
-      await removeExample(user.uid);
+      await removeStarter(user.uid);
     } catch (e) {
-      setError(`Could not remove the example data: ${(e as Error).message}`);
+      setError(`Could not remove the starter decks: ${(e as Error).message}`);
     } finally {
       setBusy('');
     }
@@ -339,15 +338,15 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
   return (
     <Section icon="download" title="Your data">
       <Row
-        label="Example data"
-        help={hasExample ? 'Example decks and ten weeks of history are loaded, to explore every feature. Removing them keeps your own work.' : 'Load three example decks and ten weeks of study history, to see insights and levels at once.'}
+        label="Starter decks"
+        help={hasExample ? 'Three decks made by Recall from real public documents are in your library. Removing them keeps your own work.' : 'Add three decks made by Recall from real public documents (NASA, the National Park Service, the U.S. National Library of Medicine), to start studying at once.'}
       >
         {hasExample ? (
           <button className="btn sm" onClick={removeExamples} disabled={!!busy || !online}>
             {busy === 'example' ? <><span className="spinner sm" /> Removing…</> : <><Icon name="trash" size={14} /> Remove</>}
           </button>
         ) : (
-          <button className="btn sm" onClick={() => seedExample(user.uid, exampleData(new Date()))} disabled={!!busy}>
+          <button className="btn sm" onClick={() => seedStarter(user.uid)} disabled={!!busy}>
             <Icon name="sparkle" size={14} /> Load
           </button>
         )}

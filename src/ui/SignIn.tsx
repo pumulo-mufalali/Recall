@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react';
 import { GoogleAuthProvider, getRedirectResult, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../services/firebase';
-import { seedExample } from '../services/store';
-import { exampleData } from '../core/example';
+import { seedStarter } from '../services/store';
 import { Plain, friendly, type Friendly } from '../core/errors';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
@@ -40,13 +39,14 @@ export function SignIn() {
   };
 
   // A guest (Firebase anonymous sign-in): no Google account needed. They land on a full app, with
-  // the example decks and history loaded; Settings can keep it by signing in with Google.
+  // three starter decks to study (real documents, made into cards by Recall); Settings can keep
+  // the account by signing in with Google.
   const tryAsGuest = async () => {
     setBusy(true);
     setError(null);
     try {
       const { user } = await signInAnonymously(auth);
-      seedExample(user.uid, exampleData(new Date()));
+      seedStarter(user.uid);
     } catch (e) {
       fail(e);
       setBusy(false);
@@ -75,7 +75,7 @@ export function SignIn() {
             </button>
           </div>
           {error && <ErrorNote error={error} onRetry={signIn} />}
-          <p className="small muted">Free. With Google, your cards sync across devices; without, they stay in this browser, with example decks to explore. Both work offline.</p>
+          <p className="small muted">Free. With Google, your cards sync across devices; without, they stay in this browser, with three starter decks to study. Both work offline.</p>
         </div>
 
         <div className="welcome-demo" aria-hidden>

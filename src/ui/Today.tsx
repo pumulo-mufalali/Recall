@@ -11,8 +11,7 @@ import { current, upcoming, type Session } from '../core/plan';
 import { playedToday, totalXp, type GauntletRun } from '../core/gauntlet';
 import { LevelBar } from './LevelBar';
 import { sessionText } from './sessions';
-import { seedExample, type QueuedJob } from '../services/store';
-import { exampleData } from '../core/example';
+import { seedStarter, type QueuedJob } from '../services/store';
 import type { Review } from '../services/review';
 import { Icon } from './Icon';
 import { Heatmap, ProgressBar } from './charts';
@@ -74,10 +73,10 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
         </div>
       </header>
 
-      {decks.some((d) => d.example) && (
+      {decks.some((d) => d.starter) && (
         <p className="example-note">
           <Icon name="sparkle" size={15} />
-          <span>You are exploring <strong>example data</strong>: ten weeks of study, so every feature has something to show. Your own decks join it; remove the examples in <a href="#/settings">Settings</a>.</span>
+          <span>You have three <strong>starter decks</strong>, made by Recall from real public documents (NASA, the National Park Service, the U.S. National Library of Medicine). Study a few cards and Insights, levels and the Trap Gauntlet fill in from your own answers. Add your own material any time; remove the starters in <a href="#/settings">Settings</a>.</span>
         </p>
       )}
 
@@ -291,10 +290,10 @@ function Welcome({ uid, name, conditions }: { uid: string; name: string; conditi
           <p>Paste notes, snap a photo of a textbook page or upload a PDF. Recall writes the questions and fact-checks them against your material.</p>
           <span className="btn primary">Add material <Icon name="arrow" size={16} /></span>
         </a>
-        <button className="onboard-alt" onClick={() => seedExample(uid, exampleData(new Date()))}>
+        <button className="onboard-alt" onClick={() => seedStarter(uid)}>
           <span className="onboard-icon alt"><Icon name="sparkle" size={24} /></span>
-          <h3>Or explore with example data</h3>
-          <p className="muted">Three decks and ten weeks of study history, so insights, levels and the Trap Gauntlet all have something to show. Remove it any time in Settings.</p>
+          <h3>Or start with three starter decks</h3>
+          <p className="muted">Made by Recall from real public documents (NASA, the National Park Service, the U.S. National Library of Medicine). Remove them any time in Settings.</p>
         </button>
       </section>
       <section className="how">

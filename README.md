@@ -6,7 +6,7 @@ Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: e
 
 > **Live app:** <https://recall-three-rust.vercel.app/> · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
 >
-> **Trying it out?** Click **"Try it without signing in"**: no account needed. You start with three example decks and ten weeks of study history, so Insights, the AI self-audit, levels and the Trap Gauntlet all have something to show straight away. (Signed in with Google instead? Choose **"Or explore with example data"**.) Remove the examples any time in Settings → Your data.
+> **Trying it out?** Click **"Try it without signing in"**: no account needed. You start with three **starter decks**, made by Recall's own pipeline (Gemini writes the cards, a second model fact-checks them) from real public documents: [Cells and DNA](https://medlineplus.gov/download/genetics/understanding/basics.pdf) (U.S. National Library of Medicine), [Fun Facts About the Moon](https://nightsky.jpl.nasa.gov/media/documents/attachments/Fun_Facts_About_the_Moon.pdf) (NASA) and an [American Revolution overview](https://www.nps.gov/inde/learn/education/classrooms/upload/American-Revolution-Overview-v2.pdf) (National Park Service). There is no made-up history: study a few cards and Insights, levels and the Trap Gauntlet fill in from your own answers. (Signed in with Google instead? Choose **"Or start with three starter decks"**.) Remove them any time in Settings → Your data.
 
 ## The problem
 

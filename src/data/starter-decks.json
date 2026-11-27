@@ -1,0 +1,332 @@
+[
+  {
+    "title": "Cells and DNA",
+    "publisher": "MedlinePlus Genetics, U.S. National Library of Medicine",
+    "url": "https://medlineplus.gov/download/genetics/understanding/basics.pdf",
+    "madeBy": "cloud",
+    "checkedBy": "cloud",
+    "madeAt": "2026-11-27",
+    "cards": [
+      {
+        "prompt": "What are cells and what primary roles do they serve in the human body?",
+        "answer": "Cells are the basic building blocks of all living things, and the human body is composed of trillions of them. They provide structure, take in nutrients from food to convert into energy, carry out specialized functions, contain hereditary material, and can make copies of themselves.",
+        "keyPoints": [
+          "Basic building blocks of all living things",
+          "Provide structure and convert food into energy",
+          "Contain hereditary material and make copies of themselves"
+        ]
+      },
+      {
+        "prompt": "What is the function of the cytoskeleton within a cell?",
+        "answer": "The cytoskeleton is a network of long fibers that forms the cell's structural framework. It determines cell shape, participates in cell division, allows cells to move, and provides a track-like system for the movement of organelles and other substances.",
+        "keyPoints": [
+          "Network of long fibers providing structural framework",
+          "Determines cell shape, allows movement, and aids cell division",
+          "Directs movement of organelles and substances"
+        ]
+      },
+      {
+        "prompt": "How do lysosomes and peroxisomes function as the recycling center of the cell?",
+        "answer": "Lysosomes and peroxisomes act as recycling centers by digesting foreign bacteria that invade the cell, ridding the cell of toxic substances, and recycling worn-out cell components.",
+        "keyPoints": [
+          "Digest foreign invading bacteria",
+          "Rid the cell of toxic substances",
+          "Recycle worn-out cell components"
+        ]
+      },
+      {
+        "prompt": "What makes mitochondria unique compared to other organelles in the cell?",
+        "answer": "Mitochondria are complex organelles that convert energy from food into a usable form for the cell. Unlike most other organelles, they have their own genetic material separate from the nuclear DNA and can make copies of themselves.",
+        "keyPoints": [
+          "Convert energy from food into a usable form",
+          "Have their own separate genetic material",
+          "Capable of making copies of themselves"
+        ]
+      },
+      {
+        "prompt": "What is the main role of the cell nucleus and how is its DNA protected?",
+        "answer": "The nucleus serves as the cell's command center by sending directions to grow, mature, divide, or die, and it houses the cell's hereditary DNA. The nuclear envelope surrounds and protects the DNA while separating the nucleus from the rest of the cell.",
+        "keyPoints": [
+          "Acts as the cell's command center",
+          "Houses the cell's hereditary DNA",
+          "Protected and separated by the nuclear envelope"
+        ]
+      },
+      {
+        "prompt": "How is information stored in DNA and what determines the specific characteristics of an organism?",
+        "answer": "Information in DNA is stored as a code made up of four chemical bases: adenine, guanine, cytosine, and thymine. The order, or sequence, of these bases determines the information available for building and maintaining an organism.",
+        "keyPoints": [
+          "Stored as a code of four chemical bases (A, G, C, T)",
+          "Base sequence determines information for building and maintaining an organism"
+        ]
+      },
+      {
+        "prompt": "Why is DNA replication critical when cells divide?",
+        "answer": "DNA replication allows each strand in the double helix to serve as a pattern for duplicating the base sequence. This is critical during cell division because every new cell requires an exact copy of the DNA from the old cell.",
+        "keyPoints": [
+          "Strands serve as patterns to duplicate base sequences",
+          "Ensures new cells receive an exact copy of DNA"
+        ]
+      },
+      {
+        "prompt": "What is a gene and how do alleles contribute to physical differences among people?",
+        "answer": "A gene is the basic physical and functional unit of heredity made of DNA that often acts as instructions to make proteins. Alleles are forms of the same gene with small differences in their DNA base sequences, which contribute to each person's unique physical features.",
+        "keyPoints": [
+          "Basic unit of heredity made of DNA",
+          "Alleles are variant forms of the same gene",
+          "Small base differences in alleles create unique physical features"
+        ]
+      },
+      {
+        "prompt": "How are chromosomes structured inside the nucleus of a cell?",
+        "answer": "Inside the nucleus, DNA molecules are tightly coiled many times around support proteins called histones. This packaging forms thread-like structures called chromosomes, which feature a centromere and a p arm and q arm.",
+        "keyPoints": [
+          "DNA is tightly coiled around histone proteins",
+          "Form thread-like structures with a centromere, p arm, and q arm"
+        ]
+      },
+      {
+        "prompt": "What are promoters, enhancers, and silencers in noncoding DNA?",
+        "answer": "They are regulatory elements found in noncoding DNA that provide binding sites for specialized proteins. Promoters are found ahead of genes to help carry out transcription, enhancers help activate transcription, and silencers repress transcription.",
+        "keyPoints": [
+          "Regulatory elements providing protein binding sites",
+          "Promoters and enhancers assist or activate transcription",
+          "Silencers repress transcription"
+        ]
+      },
+      {
+        "prompt": "What roles do telomeres and satellite DNA play as structural elements of noncoding DNA?",
+        "answer": "Telomeres are repeated noncoding DNA sequences at chromosome ends that protect them from degradation during copying. Satellite DNA forms structural elements like centromeres and densely packed heterochromatin, helping control gene activity and maintain chromosome structure.",
+        "keyPoints": [
+          "Telomeres protect chromosome ends from degradation during copying",
+          "Satellite DNA forms centromeres and heterochromatin",
+          "Maintain chromosome structure and control gene activity"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Moon",
+    "publisher": "NASA Night Sky Network, Jet Propulsion Laboratory",
+    "url": "https://nightsky.jpl.nasa.gov/media/documents/attachments/Fun_Facts_About_the_Moon.pdf",
+    "madeBy": "cloud",
+    "checkedBy": "cloud",
+    "madeAt": "2026-11-27",
+    "cards": [
+      {
+        "prompt": "Why are the dark regions on the Moon's surface called maria, and what are they actually?",
+        "answer": "The dark regions are called maria, which means seas, because early observers thought they were bodies of water. In reality, they are vast, smooth lava beds.",
+        "keyPoints": [
+          "Called maria or seas",
+          "Appear as vast dark regions",
+          "Actually very large, smooth lava beds"
+        ]
+      },
+      {
+        "prompt": "Why do footprints left by Apollo astronauts on the Moon last for a very long time?",
+        "answer": "The footprints last a long time because the Moon has no long-lasting or significant atmosphere, meaning there is no wind or rain to erode the surface.",
+        "keyPoints": [
+          "No significant or long-lasting atmosphere",
+          "Absence of wind and rain prevents surface erosion"
+        ]
+      },
+      {
+        "prompt": "How do spring tides and neap tides differ in their causes during the Moon's orbit?",
+        "answer": "Spring tides occur during full and new moons when the Sun, Earth, and Moon align, producing higher than normal tides. Neap tides are smaller tides that form when the Moon is at its first or last quarter.",
+        "keyPoints": [
+          "Spring tides happen at full and new moon during alignment",
+          "Neap tides happen at first or last quarter phases",
+          "Spring tides are higher than normal"
+        ]
+      },
+      {
+        "prompt": "Why does the Moon always show the same face to Earth?",
+        "answer": "Long ago, Earth's gravitational effects slowed down the Moon's rotation about its axis until it matched the Moon's orbital period, causing the effect to stabilize.",
+        "keyPoints": [
+          "Earth's gravity slowed the Moon's rotation",
+          "Rotation rate matched the orbital period",
+          "The synchronized effect eventually stabilized"
+        ]
+      },
+      {
+        "prompt": "What is the leading theory regarding how the Moon was created?",
+        "answer": "According to the leading theory, the Moon was created shortly after the solar system began forming about 4.5 billion years ago when a rock the size of Mars slammed into Earth.",
+        "keyPoints": [
+          "Created about 4.5 billion years ago",
+          "Caused by a Mars-sized rock slamming into Earth"
+        ]
+      },
+      {
+        "prompt": "Why haven't the craters on the Moon eroded significantly over billions of years?",
+        "answer": "The craters have not eroded much because the Moon is not geologically active—lacking earthquakes, volcanoes, or mountain-building—and has virtually no atmosphere to cause wind or rain erosion.",
+        "keyPoints": [
+          "Lack of geological activity like earthquakes or volcanoes",
+          "Virtually no atmosphere to cause wind and rain erosion"
+        ]
+      },
+      {
+        "prompt": "How does the Moon affect Earth's rotation over long periods of time?",
+        "answer": "The Moon steals some of Earth's rotational energy through gravitational tugging and tidal forces, which causes our planet to slow down by about 1.5 milliseconds every century.",
+        "keyPoints": [
+          "Moon steals some of Earth's rotational energy",
+          "Causes Earth's rotation to slow down by 1.5 milliseconds per century"
+        ]
+      },
+      {
+        "prompt": "Why are some scientists inclined to consider the Earth-Moon system a double planet?",
+        "answer": "Some scientists view the system this way because the Moon is larger than Pluto and has a diameter roughly one-fourth that of Earth, making it unusually large for a moon.",
+        "keyPoints": [
+          "Moon is bigger than Pluto",
+          "Moon has roughly one-fourth the diameter of Earth"
+        ]
+      },
+      {
+        "prompt": "How do moonquakes differ from earthquakes in terms of their origin and geological implications?",
+        "answer": "Small moonquakes originate several miles below the surface and are thought to be caused by Earth's gravitational pull rather than tectonic activity, showing the Moon is not a totally geologically dead place.",
+        "keyPoints": [
+          "Originate several miles below the surface",
+          "Caused by the gravitational pull of Earth",
+          "Indicates the Moon is not entirely geologically dead"
+        ]
+      },
+      {
+        "prompt": "What causes a lunar eclipse to occur, and why doesn't it happen every month?",
+        "answer": "A lunar eclipse happens when the Full Moon enters the shadow of the Earth. It does not happen every month because the Moon's orbit is slightly inclined relative to Earth's orbit.",
+        "keyPoints": [
+          "Occurs when Full Moon enters Earth's shadow",
+          "Moon's orbit is slightly inclined to Earth's orbit"
+        ]
+      },
+      {
+        "prompt": "What is the physical shape and center of mass of the Moon?",
+        "answer": "The Moon is not spherical but is shaped like an egg, with one of the small ends pointing toward Earth. Furthermore, its center of mass is about 1.2 miles off-center from its geometric center.",
+        "keyPoints": [
+          "Shaped like an egg rather than a sphere",
+          "Center of mass is about 1.2 miles off-center"
+        ]
+      },
+      {
+        "prompt": "What are 'Moon trees' and how did they originate?",
+        "answer": "Moon trees are trees on Earth that grew from seeds taken into lunar orbit by Apollo 14 astronaut Stuart Roosa in 1971, which were later brought back and germinated on Earth.",
+        "keyPoints": [
+          "Grew from seeds taken into lunar orbit on Apollo 14",
+          "Brought back to Earth and germinated at various sites"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The American Revolution",
+    "publisher": "National Park Service, Independence National Historical Park",
+    "url": "https://www.nps.gov/inde/learn/education/classrooms/upload/American-Revolution-Overview-v2.pdf",
+    "madeBy": "cloud",
+    "checkedBy": "cloud",
+    "madeAt": "2026-11-27",
+    "cards": [
+      {
+        "prompt": "How did the governance of the American colonies transition from the end of the Revolutionary War to 1789?",
+        "answer": "After gaining independence, the colonies initially ruled themselves under the Articles of Confederation, which was a firm league of friendship. In 1789, this was superseded by the U.S. Constitution, which established the legislative, executive, and judicial branches.",
+        "keyPoints": [
+          "Ruled initially under the Articles of Confederation",
+          "Transitioned to the U.S. Constitution in 1789",
+          "Constitution established three distinct branches of government"
+        ]
+      },
+      {
+        "prompt": "Why did the Second Continental Congress draft and send the Olive Branch Petition to King George III in 1775?",
+        "answer": "The Congress drafted the Olive Branch Petition in hopes of reaching a peaceful resolution with Britain, despite already preparing for war by establishing a Continental army and electing George Washington as Commander-in-Chief.",
+        "keyPoints": [
+          "Sent in hopes of reaching a peaceful resolution",
+          "Drafted while simultaneously preparing for war and establishing an army",
+          "Rejected by King George III, who declared the colonies in revolt"
+        ]
+      },
+      {
+        "prompt": "Who were the members of the Committee of Five assigned to draft a document of independence, and who did most of the writing?",
+        "answer": "The Committee of Five consisted of John Adams, Benjamin Franklin, Thomas Jefferson, Roger Sherman, and Robert R. Livingston. Thomas Jefferson did most of the work, drafting the document at his lodgings.",
+        "keyPoints": [
+          "Composed of Adams, Franklin, Jefferson, Sherman, and Livingston",
+          "Thomas Jefferson did most of the actual drafting"
+        ]
+      },
+      {
+        "prompt": "Why did Thomas Jefferson state that the purpose of the Declaration of Independence was not to be thoroughly original?",
+        "answer": "Jefferson explained that the document's purpose was to make the case for the American colonies in plain terms and persuade the world using the harmonizing sentiments of the day, acting as an expression of the American mind rather than introducing entirely new principles.",
+        "keyPoints": [
+          "Not intended to present entirely new principles or ideas",
+          "Meant to express common sense and the harmonizing sentiments of the day",
+          "Acted as an expression of the American mind to persuade the world"
+        ]
+      },
+      {
+        "prompt": "Which specific section or clause removed from the original draft of the Declaration angered Thomas Jefferson the most?",
+        "answer": "Thomas Jefferson was most angered by the removal of a clause that blamed the British King for forcing the slave trade upon the American colonies.",
+        "keyPoints": [
+          "A clause blaming the King for the slave trade was removed",
+          "This removal was the one that angered Jefferson the most"
+        ]
+      },
+      {
+        "prompt": "How does the preamble of the Declaration of Independence justify the right of the people to form a new government?",
+        "answer": "The preamble asserts individual unalienable rights like life, liberty, and the pursuit of happiness. It argues that if a government tries to take these rights away through a long train of abuses and usurpations, it becomes the people's right and duty to throw off that government and establish new guards for their security.",
+        "keyPoints": [
+          "Asserts unalienable rights including life, liberty, and the pursuit of happiness",
+          "States that people have the right and duty to overthrow a government that violates these rights",
+          "Triggered by a long train of abuses and usurpations by the government"
+        ]
+      },
+      {
+        "prompt": "What major complaints or grievances did the colonists level against the British King and Parliament in the Declaration?",
+        "answer": "The colonists complained that the British government took away their rights as English citizens, ignored or altered their colonial governments, denied them trial by jury, and sent a hired army to force obedience to unjust laws.",
+        "keyPoints": [
+          "Taking away rights as English citizens and altering colonial governments",
+          "Denying the right to a trial by jury",
+          "Sending a hired army to enforce unjust laws"
+        ]
+      },
+      {
+        "prompt": "What did the signers of the Declaration of Independence pledge to each other in the formal declaration of independence?",
+        "answer": "The signers ended the formal declaration by mutually pledging to each other their lives, their fortunes, and their sacred honor to demonstrate their willingness to sacrifice everything for freedom.",
+        "keyPoints": [
+          "Pledged their lives, fortunes, and sacred honor",
+          "Demonstrated ultimate commitment and willingness to give up everything for freedom"
+        ]
+      },
+      {
+        "prompt": "What significance did John Hancock's signature have on the Declaration of Independence?",
+        "answer": "As the President of the Second Continental Congress, John Hancock signed first and wrote his name very large, highlighting the immense personal risk involved since all signers risked their lives by signing the document.",
+        "keyPoints": [
+          "John Hancock was the President of the Second Continental Congress and signed first",
+          "He wrote his name in a very large script",
+          "Signifying the great personal risk and potential death warrants signers faced"
+        ]
+      },
+      {
+        "prompt": "How did the words of the Declaration of Independence influence international movements shortly after its creation?",
+        "answer": "Although remaining obscure within the U.S. for decades, the spirit of the Declaration immediately inspired global movements, most notably triggering ripples that led to the French Revolution in 1789, the Haitian Revolution, and later independence struggles in Latin America.",
+        "keyPoints": [
+          "Inspired the French Revolution in 1789",
+          "Influenced the Haitian Revolution and Latin American independence movements",
+          "Spread its spirit of independence internationally despite initial local obscurity"
+        ]
+      },
+      {
+        "prompt": "How did domestic groups like the women’s suffrage movement and abolitionists adapt or view the Declaration of Independence in later decades?",
+        "answer": "The women's suffrage movement adapted the text in the 1848 Declaration of Sentiments to assert that 'all men and women are created equal,' while abolitionists like Frederick Douglass used the nation's independence celebrations to highlight the hypocrisy and shortcoming of denying liberty to enslaved people.",
+        "keyPoints": [
+          "Women's suffrage movement adapted it in the Declaration of Sentiments to include women",
+          "Abolitionists like Frederick Douglass used it to critique the nation's failure to extend liberty to enslaved people"
+        ]
+      },
+      {
+        "prompt": "What did John Adams mean when he asserted that the real American Revolution was effected before the war commenced?",
+        "answer": "Adams meant that the fundamental revolution occurred within the minds and hearts of the people through a radical change in their principles, opinions, sentiments, and religious understandings of their duties and obligations before the military conflict even started.",
+        "keyPoints": [
+          "The real revolution happened in the minds and hearts of the people",
+          "Involved a radical shift in principles, opinions, and sentiments",
+          "Occurred prior to the commencement of the actual war"
+        ]
+      }
+    ]
+  }
+]
