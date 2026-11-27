@@ -108,15 +108,13 @@ const scenes = {
     await s.finish();
   },
 
-  /** Study: confidence, typing and speaking into one box, Nano's mark; then an escalation and the tutor. */
+  /** Study: typing and speaking into one box, then confidence, Nano's mark; then an escalation and the tutor. */
   async study() {
     const s = await open('study');
     await s.go('#/study');
     await s.record();
     await s.mark('question', '.qcard');
     await s.sleep(1800);
-    await s.click('.conf', 'Fairly sure', { label: 'confidence' });
-    await s.sleep(900);
     await s.click('textarea.answer-box', '', { label: 'answer' });
     await s.type('A molecule on the surface of a germ, ', 20);
     await s.ev(`window.__say = 'that the immune system recognises'`);
@@ -124,6 +122,8 @@ const scenes = {
     await s.mark('listening', '.answer-wrap');
     await s.sleep(3300);
     await s.click('.mic-btn', '', { label: 'stop' });
+    await s.sleep(900);
+    await s.click('.conf', 'Fairly sure', { label: 'confidence' });
     await s.sleep(900);
     await s.click('button.btn.primary', 'Check my answer');
     await s.mark('marking', '.answer-area');
@@ -136,10 +136,10 @@ const scenes = {
     await s.click('button.btn.primary', 'Next card');
     await s.sleep(1200);
     await s.ev(`window.__film.mark = 'escalate'`);
-    await s.click('.conf', 'Unsure', { label: 'confidence-2' });
     await s.click('textarea.answer-box', '', { label: 'answer-2' });
     await s.type('They remember the germ for next time.', 24);
     await s.sleep(300);
+    await s.click('.conf', 'Unsure', { label: 'confidence-2' });
     await s.click('button.btn.primary', 'Check my answer');
     await s.mark('marking-2', '.answer-area');
     await s.sleep(3000);

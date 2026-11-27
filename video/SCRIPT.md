@@ -70,19 +70,19 @@ Then a second, larger cloud model fact-checks every card against your notes. It 
 
 ## 4. Study
 
-**On screen:** a card ("What is an antigen?"), the confidence buttons (No idea, Unsure, Fairly
-sure, Certain), an answer typed and then finished by speaking into the microphone in the answer
-box ("Listening on this device"), Check my answer, then the mark with its "On this device" badge.
+**On screen:** a card ("What is an antigen?"), an answer typed and then finished by speaking into
+the microphone in the answer box ("Listening on this device"), then the confidence buttons (No
+idea, Unsure, Fairly sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
-**Narration** (47 words):
+**Narration** (48 words):
 
-Now, study the cards. First, say how sure you are. Then answer, typed or spoken: Chrome's on-device speech recognition writes your words into the box, so your voice stays on the device. Gemini Nano marks the answer right here, with prefer on device: instant, free and private.
+Now, study the cards. Answer from memory, typed or spoken: Chrome's on-device speech recognition writes your words into the box, so your voice stays on the device. Then say how sure you are. Gemini Nano marks the answer right here, with prefer on device: instant, free and private.
 
 **Highlights:**
 
-- "say how sure you are" → circle → the confidence buttons
 - "typed or spoken" → point at → the microphone in the answer box
 - "your voice stays on the device" → circle → "Listening on this device: your voice never leaves it."
+- "say how sure you are" → circle → the confidence buttons
 - "marks the answer right here" → circle → the mark and its "On this device" badge
 
 ## 5. Self-audit
