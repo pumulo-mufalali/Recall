@@ -1,8 +1,8 @@
 /**
  * The Recall demo video: the app's real interface, full frame, recorded to the voice's cues. The
  * camera eases in on what the narrator names; a ring goes round the things that matter most.
- * Nothing else is drawn over the app but text: subtitles at the bottom, and a plain label at the
- * top left naming the technique in each part. The music sits under the voice.
+ * Nothing else is drawn over the app but subtitles; the techniques used are named once, at the
+ * end, above the web address. The music sits under the voice.
  */
 import React from 'react';
 import { AbsoluteFill, Audio, Easing, Freeze, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame } from 'remotion';
@@ -11,16 +11,18 @@ import { CLIPS, END_SECONDS, FPS, PARTS, TOTAL_SECONDS, VIEW_H, VIEW_W, type Cli
 const FIT = 1920 / VIEW_W;
 const FONT = '"Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif';
 const MONO = '"Cascadia Code", Consolas, monospace';
+/** Named at the end: what the video showed, in the terms the hackathon asks about. */
+const TECHNIQUES = [
+  'Firebase AI Logic hybrid inference',
+  'prefer_on_device · only_on_device · only_in_cloud',
+  'Structured output on both engines',
+  'Streamed chat, handed between engines',
+  'Self-audit: doubtful marks escalated',
+  'Gemini text-to-speech',
+];
 /** Crossfade between recordings, in seconds. */
 const BLEND = 0.35;
 const RING = '#f97316';
-
-const KINDS = {
-  device: { color: '#5eead4', label: 'On device' },
-  cloud: { color: '#c4b5fd', label: 'Cloud' },
-  hybrid: { color: '#93c5fd', label: 'Hybrid' },
-  code: { color: '#fcd34d', label: 'Under the hood' },
-};
 
 const ease = Easing.bezier(0.45, 0, 0.2, 1);
 const sec = (f: number) => f / FPS;
@@ -44,7 +46,6 @@ export const Demo: React.FC = () => (
         <Audio src={staticFile(`narration/${p.id}.wav`)} />
       </Sequence>
     ))}
-    <Labels />
     <Subtitles />
     <EndText />
     <Music />
@@ -97,24 +98,7 @@ const RingMark: React.FC<{ t: number; ring: Clip['rings'][number]; zoom: number 
   );
 };
 
-// ----- Labels, subtitles and the end -----
-
-/** Plain text on a dark band, top left: clearly the video speaking, not the app. */
-const Labels: React.FC = () => {
-  const t = sec(useCurrentFrame());
-  const i = PARTS.findIndex((x, j) => x.label && t >= x.start + 0.3 && t < (PARTS[j + 1]?.start ?? x.end + 1) - 0.25);
-  if (i < 0) return null;
-  const p = PARTS[i];
-  const k = KINDS[p.label!.kind];
-  const code = (s: string) => /[a-z]_[a-z]|[a-z][A-Z]/.test(s);
-  return (
-    <div style={{ position: 'absolute', left: 48, top: 40, opacity: fade(t, p.start + 0.3, (PARTS[i + 1]?.start ?? p.end + 1) - 0.25), background: 'rgba(15,20,32,.86)', padding: '12px 20px 14px', borderRadius: 4, maxWidth: 900 }}>
-      <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase', color: k.color }}>{k.label}</div>
-      <div style={{ fontSize: 32, fontWeight: 700, color: '#fff', lineHeight: 1.2, marginTop: 2 }}>{p.label!.title}</div>
-      {p.label!.detail && <div style={{ fontSize: 22, color: '#cbd5e1', marginTop: 4, lineHeight: 1.35, fontFamily: code(p.label!.detail) ? MONO : FONT }}>{p.label!.detail}</div>}
-    </div>
-  );
-};
+// ----- Subtitles and the end -----
 
 const Subtitles: React.FC = () => {
   const t = sec(useCurrentFrame());
@@ -134,7 +118,12 @@ const EndText: React.FC = () => {
   if (t < from) return null;
   return (
     <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 48, opacity: interpolate(t, [from, from + 0.4], [0, 1], clamp) }}>
-      <div style={{ background: 'rgba(15,20,32,.9)', color: 'white', padding: '18px 32px 20px', borderRadius: 4, textAlign: 'center' }}>
+      <div style={{ background: 'rgba(15,20,32,.92)', color: 'white', padding: '26px 40px 24px', borderRadius: 4, textAlign: 'center', maxWidth: 1500 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px 12px', marginBottom: 22 }}>
+          {TECHNIQUES.map((x) => (
+            <span key={x} style={{ fontSize: 24, padding: '6px 14px', borderRadius: 4, background: 'rgba(255,255,255,.1)', color: '#e2e8f0', fontFamily: /[a-z]_[a-z]/.test(x) ? MONO : FONT }}>{x}</span>
+          ))}
+        </div>
         <div style={{ fontSize: 44, fontWeight: 700 }}>recall-three-rust.vercel.app</div>
         <div style={{ fontSize: 24, color: '#cbd5e1', marginTop: 4 }}>Recall · built for #BuildHybridAI 2026 with Firebase AI Logic · Gemini Nano + Gemini</div>
       </div>

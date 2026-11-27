@@ -1,6 +1,6 @@
 {
-  "total": 152.11,
-  "end": 5,
+  "total": 155.11,
+  "end": 8,
   "parts": [
     {
       "id": "hook",
@@ -8,11 +8,7 @@
       "seconds": 16.93,
       "end": 18.13,
       "text": "Nobody likes getting things wrong, or wondering where their wrong answers end up. With Recall, you don't have to worry: your answers are saved only on your device. Recall turns your notes into questions, marks every answer, and brings each card back just before you'd forget it.",
-      "label": {
-        "kind": "hybrid",
-        "title": "Firebase AI Logic, hybrid inference",
-        "detail": "Gemini Nano in Chrome + Gemini in the cloud"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "turns your notes into questions",
@@ -252,11 +248,7 @@
       "seconds": 16.79,
       "end": 36.32,
       "text": "Start with what you're studying: notes, a photo of a page, or a PDF. Gemini Nano, built into Chrome, turns short notes and photos into questions. PDFs go to Gemini in the cloud. Firebase AI Logic picks the right one for each job.",
-      "label": {
-        "kind": "hybrid",
-        "title": "Each job routed",
-        "detail": "prefer_on_device for notes and photos · only_in_cloud for PDFs"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "notes, a photo of a page, or a PDF",
@@ -474,11 +466,7 @@
       "seconds": 10.64,
       "end": 48.56,
       "text": "Then a bigger AI in the cloud checks every card against your notes. This one says fifty-nine percent. Your notes say ninety-five. Flagged, with the fix ready.",
-      "label": {
-        "kind": "cloud",
-        "title": "A second, larger model",
-        "detail": "Checks every card against your material"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "a bigger AI in the cloud",
@@ -634,11 +622,7 @@
       "seconds": 13.42,
       "end": 64.18,
       "text": "Now, study. Answer from memory: your answers are saved only on your device. Type, or just speak, and your voice is written down right there too. Then say how sure you are, and Gemini Nano marks it on the spot.",
-      "label": {
-        "kind": "device",
-        "title": "Gemini Nano marks the answer",
-        "detail": "prefer_on_device · structured output"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "saved only on your device",
@@ -862,11 +846,7 @@
       "seconds": 11.87,
       "end": 80.25,
       "text": "Can a small model mark fairly? Recall checks itself. A doubtful mark goes to the bigger cloud AI before you see it. The more often Nano gets it right, the less it needs to ask.",
-      "label": {
-        "kind": "hybrid",
-        "title": "The self-audit",
-        "detail": "Doubtful marks go to the cloud before you see them"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "goes to the bigger cloud AI",
@@ -1042,11 +1022,7 @@
       "seconds": 8.75,
       "end": 90.8,
       "text": "Missed a point? Talk it through with a tutor on your device. Need more? Ask a bigger model, and the conversation moves to the cloud.",
-      "label": {
-        "kind": "hybrid",
-        "title": "A streamed chat session",
-        "detail": "startChat · sendMessageStream · handed to the cloud"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "Talk it through",
@@ -1200,11 +1176,7 @@
       "seconds": 15.55,
       "end": 108.55,
       "text": "Every day, the Trap Gauntlet turns your mistakes into a game. Nano writes true-or-false traps on your device, while a cloud referee throws out any unfair ones. Confidence counts: being sure earns more, and costs more when you're wrong.",
-      "label": {
-        "kind": "hybrid",
-        "title": "Written on device, refereed in the cloud",
-        "detail": "only_on_device writer · cloud referee in parallel"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "Nano writes true-or-false traps",
@@ -1412,11 +1384,7 @@
       "seconds": 6.02,
       "end": 116.77,
       "text": "Questions can be read aloud too, by Gemini's text-to-speech. In fact, you're listening to it now.",
-      "label": {
-        "kind": "cloud",
-        "title": "Gemini text-to-speech",
-        "detail": "Through Firebase AI Logic, streamed"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "read aloud",
@@ -1508,11 +1476,7 @@
       "seconds": 14.25,
       "end": 133.02,
       "text": "The AI engine page shows where each job runs. Go offline, and marking, the tutor and the Gauntlet keep working on your device; PDFs wait for a connection. And in Private mode, no answer ever goes to the cloud AI.",
-      "label": {
-        "kind": "hybrid",
-        "title": "The router, live",
-        "detail": "Offline: the device keeps working · Private: only_on_device"
-      },
+      "label": null,
       "highlights": [
         {
           "phrase": "shows where each job runs",
@@ -1958,7 +1922,7 @@
       ],
       "pre": 1.4,
       "start": 133.62,
-      "until": 152.11
+      "until": 155.11
     }
   ]
 }

@@ -27,15 +27,13 @@ export const TOTAL_SECONDS = plan.total;
 export const TOTAL_FRAMES = Math.ceil(TOTAL_SECONDS * FPS);
 export const END_SECONDS = plan.end;
 
-export type Kind = 'device' | 'cloud' | 'hybrid' | 'code';
 export interface Part {
   id: string;
   start: number;
   end: number;
-  label: { kind: Kind; title: string; detail: string } | null;
   lines: { text: string; at: number }[];
 }
-export const PARTS: Part[] = plan.parts.map((p) => ({ id: p.id, start: p.start, end: p.end, label: p.label as Part['label'], lines: p.lines }));
+export const PARTS: Part[] = plan.parts.map((p) => ({ id: p.id, start: p.start, end: p.end, lines: p.lines }));
 
 /** The camera: from `at`, frame a region (zoom 1 = the whole screen). */
 export interface Shot { at: number; z: number; cx: number; cy: number }

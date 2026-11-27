@@ -15,7 +15,7 @@ const GAP = 1.0;
 /** Extra time after a part's words, where the screen needs it before the next part starts. */
 const HOLD = { hook: 0.4, add: 0.6, factcheck: 1.2, study: 3.2, audit: 0.8, tutor: 1.2, gauntlet: 1.2, voice: 1.0, engine: 1.0 };
 /** The end: the app stays on screen with its address. */
-const END = 5;
+const END = 8;
 /** Which recording plays under which parts, and how long it runs before its first part's words. */
 const CLIPS = [
   { clip: 'hook', parts: ['hook'], pre: LEAD_IN },
