@@ -24,15 +24,15 @@ the footage under each part, and the highlights.
 **On screen:** the Today screen: "11 cards ready for you", the Start session button, the level
 and the Trap Gauntlet card, the "Online · On-device AI" status at the bottom left.
 
-**Narration** (55 words):
+**Narration** (53 words):
 
-Re-reading your notes feels like studying. It isn't. Recall turns your material into cards, and each card is a question you answer from memory. It marks your answers, shows what you really know, and brings each card back before you forget it. Its AI runs on your device and in the cloud, as a team.
+You've read your notes three times. Could you answer a question on them without looking? Recall makes cards from your material and asks you, one at a time. It marks what you say, shows where you stand, and brings each card back right before it slips. On-device and cloud AI share the work.
 
 **Highlights:**
 
-- "turns your material into cards" → circle → the "11 cards ready for you" panel
+- "makes cards from your material" → circle → the "11 cards ready for you" panel
 - "brings each card back" → point at → "5 to review · 6 new"
-- "on your device and in the cloud" → circle → the "Online · On-device AI" status
+- "On-device and cloud AI" → circle → the "Online · On-device AI" status
 
 ## 2. Make questions
 
