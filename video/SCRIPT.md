@@ -24,15 +24,15 @@ the footage under each part, and the highlights.
 **On screen:** the Today screen: "11 cards ready for you", the Start session button, the level
 and the Trap Gauntlet card, the "Online · On-device AI" status at the bottom left.
 
-**Narration** (53 words):
+**Narration** (49 words):
 
-You've read your notes three times. Could you answer a question on them without looking? Recall makes cards from your material and asks you, one at a time. It marks what you say, shows where you stand, and brings each card back right before it slips. On-device and cloud AI share the work.
+You've read your notes three times. But could you answer a question on them without looking? Recall finds out. It turns your notes into questions, marks your answers, and brings each card back before you'd forget it. The AI runs partly on your device, and partly in the cloud.
 
 **Highlights:**
 
-- "makes cards from your material" → circle → the "11 cards ready for you" panel
+- "turns your notes into questions" → circle → the "11 cards ready for you" panel
 - "brings each card back" → point at → "5 to review · 6 new"
-- "On-device and cloud AI" → circle → the "Online · On-device AI" status
+- "partly on your device" → circle → the "Online · On-device AI" status
 
 ## 2. Make questions
 
@@ -41,16 +41,16 @@ page is dropped in), then PDF (a lecture PDF), then back to Notes. Under the mat
 where the work will run ("Runs on this device" or "Runs in the cloud") and why. Then Make
 questions is pressed.
 
-**Narration** (62 words):
+**Narration** (60 words):
 
-It starts with your material: notes, a photo of a page, or a PDF. Firebase AI Logic routes each job. Notes and photos go to Gemini Nano, built into Chrome, with prefer on device. A PDF goes to the cloud. Either way, the cards come back in one structured format: a response constraint on the device, a response schema in the cloud.
+First, add what you're studying: typed notes, a photo of a page, or a PDF. Recall shows where the work will happen, and why. Notes and photos go to Gemini Nano, the model built into Chrome, so they stay on your computer. A PDF goes to Gemini in the cloud. Firebase AI Logic sends each job to the right place.
 
 **Highlights:**
 
-- "notes, a photo of a page, or a PDF" → point at → the Notes / Photo / PDF switch
+- "typed notes, a photo of a page, or a PDF" → point at → the Notes / Photo / PDF switch
 - "Notes and photos go to Gemini Nano" → circle → the "Runs on this device" box
-- "A PDF goes to the cloud" → circle → the "Runs in the cloud" box
-- "one structured format" → point at → the Make questions button
+- "A PDF goes to Gemini in the cloud" → circle → the "Runs in the cloud" box
+- "sends each job to the right place" → point at → the Make questions button
 
 ## 3. Fact-check
 
@@ -58,15 +58,15 @@ It starts with your material: notes, a photo of a page, or a PDF. Firebase AI Lo
 answer with a second model), then the review: the tally of cards, one card flagged ("59%" where
 the notes say "95%") with a suggested correction, and Use the correction being pressed.
 
-**Narration** (39 words):
+**Narration** (36 words):
 
-Then a second, larger cloud model fact-checks every card against your notes. It has to quote its evidence, and plain code checks every number. This card says fifty-nine percent. The notes say ninety-five. So it's flagged, with a fix.
+Next, a second, larger model in the cloud checks every card against your notes, quoting its evidence. Here, a card says fifty-nine percent, but the notes say ninety-five. So Recall flags it, and suggests the fix.
 
 **Highlights:**
 
-- "a second, larger cloud model" → circle → the "Fact-checking every answer" step
-- "This card says fifty-nine percent" → circle → the flagged card's "59%"
-- "with a fix" → point at → the Use the correction button
+- "a second, larger model in the cloud" → circle → the "Fact-checking every answer" step
+- "a card says fifty-nine percent" → circle → the flagged card's "59%"
+- "suggests the fix" → point at → the Use the correction button
 
 ## 4. Study
 
@@ -74,16 +74,16 @@ Then a second, larger cloud model fact-checks every card against your notes. It 
 the microphone in the answer box ("Listening on this device"), then the confidence buttons (No
 idea, Unsure, Fairly sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
-**Narration** (48 words):
+**Narration** (50 words):
 
-Now, study the cards. Answer from memory, typed or spoken: Chrome's on-device speech recognition writes your words into the box, so your voice stays on the device. Then say how sure you are. Gemini Nano marks the answer right here, with prefer on device: instant, free and private.
+Now it's time to study. You answer from memory, by typing or just by speaking. Chrome recognises your speech on your device, so your voice never leaves it. Then you say how sure you are. Gemini Nano marks the answer right there on your device. It's instant, free and private.
 
 **Highlights:**
 
-- "typed or spoken" → point at → the microphone in the answer box
-- "your voice stays on the device" → circle → "Listening on this device: your voice never leaves it."
+- "by typing or just by speaking" → point at → the microphone in the answer box
+- "your voice never leaves it" → circle → "Listening on this device: your voice never leaves it."
 - "say how sure you are" → circle → the confidence buttons
-- "marks the answer right here" → circle → the mark and its "On this device" badge
+- "marks the answer right there" → circle → the mark and its "On this device" badge
 
 ## 5. Self-audit
 
@@ -92,12 +92,12 @@ checked by the larger cloud model before being shown.
 
 **Narration** (52 words):
 
-But can a small model be trusted? Recall checks itself. Every mark is weighed for doubt. Doubtful marks go to the larger cloud model before you see them, and a sample of confident ones is spot-checked. Agreement becomes Nano's trust score, so the more it earns, the less ever leaves your device.
+But can a small model mark you fairly? Recall checks its own work. When Nano's mark looks doubtful, the bigger cloud model rechecks it before you see it, and spot-checks some confident marks too. The more often Nano is right, the more Recall trusts it, and the less data leaves your device.
 
 **Highlights:**
 
-- "Doubtful marks go to the larger cloud model" → circle → the "checked by the cloud" note
-- "Nano's trust score" → point at → the mark's badge
+- "the bigger cloud model rechecks it" → circle → the "checked by the cloud" note
+- "the more Recall trusts it" → point at → the mark's badge
 
 ## 6. Talk it through
 
@@ -105,16 +105,16 @@ But can a small model be trusted? Recall checks itself. Every mark is weighed fo
 tutor's reply streams in, badged "On this device". Then Ask a bigger model: a divider marks the
 handoff and the next reply is badged "Cloud".
 
-**Narration** (41 words):
+**Narration** (37 words):
 
-Missed a point? Talk it through. The tutor is a Firebase AI Logic chat session, streaming on Nano. Ask a bigger model, and the same conversation hands off to Gemini in the cloud, with every reply badged by where it ran.
+Missed something? Talk it through with a tutor, running right on your device. Want a deeper answer? Ask a bigger model. The same conversation carries on in the cloud, and every reply shows where it came from.
 
 **Highlights:**
 
 - "Talk it through" → point at → the Talk it through button
-- "streaming on Nano" → circle → the first reply, as it streams
+- "running right on your device" → circle → the first reply, as it streams
 - "Ask a bigger model" → point at → the Ask a bigger model button
-- "badged by where it ran" → circle → the "Cloud" badge on the new reply
+- "every reply shows where it came from" → circle → the "Cloud" badge on the new reply
 
 ## 7. The Trap Gauntlet
 
@@ -122,27 +122,27 @@ Missed a point? Talk it through. The tutor is a Firebase AI Logic chat session, 
 statements answered against the clock; the referee chip ("Referee: 1 withdrawn as unfair") and
 the note that one statement was withdrawn.
 
-**Narration** (44 words):
+**Narration** (48 words):
 
-Each day, the Trap Gauntlet turns your mistakes into a game. Nano writes true statements and traps, on the device. While you race the clock, a cloud model referees every statement in parallel, and withdraws any unfair one, live. Honest confidence earns you XP.
+Each day, the Trap Gauntlet turns your past mistakes into a game. Nano writes true statements and traps on your device. As you race the clock, a cloud model referees each one and throws out any that are unfair. Being honest about how sure you are earns points.
 
 **Highlights:**
 
 - "Nano writes true statements and traps" → circle → "On this device · Written on this device from your mistakes"
-- "withdraws any unfair one, live" → circle → "Referee: 1 withdrawn as unfair"
-- "Honest confidence earns you XP" → point at → "I'm sure (+3 if right, −2 if wrong)"
+- "throws out any that are unfair" → circle → "Referee: 1 withdrawn as unfair"
+- "earns points" → point at → "I'm sure (+3 if right, −2 if wrong)"
 
 ## 8. Read aloud
 
 **On screen:** a question card; the speaker icon is pressed; it shows loading, then speaking.
 
-**Narration** (26 words):
+**Narration** (28 words):
 
-Questions can be read aloud by Gemini's text-to-speech, through Firebase AI Logic, streamed so it starts in about a second. That's the voice you're hearing now.
+Recall can also read questions out loud, using Gemini's text-to-speech through Firebase AI Logic. It starts speaking in about a second. That's the voice you're hearing right now.
 
 **Highlights:**
 
-- "read aloud" → circle → the speaker icon (loading, then speaking)
+- "read questions out loud" → circle → the speaker icon (loading, then speaking)
 
 ## 9. The AI engine page
 
@@ -150,13 +150,13 @@ Questions can be read aloud by Gemini's text-to-speech, through Firebase AI Logi
 App Check"); the routing table, which changes when the connection goes offline; the trust score
 and privacy setting; the Remote Config card.
 
-**Narration** (44 words):
+**Narration** (50 words):
 
-The AI engine page shows the router, live. Go offline, and marking, tutoring and the gauntlet stay on the device, while PDFs wait in a queue. Private mode forces only on device. Models come from Remote Config, and App Check protects every cloud call.
+The AI engine page shows where each job runs, live. Go offline, and marking, the tutor and the Gauntlet keep working on your device, while PDFs wait until you're back online. Private mode keeps everything on the device. Remote Config picks the models, and App Check protects every cloud call.
 
 **Highlights:**
 
-- "shows the router, live" → point at → the routing table
+- "shows where each job runs, live" → point at → the routing table
 - "Go offline" → circle → the routes switching to Device / Queued
 - "Private mode" → circle → the privacy setting
 - "Remote Config" → circle → the configuration card
@@ -168,11 +168,11 @@ The AI engine page shows the router, live. Go offline, and marking, tutoring and
 as a dashed line, how often you were right as a bar), then the "Certain, but wrong" list. The
 video ends on this page with the web address.
 
-**Narration** (32 words):
+**Narration** (34 words):
 
-Insights shows where your confidence and your results disagree, so you study what you only thought you knew. Small, private work on the device. Rare, heavy work in the cloud. That's Recall.
+Insights shows where your confidence and your results don't match, so you can focus on what you only thought you knew. Quick, private work on your device. Heavy work in the cloud. That's Recall.
 
 **Highlights:**
 
-- "where your confidence and your results disagree" → circle → the "Certain" bar and its dashed line
+- "where your confidence and your results don't match" → circle → the "Certain" bar and its dashed line
 - "what you only thought you knew" → circle → the "Certain, but wrong" list
