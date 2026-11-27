@@ -22,17 +22,18 @@ the footage under each part, and the highlights.
 ## 1. Hook
 
 **On screen:** the Today screen: "11 cards ready for you", the Start session button, the level
-and the Trap Gauntlet card, the "Online · On-device AI" status at the bottom left.
+and the Trap Gauntlet card, the "Marked privately on device" tile, the "Online · On-device AI"
+status at the bottom left.
 
-**Narration** (49 words):
+**Narration** (54 words):
 
-You've read your notes three times. But could you answer a question on them without looking? Recall finds out. It turns your notes into questions, marks your answers, and brings each card back before you'd forget it. The AI runs partly on your device, and partly in the cloud.
+You've read your notes three times. But could you answer a question on them without looking? Recall finds out. It turns your notes into questions, marks your answers, and brings each card back before you'd forget it. And what you write is saved only on your device, so it's safe to get things wrong.
 
 **Highlights:**
 
 - "turns your notes into questions" → circle → the "11 cards ready for you" panel
 - "brings each card back" → point at → "5 to review · 6 new"
-- "partly on your device" → circle → the "Online · On-device AI" status
+- "saved only on your device" → circle → the "Marked privately on device" tile
 
 ## 2. Make questions
 
@@ -66,17 +67,19 @@ Next, a second, larger model in the cloud checks every card against your notes, 
 
 ## 4. Study
 
-**On screen:** a card ("What is an antigen?"), an answer typed and then finished by speaking into
-the microphone in the answer box ("Listening on this device"), then the confidence buttons (No
-idea, Unsure, Fairly sure, Certain), Check my answer, then the mark with its "On this device" badge.
+**On screen:** a card ("What is an antigen?"), with the line under the answer box: "Your answers
+are saved and marked on this device…"; an answer typed and then finished by speaking into the
+microphone ("Listening on this device"), then the confidence buttons (No idea, Unsure, Fairly
+sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
-**Narration** (50 words):
+**Narration** (51 words):
 
-Now it's time to study. You answer from memory, by typing or just by speaking. Chrome recognises your speech on your device, so your voice never leaves it. Then you say how sure you are. Gemini Nano marks the answer right there on your device. It's instant, free and private.
+Now it's time to study. You answer from memory, and what you write is saved only on your device. Type, or just speak: Chrome recognises your speech on your device too, so your voice never leaves it. Then you say how sure you are. Gemini Nano marks the answer right there.
 
 **Highlights:**
 
-- "by typing or just by speaking" → point at → the microphone in the answer box
+- "saved only on your device" → circle → the line under the answer box
+- "Type, or just speak" → point at → the microphone in the answer box
 - "your voice never leaves it" → circle → "Listening on this device: your voice never leaves it."
 - "say how sure you are" → circle → the confidence buttons
 - "marks the answer right there" → circle → the mark and its "On this device" badge
@@ -131,9 +134,9 @@ Each day, the Trap Gauntlet turns your past mistakes into a game. Nano writes tr
 
 **On screen:** a question card; the speaker icon is pressed; it shows loading, then speaking.
 
-**Narration** (28 words):
+**Narration** (21 words):
 
-Recall can also read questions out loud, using Gemini's text-to-speech through Firebase AI Logic. It starts speaking in about a second. That's the voice you're hearing right now.
+Recall can also read questions out loud, using Gemini's text-to-speech through Firebase AI Logic. That's the voice you're hearing right now.
 
 **Highlights:**
 
