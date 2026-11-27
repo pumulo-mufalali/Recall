@@ -73,7 +73,8 @@ export async function writeTraps(cards: Card[], attempts: Attempt[], settings: S
   if (r.run !== 'model') throw new Queued(r);
   const misses = cards.map((c) => lastMiss(c, attempts));
   const result = await call(
-    { mode: r.mode, system: TRAPS_SYSTEM, format: STATEMENTS_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true },
+    // Written on the device by design; if the built-in AI fails, the cloud may write them, unless in Private mode.
+    { mode: r.mode, system: TRAPS_SYSTEM, format: STATEMENTS_FORMAT, io: TEXT_IO, models: writers(settings), deviceCan: true, cloudOk: policy !== 'private' },
     trapsPrompt(cards, misses),
   );
   const statements = toStatements(parseJson(result.response.text()), cards.length);

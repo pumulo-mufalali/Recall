@@ -185,6 +185,11 @@ export interface Spec {
   deviceCan: boolean;
   /** How long each cloud model gets before the next is tried (default CLOUD_TIMEOUT_MS). */
   timeoutMs?: number;
+  /**
+   * For a request routed only to the device: whether the cloud may take it if the built-in AI
+   * fails. Never in Private mode or offline; requests preferring the device may always.
+   */
+  cloudOk?: boolean;
 }
 
 const PAUSES_MS = [1000, 3000, 7000];
@@ -197,13 +202,38 @@ export const restModel = (model: string) => resting.set(model, Date.now() + REST
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms + Math.random() * 400));
 
 /**
+ * Runs a request where its route says, with a safety net: if the built-in AI fails (an error,
+ * or not the JSON asked for), the cloud takes the request, where that is allowed (online, not
+ * Private mode, and not a request that must stay on the device). The reply is then badged by
+ * where it really ran.
+ */
+export async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
+  try {
+    const result = await callAsRouted(spec, request);
+    if (spec.format && result.response.inferenceSource === InferenceSource.ON_DEVICE) parseJson(result.response.text());
+    return result;
+  } catch (e) {
+    if (!(await cloudCanTakeOver(spec))) throw e;
+    console.warn('[recall] the built-in AI failed; the cloud takes this request', e);
+    return callAsRouted({ ...spec, mode: 'only_in_cloud', deviceCan: false }, request);
+  }
+}
+
+/** Whether the cloud may take a request the built-in AI failed. */
+async function cloudCanTakeOver(spec: Spec): Promise<boolean> {
+  if (!navigator.onLine || spec.mode === 'only_in_cloud' || spec.mode === 'prefer_in_cloud') return false;
+  if (spec.mode === 'only_on_device' && !spec.cloudOk) return false;
+  return (await deviceModel()) === 'available';
+}
+
+/**
  * Runs a request on the cloud models: when one is busy (overloaded, rate-limited or too slow),
  * the next is tried at once, and only when every model has been tried is there a pause before
  * the next round. A busy model rests for a minute (tried last). Then, if the cloud stays busy
  * and the request fits, the on-device model. Errors that are not "busy" (a bad request, App
  * Check) fail at once.
  */
-export async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
+async function callAsRouted(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
   let last: unknown;
   for (let round = 0; round <= PAUSES_MS.length; round++) {
     for (const model of modelOrder(spec.models, resting, Date.now())) {

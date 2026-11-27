@@ -79,12 +79,30 @@ export async function askTutor(
   // long as it has not started replying.
   const models = cloudOrder(opts.deeper ? checkers(opts.settings) : writers(opts.settings));
   let last: unknown;
+  let mode = r.mode;
+  let used: Route = r;
   for (const cloudModel of models) {
     let started = false;
     try {
-      return await stream(r.mode, cloudModel, r, () => (started = true));
+      return await stream(mode, cloudModel, used, () => (started = true));
     } catch (e) {
-      if (!isBusy(e) || started) throw e;
+      if (started) throw e;
+      // The safety net: the built-in AI failed before replying, so the cloud takes the
+      // conversation (only where the learner's settings let it, and online).
+      if (!isBusy(e) && mode === 'prefer_on_device' && navigator.onLine && (await deviceModel()) === 'available') {
+        console.warn('[recall] the built-in AI failed; the cloud takes the conversation', e);
+        mode = 'only_in_cloud';
+        used = model('only_in_cloud', 'The built-in AI failed, so the cloud answered.');
+        try {
+          return await stream(mode, cloudModel, used, () => (started = true));
+        } catch (e2) {
+          if (started || !isBusy(e2)) throw e2;
+          restModel(cloudModel);
+          last = e2;
+          continue;
+        }
+      }
+      if (!isBusy(e)) throw e;
       restModel(cloudModel);
       last = e;
       if (r.mode === 'only_on_device') break;
