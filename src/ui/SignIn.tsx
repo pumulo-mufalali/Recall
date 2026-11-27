@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { GoogleAuthProvider, getRedirectResult, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import { seedStarter } from '../services/store';
+import { STARTER_DECKS } from '../core/starter';
 import { Plain, friendly, type Friendly } from '../core/errors';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
@@ -78,18 +79,15 @@ export function SignIn() {
           <p className="small muted">Free. With Google, your cards sync across devices; without, they stay in this browser, with three starter decks to study. Both work offline.</p>
         </div>
 
+        {/* Real questions from the starter decks (made by Recall from public documents), as they will be asked. */}
         <div className="welcome-demo" aria-hidden>
           <div className="demo-card">
-            <p className="demo-q">Why does the Moon show phases?</p>
-            <p className="demo-a">“Because we see different amounts of its sunlit half as it orbits Earth.”</p>
-            <div className="demo-meter"><span style={{ width: '86%' }} /></div>
-            <div className="demo-row">
-              <span className="badge badge-on-device"><Icon name="device" size={13} /> Marked on this device</span>
-              <strong>86%</strong>
-            </div>
+            <p className="eyebrow">{PREVIEW.deck.title} · {PREVIEW.deck.publisher.split(',')[0]}</p>
+            <p className="demo-q">{PREVIEW.card.prompt}</p>
+            <p className="demo-a">Answer from memory, in your own words. Then say how sure you are.</p>
           </div>
           <div className="demo-card back">
-            <p className="demo-q">Certain · 95%</p>
+            <p className="demo-q">{BEHIND.deck.title} · {BEHIND.deck.publisher.split(',')[0]}</p>
           </div>
         </div>
       </section>
@@ -108,6 +106,14 @@ export function SignIn() {
     </div>
   );
 }
+
+/** A starter deck's question, shown as a preview: the Moon deck's lunar-eclipse card when present. */
+function pick(deckIndex: number, match: RegExp) {
+  const deck = STARTER_DECKS[deckIndex % STARTER_DECKS.length];
+  return { deck, card: deck.cards.find((c) => match.test(c.prompt)) ?? deck.cards[0] };
+}
+const PREVIEW = pick(Math.max(0, STARTER_DECKS.findIndex((d) => /moon/i.test(d.title))), /eclipse/i);
+const BEHIND = pick(STARTER_DECKS.indexOf(PREVIEW.deck) + 1, /./);
 
 function Step({ icon, title, children }: { icon: 'device' | 'cloud' | 'insights'; title: string; children: React.ReactNode }) {
   return (
