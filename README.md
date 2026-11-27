@@ -6,7 +6,7 @@ Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: e
 
 > **Live app:** <https://recall-three-rust.vercel.app/> · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
 >
-> **Trying it out?** Sign in with Google, then choose **"Or explore with example data"**: three decks and ten weeks of study history load into your own account, so Insights, the AI self-audit, levels and the Trap Gauntlet all have something to show straight away. Remove it any time in Settings → Your data.
+> **Trying it out?** Click **"Try it without signing in"**: no account needed. You start with three example decks and ten weeks of study history, so Insights, the AI self-audit, levels and the Trap Gauntlet all have something to show straight away. (Signed in with Google instead? Choose **"Or explore with example data"**.) Remove the examples any time in Settings → Your data.
 
 ## The problem
 
