@@ -25,9 +25,9 @@ the footage under each part, and the highlights.
 and the Trap Gauntlet card, the "Marked privately on device" tile, the "Online · On-device AI"
 status at the bottom left.
 
-**Narration** (45 words):
+**Narration** (47 words):
 
-Nobody likes getting things wrong, especially in front of an AI. With Recall, you don't have to worry: your answers are saved only on your device. Recall turns your notes into questions, marks every answer, and brings each card back just before you'd forget it.
+Nobody likes getting things wrong, or wondering where their wrong answers end up. With Recall, you don't have to worry: your answers are saved only on your device. Recall turns your notes into questions, marks every answer, and brings each card back just before you'd forget it.
 
 **Highlights:**
 
@@ -72,9 +72,9 @@ are saved and marked on this device…"; an answer typed and then finished by sp
 microphone ("Listening on this device"), then the confidence buttons (No idea, Unsure, Fairly
 sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
-**Narration** (51 words):
+**Narration** (50 words):
 
-Now it's time to study. You answer from memory, and what you write is saved only on your device. Type, or just speak: Chrome recognises your speech on your device too, so your voice never leaves it. Then you say how sure you are. Gemini Nano marks the answer right there.
+Now it's time to study. You answer from memory, and your answers are saved only on your device. Type, or just speak: Chrome recognises your speech on your device too, so your voice never leaves it. Then you say how sure you are. Gemini Nano marks the answer right there.
 
 **Highlights:**
 
