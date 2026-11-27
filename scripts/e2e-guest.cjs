@@ -3,12 +3,34 @@
 // starter cards, read one aloud, talk a miss through with the tutor (then a bigger model), play
 // the Trap Gauntlet, open Insights; then end the guest session. Logs each step and page errors,
 // and saves screenshots. Usage: node scripts/e2e-guest.cjs [screenshot dir]
+//
+// FAKE_NANO=fail (or garbage) puts a stand-in for Chrome's built-in AI in the browser that says it
+// is ready, then fails (or replies with junk): to check the safety net, where the cloud takes
+// over, without a computer that can run Gemini Nano.
 const { spawn, execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
 const APP = 'http://localhost:5188/';
+const FAKE_NANO = process.env.FAKE_NANO;
+const FAKE_SCRIPT = `(() => {
+  const mode = ${JSON.stringify(FAKE_NANO)};
+  const fail = () => { throw new Error('Stand-in built-in AI: failing on purpose'); };
+  class Session {
+    async prompt() { return mode === 'fail' ? fail() : 'this is not what was asked for'; }
+    promptStreaming() {
+      return new ReadableStream({ start(c) { if (mode === 'fail') c.error(new Error('Stand-in built-in AI: failing on purpose')); else { c.enqueue('a reply from the stand-in'); c.close(); } } });
+    }
+    async append() {}
+    async measureInputUsage() { return 1; }
+    get inputQuota() { return 100000; }
+    get inputUsage() { return 0; }
+    clone() { return this; }
+    destroy() {}
+  }
+  globalThis.LanguageModel = { availability: async () => 'available', create: async () => new Session(), params: async () => ({ defaultTopK: 3, maxTopK: 8, defaultTemperature: 1, maxTemperature: 2 }) };
+})();`;
 const STARTER = require('../src/data/starter-decks.json');
 const shots = process.argv[2] || path.join(os.tmpdir(), 'recall-e2e');
 fs.mkdirSync(shots, { recursive: true });
@@ -31,7 +53,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     if (d.id && pend[d.id]) { pend[d.id](d.result ?? d); delete pend[d.id]; }
     if (d.method === 'Runtime.consoleAPICalled' && (d.params.type === 'error' || d.params.type === 'warning')) {
       const text = d.params.args.map((a) => a.value ?? a.description).join(' ').slice(0, 300);
-      if (!/DevTools|download the React|App Check debug token|Lit is in dev mode/i.test(text)) { problems.push(`console ${d.params.type}: ${text}`); log(`  [console ${d.params.type}]`, text); }
+      if (!/DevTools|download the React|App Check debug token|Lit is in dev mode|the built-in AI failed|on-device marking failed|Stand-in built-in AI/i.test(text)) { problems.push(`console ${d.params.type}: ${text}`); log(`  [console ${d.params.type}]`, text); }
     }
     if (d.method === 'Runtime.exceptionThrown') { const t = d.params.exceptionDetails.exception?.description?.slice(0, 300); problems.push(`page error: ${t}`); log('  [page error]', t); }
   };
@@ -48,6 +70,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
   await cmd('Runtime.enable');
   await cmd('Page.enable');
+  if (FAKE_NANO) { await cmd('Page.addScriptToEvaluateOnNewDocument', { source: FAKE_SCRIPT }); log(`stand-in built-in AI: ${FAKE_NANO}`); }
   await cmd('Page.navigate', { url: APP });
 
   await step('Try it without signing in', async () => {
