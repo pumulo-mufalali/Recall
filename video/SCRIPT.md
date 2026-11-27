@@ -72,15 +72,15 @@ are saved and marked on this device…"; an answer typed and then finished by sp
 microphone ("Listening on this device"), then the confidence buttons (No idea, Unsure, Fairly
 sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
-**Narration** (39 words):
+**Narration** (40 words):
 
-Now, study. Answer from memory: your answers are saved only on your device. Type, or just speak; Chrome hears your voice on the device too. Then say how sure you are, and Gemini Nano marks it on the spot.
+Now, study. Answer from memory: your answers are saved only on your device. Type, or just speak, and your voice is written down right there too. Then say how sure you are, and Gemini Nano marks it on the spot.
 
 **Highlights:**
 
 - "saved only on your device" → circle → the line under the answer box
 - "Type, or just speak" → point at → the microphone in the answer box
-- "Chrome hears your voice on the device" → circle → "Listening on this device: your voice never leaves it."
+- "your voice is written down right there" → circle → "Listening on this device: your voice never leaves it."
 - "say how sure you are" → circle → the confidence buttons
 - "marks it on the spot" → circle → the mark and its "On this device" badge
 
