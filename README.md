@@ -12,7 +12,7 @@ Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: e
 
 Re-reading notes makes material feel familiar, and familiar feels known. Students walk into exams overconfident about exactly the things they cannot recall. Active recall (answering from memory) and spaced repetition fix this, but making good questions is tedious and marking free-text answers needs judgement.
 
-Recall does both with AI, and adds the piece most study apps leave out: **calibration**. Before each answer you say how sure you are; Recall then shows where your confidence and your results disagree. Confident mistakes are the most valuable thing to study.
+Recall does both with AI, and adds the piece most study apps leave out: **calibration**. After each answer, before it is marked, you say how sure you are; Recall then shows where your confidence and your results disagree. Confident mistakes are the most valuable thing to study.
 
 ## What it does
 

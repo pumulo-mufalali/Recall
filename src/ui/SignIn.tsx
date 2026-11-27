@@ -81,7 +81,7 @@ export function SignIn() {
           Long chapters and PDFs go to Gemini in the cloud, and a second, larger model fact-checks every card before you learn it.
         </Step>
         <Step icon="insights" title="Confidence, measured">
-          Rate how sure you are before each answer. Recall shows where you are overconfident, which is where re-reading fools you.
+          Rate how sure you are after each answer, before it is marked. Recall shows where you are overconfident, which is where re-reading fools you.
         </Step>
       </section>
     </div>
