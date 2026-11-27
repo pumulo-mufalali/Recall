@@ -1,4 +1,4 @@
-// The recordings, one per part of the video, paced to its narration.
+// The recordings, one per part of the video, acted out on the narration's cues (src/plan.json).
 // Usage (film set running on :5199): node capture/scenes.cjs [scene ...]   (default: all)
 const { open } = require('./cdp.cjs');
 
@@ -37,207 +37,187 @@ Herd immunity: when enough people are immune, a germ cannot spread easily. For m
 
 mRNA vaccines: cells read the mRNA and briefly make a harmless spike protein, which trains the immune system.`;
 
+/** Scrolls so an element's top sits `gap` px below the top of the screen, smoothly. */
+const scrollTo = (s, selector, text = '', gap = 40) => s.ev(`(() => {
+  const el = [...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => e.textContent.includes(${JSON.stringify(text)}));
+  window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - ${gap}, behavior: 'smooth' });
+})()`);
+
+// Each scene follows its narration (SCRIPT.md): s.on() waits for a phrase, s.point() and
+// s.circle() act on the highlights' phrases. A scene that falls behind the voice says so.
 const scenes = {
-  /** Today: the app at a glance, within the first seconds. */
+  /** Today: answers saved on the device, the cards ready, each coming back on time. */
   async hook() {
     const s = await open('hook');
     await s.go('#/');
     await s.record();
-    await s.mark('today', '.page-head');
-    await s.sleep(1500);
-    await s.move({ x: 420, y: 330 }, 1200);
-    await s.mark('due', '.hero-copy');
-    await s.sleep(2500);
-    await s.move(await s.box('a.btn.primary', 'Start session'), 1400);
-    await s.mark('start', 'a.btn.primary', 'Start session');
-    await s.sleep(3000);
-    await s.move(await s.box('.game-card'), 1300);
-    await s.mark('game', '.game-card');
-    await s.sleep(2400);
-    await s.move(await s.box('.sidebar-foot, .status, aside', 'On-device AI'), 1200);
-    await s.mark('ondevice', 'aside', 'On-device AI');
-    await s.sleep(2500);
+    await s.circle('saved only on your device', '.tile', 'Marked privately');
+    await s.circle('turns your notes into questions', '.hero-card');
+    await s.point('brings each card back', '.hero-copy *', 'to review');
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** Add material: notes, a photo, a PDF; then writing and the fact-check. */
+  /** Add: notes, a photo, a PDF; then the questions are written and fact-checked. */
   async add() {
     const s = await open('add');
     await s.go('#/add');
-    await s.record();
-    await s.sleep(600);
-    await s.click('input', '', { label: 'title' });
-    await s.type('How vaccines work', 26);
-    await s.click('textarea.notes', '', { label: 'notes' });
+    // The notes are in before the recording starts: the story begins with the material.
+    await s.click('input', '', { label: 'title', ms: 50, pause: 20 });
+    await s.paste('How vaccines work');
+    await s.click('textarea.notes', '', { label: 'notes', ms: 50, pause: 20 });
     await s.paste(NOTES);
-    await s.sleep(400);
-    await s.mark('source-notes', '.seg');
-    await s.sleep(2600);
-    await s.click('.seg button', 'Photo');
-    await s.sleep(500);
+    await s.ev('document.activeElement.blur(); scrollTo(0, 0)');
+    s.events.splice(0);
+    await s.record();
+    await s.point('notes, a photo of a page, or a PDF', '.seg');
+    await s.on('photos into questions', 0.6);
+    await s.click('.seg button', 'Photo', { ms: 450 });
+    await s.sleep(350);
     await s.ev(dropFile('image'));
-    await s.sleep(300);
-    await s.mark('source-photo', '.seg');
-    await s.sleep(2600);
-    await s.click('.seg button', 'PDF');
-    await s.sleep(500);
+    await s.on('PDFs go to', 0.6);
+    await s.click('.seg button', 'PDF', { ms: 450 });
+    await s.sleep(350);
     await s.ev(dropFile('pdf'));
+    await s.on('Firebase AI Logic picks', 0.4);
+    await s.click('.seg button', 'Notes', { ms: 450 });
+    await s.point('picks the right one for each job', 'button.btn.primary', 'Make questions');
     await s.sleep(300);
-    await s.mark('source-pdf', '.seg');
-    await s.sleep(3000);
-    await s.click('.seg button', 'Notes');
-    await s.sleep(700);
-    await s.mark('source-back', '.seg');
-    await s.sleep(1800);
-    await s.click('button.btn.primary', 'Make questions');
-    await s.sleep(200);
+    await s.click('button.btn.primary', 'Make questions', { ms: 120, pause: 60 });
     await s.mark('writing', '.working');
-    await s.sleep(2500);
-    await s.mark('checking', '.working');
-    await s.sleep(3300);
-    // The review: the tally, then the flagged card and its fix.
-    await s.mark('review', '.review-summary');
-    await s.sleep(3200);
-    await s.mark('flagged', '.draft-flagged');
-    await s.move(await s.box('.draft-flagged .flag'), 900);
-    await s.sleep(5200);
-    await s.click('.draft-flagged button', 'Use the correction');
-    await s.sleep(600);
+    await s.circle('a bigger AI in the cloud', '.stepper li', 'Fact-checking');
+    // The review: the flagged card, brought into view, then its fix.
+    await s.on('This one says', 1.6);
+    await s.box('.draft-flagged');
+    await s.circle('says fifty-nine percent', '.draft-flagged *', '59%');
+    await s.point('with the fix ready', '.draft-flagged button', 'Use the correction');
+    await s.end('factcheck', 0.3);
+    await s.click('.draft-flagged button', 'Use the correction', { ms: 120, pause: 60 });
     await s.mark('resolved', '.draft-fixed');
-    await s.sleep(2800);
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** Study: typing and speaking into one box, then confidence, Nano's mark; then an escalation and the tutor. */
+  /** Study: answer typed then spoken, how sure, Nano's mark; then a double-checked mark; then the tutor. */
   async study() {
     const s = await open('study');
     await s.go('#/study');
+    await s.box('textarea.answer-box');
     await s.record();
-    await s.mark('question', '.qcard');
-    await s.sleep(1800);
-    await s.click('textarea.answer-box', '', { label: 'answer' });
-    await s.type('A molecule on the surface of a germ, ', 20);
+    await s.on('Answer from memory', 0.9);
+    await s.click('textarea.answer-box', '', { label: 'answer', ms: 500 });
+    await s.type('A molecule on the surface of a germ, ', 26);
+    await s.circle('saved only on your device', '.privacy-note');
     await s.ev(`window.__say = 'that the immune system recognises'`);
-    await s.click('.mic-btn', '', { label: 'mic' });
-    await s.mark('listening', '.answer-wrap');
-    await s.sleep(3300);
-    await s.click('.mic-btn', '', { label: 'stop' });
-    await s.sleep(900);
-    await s.click('.conf', 'Fairly sure', { label: 'confidence' });
-    await s.sleep(900);
-    await s.click('button.btn.primary', 'Check my answer');
-    await s.mark('marking', '.answer-area');
-    await s.sleep(1500);
-    await s.mark('verdict', '.verdict');
-    await s.move(await s.box('.verdict .badge'), 800);
-    await s.sleep(3800);
+    await s.point('Type, or just speak', '.mic-btn');
+    await s.on('just speak');
+    await s.click('.mic-btn', '', { label: 'mic', ms: 120, pause: 60 });
+    await s.circle('your voice is written down right there', '.voice-note');
+    await s.on('Then say how sure', 0.7);
+    await s.click('.mic-btn', '', { label: 'stop', ms: 120, pause: 60 });
+    await s.circle('say how sure you are', '.confidence');
+    await s.click('.conf', 'Fairly sure', { label: 'confidence', ms: 350 });
+    await s.click('button.btn.primary', 'Check my answer', { ms: 350 });
+    await s.circle('marks it on the spot', '.verdict', '', 0.3);
 
     // The self-audit: a doubtful mark goes to the cloud before it is shown.
-    await s.click('button.btn.primary', 'Next card');
-    await s.sleep(1200);
-    await s.ev(`window.__film.mark = 'escalate'`);
-    await s.click('textarea.answer-box', '', { label: 'answer-2' });
-    await s.type('They remember the germ for next time.', 24);
-    await s.sleep(300);
-    await s.click('.conf', 'Unsure', { label: 'confidence-2' });
-    await s.click('button.btn.primary', 'Check my answer');
-    await s.mark('marking-2', '.answer-area');
-    await s.sleep(3000);
-    await s.mark('escalated', '.audit-note');
-    await s.move(await s.box('.audit-note'), 900);
-    await s.sleep(5500);
-
-    // The tutor: streaming on Nano, then handed to the cloud.
-    await s.click('button.btn', 'Talk it through');
-    await s.sleep(900);
-    await s.mark('tutor', '.tutor');
-    await s.click('.tutor-chips button');
-    await s.sleep(3600);
-    await s.click('button', 'Ask a bigger model');
+    await s.end('study', 0.6);
+    await s.click('button.btn.primary', 'Next card', { ms: 500 });
     await s.sleep(700);
-    await s.mark('deeper', '.tutor');
-    await s.sleep(5200);
+    await s.ev(`(window.__film ??= {}).mark = 'escalate'`);
+    await s.click('textarea.answer-box', '', { label: 'answer-2', ms: 500 });
+    await s.type('They remember the germ for next time.', 30);
+    await s.click('.conf', 'Unsure', { label: 'confidence-2', ms: 450 });
+    await s.click('button.btn.primary', 'Check my answer', { ms: 450 });
+    await s.box('.answer-area');
+    await s.circle('goes to the bigger cloud AI', '.audit-note.escalated');
+
+    // The tutor: on the device, then handed to the cloud. The page settles first, with room
+    // below the button for the conversation.
+    await s.end('audit', 0.3);
+    await scrollTo(s, 'button.btn', 'Talk it through', 230);
+    await s.point('Talk it through', 'button.btn', 'Talk it through');
+    await s.click('button.btn', 'Talk it through', { ms: 60, pause: 40 });
+    await s.click('.tutor-chips button', '', { ms: 350, pause: 80 });
+    await s.circle('a tutor on your device', '.tutor-msg.theirs', '', 1.6);
+    await s.point('Ask a bigger model', 'button', 'Ask a bigger model');
+    await s.sleep(250);
+    await s.click('button', 'Ask a bigger model', { ms: 100, pause: 50 });
+    await s.circle('moves to the cloud', '.tutor-msg.theirs .badge-cloud', '', 0.6);
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** The Trap Gauntlet: Nano writes, you play, the referee withdraws one live. */
+  /** The Trap Gauntlet: Nano writes on the device, the referee throws one out, being sure counts. */
   async gauntlet() {
     const s = await open('gauntlet');
     await s.go('#/gauntlet');
-    await s.ev(`window.__refDelay = 5200`);
     await s.record();
-    await s.mark('intro', 'h1', 'Trap Gauntlet');
-    await s.sleep(1500);
-    await s.click('button.btn.primary', 'Start the gauntlet');
-    await s.sleep(150);
-    await s.mark('writing', 'h2', 'writing');
-    await s.sleep(1500);
-    await s.mark('play', '.trap-buttons');
-    const answers = [true, false, true, false];
-    for (const [i, a] of answers.entries()) {
-      await s.sleep(i ? 1500 : 1900);
-      await s.click(a ? '.trap-true' : '.trap-false', '', { label: `answer-${i}`, ms: 550 });
-      await s.sleep(1000);
-    }
-    await s.mark('referee', '.ref-chip');
-    await s.sleep(3200);
+    await s.on('turns your mistakes', 0.4);
+    // The referee rules just before it is mentioned.
+    await s.ev(`window.__refDelay = ${Math.round((s.when('throws out any unfair ones') - s.videoNow() - 2.6) * 1000)}`);
+    await s.click('button.btn.primary', 'Start the gauntlet', { ms: 500 });
+    await s.circle('Nano writes true-or-false traps', '.badge-on-device');
+    await s.on('while a cloud referee', 0.6);
+    await s.click('.trap-true', '', { label: 'answer-0', ms: 500 });
+    await s.circle('throws out any unfair ones', '.ref-chip');
+    await s.on('Confidence counts', 0.4);
+    await s.click('.trap-false', '', { label: 'answer-1', ms: 500 });
+    await s.point('being sure earns more', '.trap-sure');
+    await s.click('.trap-sure', '', { label: 'sure', ms: 100, pause: 50 });
+    await s.on("costs more when you're wrong", 0.2);
+    await s.click('.trap-true', '', { label: 'answer-2', ms: 500 });
+    await s.end('gauntlet', 0.6);
+    await s.click('.trap-false', '', { label: 'answer-3', ms: 500 });
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** The question read aloud: loading, then speaking. */
+  /** A question read aloud: loading, then speaking. */
   async voice() {
     const s = await open('voice');
     await s.go('#/study');
+    await s.box('.read-aloud');
     await s.record();
-    await s.sleep(800);
-    await s.click('.read-aloud', '', { label: 'speaker' });
-    await s.mark('loading', '.qcard-head');
-    await s.sleep(1300);
-    await s.mark('speaking', '.qcard-head');
-    await s.sleep(5000);
+    await s.on('read aloud', 0.9);
+    await s.click('.read-aloud', '', { label: 'speaker', ms: 600 });
+    await s.circle('read aloud', '.read-aloud');
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** The AI engine page: where each job runs right now, going offline, and the privacy mode. */
+  /** The AI engine page: where each job runs, offline, and Private mode. */
   async engine() {
     const s = await open('engine');
     await s.go('#/engine');
     await s.record();
-    // Scrolls so an element's top sits `gap` px below the top of the screen, and waits for it to settle.
-    const scrollTo = async (selector, gap = 24) => {
-      await s.ev(`window.scrollTo({ top: document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().top + scrollY - ${gap}, behavior: 'smooth' })`);
-      await s.sleep(1600);
-    };
-    await s.mark('cards', '.engine-cards');
-    await s.sleep(1800);
-    await scrollTo('.routes', 70);
-    await s.mark('routes', '.routes');
-    await s.sleep(1800);
+    await s.start('engine', 0.2);
+    await scrollTo(s, '.card', 'Right now', 70);
+    await s.point('shows where each job runs', '.routes');
+    await s.cue('Go offline', 0.2);
     await s.offline(true);
-    await s.sleep(500);
-    await s.mark('offline', '.routes');
-    await s.sleep(5200);
+    await s.circle('Go offline', '.routes', '', 0.4);
+    await s.on('And in Private mode', 1.6);
     await s.offline(false);
-    await s.sleep(300);
-    await scrollTo('.policy-now', 200);
-    await s.mark('policy', '.policy-now');
-    await s.sleep(4000);
+    await scrollTo(s, '.card', 'Privacy mode', 220);
+    await s.sleep(1000);
+    await s.circle('Private mode', '.card', 'Privacy mode');
+    await s.untilEnd();
     await s.finish();
   },
 
-  /** Insights, for the close. */
+  /** Insights: claimed against actual, then the "Certain, but wrong" list; the video ends here. */
   async close() {
     const s = await open('close');
     await s.go('#/insights');
     await s.record();
-    await s.mark('insights', '.page-head');
-    await s.sleep(3500);
-    await s.mark('claimed', 'h3', 'Claimed vs actual');
-    await s.scroll(380, 1600);
-    await s.sleep(5000);
-    await s.mark('wrong', 'h3', 'Certain, but wrong');
-    await s.scroll(420, 1600);
-    await s.sleep(9000);
+    await s.sleep(300);
+    await scrollTo(s, '.card', 'Claimed vs actual', 40);
+    await s.circle('how sure you felt with how you actually did', '.calib-col:last-child');
+    await s.on('so you study', 0.9);
+    await scrollTo(s, '.card', 'Certain, but wrong', 40);
+    await s.circle('what you only thought you knew', '.card', 'Certain, but wrong', 0.9);
+    await s.untilEnd();
     await s.finish();
   },
 };

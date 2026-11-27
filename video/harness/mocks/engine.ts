@@ -107,7 +107,7 @@ export const cachedSpeech = () => undefined;
 export async function* speechStream(): AsyncGenerator<{ pcm: Uint8Array; rate: number }> {
   await wait(1000);
   const rate = 24_000;
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 110; i++) { // about 8 s of speaking, long enough to be seen
     yield { pcm: new Uint8Array(rate / 5), rate }; // 0.1 s of near-silence per chunk
     await wait(60);
   }
