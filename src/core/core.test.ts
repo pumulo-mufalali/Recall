@@ -124,6 +124,23 @@ describe('calibrate', () => {
     const fair = [...Array.from({ length: 10 }, (_, i) => attempt(4, 1, i)), ...Array.from({ length: 10 }, (_, i) => attempt(1, 0, i + 10))];
     expect(calibrate(fair).verdict).toBe('well calibrated');
   });
+  it('judges each level, so opposite errors cannot cancel out in the average', () => {
+    // "No idea" right half the time (claims 10%), "Certain" right half the time (claims 95%):
+    // the averages nearly match, but both ends are off.
+    const mixed = [...Array.from({ length: 10 }, (_, i) => attempt(1, i % 2 ? 1 : 0, i)), ...Array.from({ length: 10 }, (_, i) => attempt(4, i % 2 ? 1 : 0, i + 10))];
+    const c = calibrate(mixed);
+    expect(Math.abs(c.gap)).toBeLessThan(0.1);
+    expect(c.verdict).toBe('mixed');
+    expect(c.worst?.confidence).toBe(4);
+    // Only "Certain" off, too sure: overconfident, and it names the level.
+    const sure = [...Array.from({ length: 10 }, (_, i) => attempt(4, i < 6 ? 1 : 0, i)), ...Array.from({ length: 10 }, (_, i) => attempt(2, i < 4 ? 1 : 0, i + 10))];
+    expect(calibrate(sure).verdict).toBe('overconfident');
+    expect(calibrate(sure).worst?.confidence).toBe(4);
+  });
+  it('ignores a level with too few answers to say anything', () => {
+    const few = [...Array.from({ length: 12 }, (_, i) => attempt(2, i % 5 < 2 ? 1 : 0, i)), ...Array.from({ length: 3 }, (_, i) => attempt(4, 0, i + 12))];
+    expect(calibrate(few).verdict).toBe('well calibrated');
+  });
 });
 
 describe('localGrade', () => {

@@ -832,6 +832,8 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 .v-overconfident em { color: var(--bad); }
 .v-underconfident { background: linear-gradient(135deg, var(--panel), var(--cloud-soft)); }
 .v-underconfident em { color: var(--cloud); }
+.v-mixed { background: linear-gradient(135deg, var(--panel), var(--mid-soft)); }
+.v-mixed em { color: var(--mid); }
 .v-well-calibrated { background: linear-gradient(135deg, var(--panel), var(--good-soft)); }
 .v-well-calibrated em { color: var(--good); }
 .verdict-stats { display: flex; gap: 28px; }

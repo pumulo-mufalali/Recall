@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { calibrate, MIN_ATTEMPTS, RIGHT } from '../core/calibration';
 import { accuracyTrend, deckProgress } from '../core/stats';
-import type { Attempt, Card, Deck } from '../core/types';
+import { CONFIDENCE_LABEL, type Attempt, type Card, type Deck } from '../core/types';
 import { CalibrationChart, TrendChart } from './charts';
 import { Icon } from './Icon';
 import { href } from './router';
@@ -43,14 +43,16 @@ export function Insights({ attempts, cards, decks }: { attempts: Attempt[]; card
             <h2>
               {c.verdict === 'overconfident' && <>You tend to be <em>overconfident</em>.</>}
               {c.verdict === 'underconfident' && <>You know <em>more than you think</em>.</>}
+              {c.verdict === 'mixed' && <>Your confidence is <em>off at both ends</em>.</>}
               {c.verdict === 'well calibrated' && <>You are <em>well calibrated</em>.</>}
             </h2>
           ) : (
             <h2>Answer {MIN_ATTEMPTS - c.attempts} more to see your calibration.</h2>
           )}
           <p className="muted">
-            {enough && c.verdict === 'overconfident' && `On average you expect ${Math.round(c.gap * 100)} points more than you score. The cards below are where that shows.`}
-            {enough && c.verdict === 'underconfident' && `You score ${Math.round(-c.gap * 100)} points above what you expect. Trust your recall a little more.`}
+            {enough && c.worst && c.verdict === 'overconfident' && `When you say "${CONFIDENCE_LABEL[c.worst.confidence]}", you are right ${pct(c.worst.actual!)} of the time, not ${pct(c.worst.claimed)}. The cards below are where that shows.`}
+            {enough && c.worst && c.verdict === 'underconfident' && `When you say "${CONFIDENCE_LABEL[c.worst.confidence]}", you are right ${pct(c.worst.actual!)} of the time, more than the ${pct(c.worst.claimed)} it claims. Trust your recall a little more.`}
+            {enough && c.worst && c.verdict === 'mixed' && `When you feel sure you are right less often than you think, and when you doubt yourself you know more. Biggest gap: "${CONFIDENCE_LABEL[c.worst.confidence]}" is right ${pct(c.worst.actual!)} of the time, against ${pct(c.worst.claimed)}.`}
             {enough && c.verdict === 'well calibrated' && 'When you feel sure you usually are, and when you doubt yourself it is with reason.'}
             {!enough && `${c.attempts} of ${MIN_ATTEMPTS} answers so far. A handful of answers says little.`}
           </p>
@@ -124,3 +126,6 @@ export function Insights({ attempts, cards, decks }: { attempts: Attempt[]; card
     </div>
   );
 }
+
+/** A share as a whole percentage. */
+const pct = (x: number) => `${Math.round(x * 100)}%`;
