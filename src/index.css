@@ -754,6 +754,8 @@ blockquote { margin: 8px 0; padding: 8px 14px; border-left: 3px solid var(--line
 @media (prefers-reduced-motion: reduce) { .mic-btn { transition: none; } }
 .read-aloud.speaking { color: var(--accent); background: var(--accent-soft); }
 .voice-note { display: flex; align-items: center; gap: 6px; margin: -2px 0 0; }
+.privacy-note { display: flex; align-items: center; gap: 6px; margin: -2px 0 0; }
+.privacy-note .icon { color: var(--device); flex: none; }
 .voice-note.error { color: var(--danger-text); }
 .confidence { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 @media (max-width: 560px) { .confidence { grid-template-columns: repeat(2, 1fr); } }

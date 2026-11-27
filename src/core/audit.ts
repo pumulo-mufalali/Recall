@@ -123,9 +123,9 @@ export type Policy = 'private' | 'balanced' | 'accurate';
 
 export const POLICY_LABEL: Record<Policy, string> = { private: 'Private', balanced: 'Balanced', accurate: 'Accuracy first' };
 export const POLICY_HELP: Record<Policy, string> = {
-  private: 'Your answers never leave this device.',
-  balanced: 'Marks that look uncertain are double-checked in the cloud.',
-  accurate: 'More marks are double-checked in the cloud, for the most reliable results.',
+  private: 'Your answers never go to the cloud. Marks are not double-checked.',
+  balanced: 'An unsure mark gets a second look from the cloud AI. Choose Private to stop that.',
+  accurate: 'More marks get a second look from the cloud AI, for the most reliable results.',
 };
 
 export interface Thresholds {

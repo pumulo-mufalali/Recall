@@ -74,8 +74,8 @@ export function SignIn() {
       </section>
 
       <section className="welcome-steps">
-        <Step icon="device" title="Private, instant marking">
-          Your answers are marked by AI built into Chrome. They never leave the device, and it works on a plane.
+        <Step icon="device" title="Safe to be wrong">
+          What you write is saved only on your device and marked by AI built into Chrome, so your wrong answers are not kept anywhere else. It even works on a plane.
         </Step>
         <Step icon="cloud" title="The cloud for heavy lifting">
           Long chapters and PDFs go to AI in the cloud, and a second AI fact-checks every card before you learn it.

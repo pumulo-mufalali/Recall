@@ -4,6 +4,9 @@
  * answer, and which engine marked it. Committing to a confidence first is the point: it turns
  * every card into a small, honest check of what you actually know.
  *
+ * What the learner writes is saved only on this device (services/words.ts), and the screen says so
+ * under the answer box: being wrong in private is what makes people willing to try.
+ *
  * Answers can be typed or spoken, in the same box: the microphone writes what it hears into it
  * (on this device when Chrome can, else transcribed by Gemini; see voicePlan in core/speech.ts),
  * and the speaker reads the question aloud.
@@ -13,7 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CONFIDENCE_CLAIM, CONFIDENCE_LABEL, type Attempt, type Card, type Confidence, type Deck } from '../core/types';
 import { RIGHT } from '../core/calibration';
-import type { Route } from '../core/route';
+import type { DeviceModel, Route } from '../core/route';
 import { Queued, explain, grade, type Hybrid, type Marked, type Outcome } from '../services/engine';
 import type { Settings } from '../services/firebase';
 import { recordAnswer, recordAudit, reviseAnswer } from '../services/store';
@@ -34,10 +37,11 @@ interface Props {
   settings: Settings;
   hybrid: Hybrid;
   online: boolean;
+  device: DeviceModel;
   onDone: () => void;
 }
 
-export function Study({ uid, cards, decks, settings, hybrid, online, onDone }: Props) {
+export function Study({ uid, cards, decks, settings, hybrid, online, device, onDone }: Props) {
   // The session's cards are fixed when it starts; answering reschedules them underneath.
   const [session] = useState(cards);
   const [index, setIndex] = useState(0);
@@ -98,6 +102,7 @@ export function Study({ uid, cards, decks, settings, hybrid, online, onDone }: P
           settings={settings}
           hybrid={hybrid}
           plan={plan}
+          privacy={privacyNote(device === 'available', online && settings.cloudGrading, hybrid.policy)}
           speech={speech}
           onGetSpeech={getSpeech}
           last={index === session.length - 1}
@@ -110,13 +115,20 @@ export function Study({ uid, cards, decks, settings, hybrid, online, onDone }: P
   );
 }
 
-function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech, last, onAnswered, onRevised, onNext }: {
+/** One plain line on where an answer goes: always saved only here; marked here, or in the cloud. */
+function privacyNote(builtIn: boolean, cloud: boolean, policy: Hybrid['policy']): string {
+  if (policy === 'private' || !cloud) return 'Only you see your answers: they are saved and marked on this device.';
+  return builtIn ? 'Your answers are saved and marked on this device. An unsure mark may get a second look in the cloud.' : 'Your answers are saved only on this device. The cloud AI marks them.';
+}
+
+function CardView({ uid, card, deck, settings, hybrid, plan, privacy, speech, onGetSpeech, last, onAnswered, onRevised, onNext }: {
   uid: string;
   card: Card;
   deck?: string;
   settings: Settings;
   hybrid: Hybrid;
   plan: VoicePlan;
+  privacy: string;
   speech: SpeechOnDevice | null;
   onGetSpeech: () => Promise<void>;
   last: boolean;
@@ -283,6 +295,7 @@ function CardView({ uid, card, deck, settings, hybrid, plan, speech, onGetSpeech
               onGetSpeech={() => void getSpeech()}
             />
           </div>
+          <p className="privacy-note small muted"><Icon name="shield" size={13} /> {privacy}</p>
           {(listening || transcribing || mic.error) && (
             <p className={`voice-note small${mic.error ? ' error' : ' muted'}`} aria-live="polite">
               {mic.error ?? (transcribing ? 'Writing down what you said…' : <><Icon name={plan.listen === 'device' ? 'device' : 'cloud'} size={13} /> {plan.listen === 'device' ? 'Listening on this device: your voice never leaves it.' : 'Recording: your words appear when you stop.'}</>)}
@@ -529,7 +542,7 @@ export function Summary({ results, onDone }: { results: { card: Card; attempt: A
         ))}
       </ul>
 
-      <p className="private-note"><Icon name="shield" size={16} /> {stats.onDevice} of {results.length} answers were marked on this device and never left it.</p>
+      <p className="private-note"><Icon name="shield" size={16} /> Your answers are saved only on this device.{stats.onDevice > 0 && ` ${stats.onDevice} of ${results.length} were marked here too.`}</p>
       <div className="actions center">
         <a className="btn" href="#/insights">See insights</a>
         <button className="btn primary" onClick={onDone} autoFocus>Done</button>
