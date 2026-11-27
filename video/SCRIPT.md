@@ -15,6 +15,8 @@ the footage under each part, and the highlights.
   The phrase must appear word for word in that part's narration. Add, remove or move lines.
 - **On screen** is the footage available for each part. If you want something else shown
   (another screen, another action), write it there and I will record it.
+- **Label** is the text box naming the technique while the part plays: `kind | title | detail`,
+  where kind is On device, Cloud, Hybrid or Under the hood. Delete the line for no label.
 - You can add, remove, merge or reorder parts. Keep the `## ` heading line for each part.
 
 ---
@@ -24,6 +26,8 @@ the footage under each part, and the highlights.
 **On screen:** the Today screen: "11 cards ready for you", the Start session button, the level
 and the Trap Gauntlet card, the "Marked privately on device" tile, the "Online · On-device AI"
 status at the bottom left.
+
+**Label:** Hybrid | Firebase AI Logic, hybrid inference | Gemini Nano in Chrome + Gemini in the cloud
 
 **Narration** (47 words):
 
@@ -40,6 +44,8 @@ Nobody likes getting things wrong, or wondering where their wrong answers end up
 **On screen:** the Add screen: a title and notes are typed in, then Photo (a photo of a notes
 page is dropped in), then PDF (a lecture PDF), then back to Notes. Then Make questions is pressed.
 
+**Label:** Hybrid | Each job routed | prefer_on_device for notes and photos · only_in_cloud for PDFs
+
 **Narration** (43 words):
 
 Start with what you're studying: notes, a photo of a page, or a PDF. Gemini Nano, built into Chrome, turns short notes and photos into questions. PDFs go to Gemini in the cloud. Firebase AI Logic picks the right one for each job.
@@ -54,6 +60,8 @@ Start with what you're studying: notes, a photo of a page, or a PDF. Gemini Nano
 **On screen:** the progress steps (Writing questions, then Fact-checking every answer against your
 material), then the review: the tally of cards, one card flagged ("59%" where the notes say "95%")
 with a suggested correction, and Use the correction being pressed.
+
+**Label:** Cloud | A second, larger model | Checks every card against your material
 
 **Narration** (27 words):
 
@@ -72,6 +80,8 @@ are saved and marked on this device…"; an answer typed and then finished by sp
 microphone ("Listening on this device"), then the confidence buttons (No idea, Unsure, Fairly
 sure, Certain), Check my answer, then the mark with its "On this device" badge.
 
+**Label:** On device | Gemini Nano marks the answer | prefer_on_device · structured output
+
 **Narration** (40 words):
 
 Now, study. Answer from memory: your answers are saved only on your device. Type, or just speak, and your voice is written down right there too. Then say how sure you are, and Gemini Nano marks it on the spot.
@@ -89,6 +99,8 @@ Now, study. Answer from memory: your answers are saved only on your device. Type
 **On screen:** the next card, answered vaguely; the mark is doubtful, so a note appears:
 "Double-checked. A second AI checked this mark before showing it to you."
 
+**Label:** Hybrid | The self-audit | Doubtful marks go to the cloud before you see them
+
 **Narration** (35 words):
 
 Can a small model mark fairly? Recall checks itself. A doubtful mark goes to the bigger cloud AI before you see it. The more often Nano gets it right, the less it needs to ask.
@@ -102,6 +114,8 @@ Can a small model mark fairly? Recall checks itself. A doubtful mark goes to the
 **On screen:** Talk it through opens under the missed card; a suggested question is sent and the
 tutor's reply streams in, badged "On this device". Then Ask a bigger model: a divider marks the
 handoff and the next reply is badged "Cloud".
+
+**Label:** Hybrid | A streamed chat session | startChat · sendMessageStream · handed to the cloud
 
 **Narration** (25 words):
 
@@ -120,6 +134,8 @@ Missed a point? Talk it through with a tutor on your device. Need more? Ask a bi
 answered against the clock, with an "On this device" badge; the referee chip ("Referee: 1
 withdrawn as unfair") and the note that one statement was withdrawn.
 
+**Label:** Hybrid | Written on device, refereed in the cloud | only_on_device writer · cloud referee in parallel
+
 **Narration** (39 words):
 
 Every day, the Trap Gauntlet turns your mistakes into a game. Nano writes true-or-false traps on your device, while a cloud referee throws out any unfair ones. Confidence counts: being sure earns more, and costs more when you're wrong.
@@ -134,6 +150,8 @@ Every day, the Trap Gauntlet turns your mistakes into a game. Nano writes true-o
 
 **On screen:** a question card; the speaker icon is pressed; it shows loading, then speaking.
 
+**Label:** Cloud | Gemini text-to-speech | Through Firebase AI Logic, streamed
+
 **Narration** (16 words):
 
 Questions can be read aloud too, by Gemini's text-to-speech. In fact, you're listening to it now.
@@ -146,6 +164,8 @@ Questions can be read aloud too, by Gemini's text-to-speech. In fact, you're lis
 
 **On screen:** the AI engine page: the cards for the built-in AI and the cloud AI; the "Right
 now" list, which changes when the connection goes offline; the Privacy card with the privacy mode.
+
+**Label:** Hybrid | The router, live | Offline: the device keeps working · Private: only_on_device
 
 **Narration** (40 words):
 
