@@ -101,7 +101,7 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
       </Section>
 
       <Section icon="shield" title="AI and privacy" note="On this device">
-        <Row label="Your answers" help="What you type or say is saved only on this device. Your account keeps your scores, so your progress follows you to other devices." />
+        <Row label="Your answers" help="Your answers are saved only on this device. Your account keeps your scores, so your progress follows you to other devices." />
         <Row label="Privacy mode" help={POLICY_HELP[policy]}>
           <Choice
             value={policy}

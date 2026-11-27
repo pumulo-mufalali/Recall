@@ -4,8 +4,8 @@
  * answer, and which engine marked it. Committing to a confidence first is the point: it turns
  * every card into a small, honest check of what you actually know.
  *
- * What the learner writes is saved only on this device (services/words.ts), and the screen says so
- * under the answer box: being wrong in private is what makes people willing to try.
+ * The learner's answers are saved only on this device (services/words.ts), and the screen says so
+ * under the answer box: nobody likes wondering where their wrong answers end up.
  *
  * Answers can be typed or spoken, in the same box: the microphone writes what it hears into it
  * (on this device when Chrome can, else transcribed by Gemini; see voicePlan in core/speech.ts),

@@ -300,7 +300,7 @@ function Welcome({ uid, name, conditions }: { uid: string; name: string; conditi
       <section className="how">
         <h3>How a session works</h3>
         <ol className="how-steps">
-          <li><strong>Answer from memory.</strong> <span className="muted">Type or say it in your own words. It is saved only on this device, so it is fine to be wrong.</span></li>
+          <li><strong>Answer from memory.</strong> <span className="muted">Type or say it in your own words. Your answers are saved only on this device.</span></li>
           <li><strong>Say how sure you are.</strong> <span className="muted">Before you see anything, so it is an honest claim.</span></li>
           <li><strong>See what you missed.</strong> <span className="muted">{conditions.device === 'available' ? 'Marked on this device, privately and instantly.' : 'Marked by AI against the key points.'}</span></li>
           <li><strong>It comes back at the right time.</strong> <span className="muted">Spaced repetition schedules each card just before you would forget it.</span></li>
