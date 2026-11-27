@@ -1,7 +1,9 @@
 /** The front door: what Recall is, how its hybrid AI works, and Google sign-in. */
 import { useEffect, useState } from 'react';
-import { GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { GoogleAuthProvider, getRedirectResult, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../services/firebase';
+import { seedExample } from '../services/store';
+import { exampleData } from '../core/example';
 import { Plain, friendly, type Friendly } from '../core/errors';
 import { ErrorNote } from './ErrorNote';
 import { Icon } from './Icon';
@@ -37,6 +39,20 @@ export function SignIn() {
     }
   };
 
+  // A guest (Firebase anonymous sign-in): no Google account needed. They land on a full app, with
+  // the example decks and history loaded; Settings can keep it by signing in with Google.
+  const tryAsGuest = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const { user } = await signInAnonymously(auth);
+      seedExample(user.uid, exampleData(new Date()));
+    } catch (e) {
+      fail(e);
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="welcome">
       <header className="welcome-top">
@@ -50,11 +66,16 @@ export function SignIn() {
           <p className="lede">
             Turn your notes, a photo of a page or a PDF into questions. Answer from memory, say how sure you are, and see the honest gap between feeling ready and being ready.
           </p>
-          <button className="btn primary lg" onClick={signIn} disabled={busy}>
-            <GoogleMark /> {busy ? 'Signing in…' : 'Continue with Google'}
-          </button>
+          <div className="welcome-actions">
+            <button className="btn primary lg" onClick={signIn} disabled={busy}>
+              <GoogleMark /> {busy ? 'Signing in…' : 'Continue with Google'}
+            </button>
+            <button className="btn lg" onClick={tryAsGuest} disabled={busy}>
+              Try it without signing in
+            </button>
+          </div>
           {error && <ErrorNote error={error} onRetry={signIn} />}
-          <p className="small muted">Free. Your cards sync across devices and work offline.</p>
+          <p className="small muted">Free. With Google, your cards sync across devices; without, they stay in this browser, with example decks to explore. Both work offline.</p>
         </div>
 
         <div className="welcome-demo" aria-hidden>

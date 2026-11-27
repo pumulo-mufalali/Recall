@@ -30,6 +30,7 @@ const DeckView = lazy(() => import('./ui/Library').then((m) => ({ default: m.Dec
 const EnginePage = lazy(() => import('./ui/EnginePage').then((m) => ({ default: m.EnginePage })));
 const SettingsPage = lazy(() => import('./ui/Settings').then((m) => ({ default: m.Settings })));
 import { useConfirm } from './ui/Dialog';
+import { accountInitial, accountName } from './ui/account';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { go, href, useRoute, type Route } from './ui/router';
 
@@ -235,8 +236,8 @@ function Signed({ user }: { user: User }) {
           <div className="sidebar-foot">
             <StatusPill conditions={conditions} />
             <a className={`me${active === 'settings' ? ' active' : ''}`} href={href({ name: 'settings' })} aria-current={active === 'settings' ? 'page' : undefined} title="Settings">
-              {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user.displayName ?? '?')[0]}</span>}
-              <span className="me-name">{user.displayName ?? user.email}</span>
+              {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{accountInitial(user)}</span>}
+              <span className="me-name">{accountName(user)}</span>
               <Icon name="settings" size={18} />
             </a>
           </div>

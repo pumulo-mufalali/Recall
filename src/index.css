@@ -451,6 +451,7 @@ a.tile:hover { border-color: var(--accent); }
 .welcome-copy h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin-bottom: 18px; }
 .welcome-copy .lede { max-width: 48ch; margin-bottom: 26px; }
 .welcome-copy .btn { margin-bottom: 14px; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 0 12px; }
 .welcome-copy .error-note { margin-bottom: 14px; }
 .welcome-demo { position: relative; min-height: 300px; }
 .demo-card { position: relative; z-index: 2; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 26px; box-shadow: var(--shadow-lg); transform: rotate(-1.5deg); }

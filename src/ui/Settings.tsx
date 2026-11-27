@@ -3,7 +3,8 @@
  * reminders, AI and privacy, their data (export and deletion), and about.
  */
 import { useState, type ReactNode } from 'react';
-import { GoogleAuthProvider, deleteUser, reauthenticateWithPopup, signOut, type User } from 'firebase/auth';
+import { GoogleAuthProvider, deleteUser, linkWithPopup, reauthenticateWithPopup, signOut, updateProfile, type User } from 'firebase/auth';
+import { accountInitial, accountName } from './account';
 import { POLICY_HELP, POLICY_LABEL, type Policy } from '../core/audit';
 import type { Session } from '../core/plan';
 import { NEW_CARD_OPTIONS, type StudyPrefs } from '../core/prefs';
@@ -48,21 +49,25 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
       </header>
 
       <Section icon="user" title="Account">
-        <div className="account">
-          {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{(user.displayName ?? '?')[0]}</span>}
-          <span className="account-who">
-            <strong>{user.displayName ?? 'Signed in'}</strong>
-            <span className="muted small">{user.email}</span>
-          </span>
-          <button
-            className="btn sm"
-            onClick={async () => {
-              if (await ask({ title: 'Sign out?', body: <p>Your cards are saved to your account and will be here when you sign back in.</p>, confirm: 'Sign out' })) signOut(auth);
-            }}
-          >
-            <Icon name="out" size={15} /> Sign out
-          </button>
-        </div>
+        {user.isAnonymous ? (
+          <GuestAccount user={user} ask={ask} />
+        ) : (
+          <div className="account">
+            {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : <span className="avatar">{accountInitial(user)}</span>}
+            <span className="account-who">
+              <strong>{accountName(user)}</strong>
+              <span className="muted small">{user.email}</span>
+            </span>
+            <button
+              className="btn sm"
+              onClick={async () => {
+                if (await ask({ title: 'Sign out?', body: <p>Your cards are saved to your account and will be here when you sign back in.</p>, confirm: 'Sign out' })) signOut(auth);
+              }}
+            >
+              <Icon name="out" size={15} /> Sign out
+            </button>
+          </div>
+        )}
       </Section>
 
       <Section icon="sun" title="Appearance" note="On this device">
@@ -136,6 +141,68 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
         </div>
       </Section>
     </div>
+  );
+}
+
+/**
+ * A guest's account (anonymous sign-in): kept in this browser only. Signing in with Google links
+ * it, so the same account (and all its data) carries on with a Google sign-in. Signing out would
+ * leave the data unreachable, so it is deleted instead.
+ */
+function GuestAccount({ user, ask }: { user: User; ask: Ask }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const keep = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const { user: linked } = await linkWithPopup(user, new GoogleAuthProvider());
+      const google = linked.providerData.find((p) => p.providerId === 'google.com');
+      if (google) await updateProfile(linked, { displayName: google.displayName, photoURL: google.photoURL });
+      location.reload(); // Shows the Google name and photo everywhere.
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? '';
+      if (code.includes('credential-already-in-use') || code.includes('email-already-in-use')) setError('That Google account already uses Recall. To use it, sign out of this guest session, then continue with Google.');
+      else if (!code.includes('popup-closed') && !code.includes('cancelled')) setError(`Could not sign in: ${(e as Error).message}`);
+      setBusy(false);
+    }
+  };
+
+  const leave = async () => {
+    const yes = await ask({
+      title: 'End the guest session?',
+      body: <p>A guest's cards and history live in this browser only, so they are deleted when you sign out.</p>,
+      confirm: 'Delete and sign out',
+      danger: true,
+    });
+    if (!yes) return;
+    setBusy(true);
+    try {
+      await deleteAllData(user.uid);
+      await deleteUser(user);
+    } catch {
+      await signOut(auth);
+    }
+  };
+
+  return (
+    <>
+      <div className="account">
+        <span className="avatar">G</span>
+        <span className="account-who">
+          <strong>Guest</strong>
+          <span className="muted small">Not signed in: your cards are kept in this browser only.</span>
+        </span>
+        <button className="btn sm" onClick={leave} disabled={busy}>
+          <Icon name="out" size={15} /> Sign out
+        </button>
+      </div>
+      <Row label="Keep your cards" help="Sign in with Google to keep everything you have done here, on every device.">
+        <button className="btn sm primary" onClick={keep} disabled={busy}>{busy ? 'Signing in…' : 'Sign in with Google'}</button>
+      </Row>
+      {error && <p className="small settings-error">{error}</p>}
+    </>
   );
 }
 
@@ -249,7 +316,7 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
   const deleteAccount = async () => {
     const yes = await ask({
       title: 'Delete your account?',
-      body: <><p>This removes your Recall account and all of your data ({counts}). It cannot be undone.</p><p>Google will ask you to confirm it is you.</p></>,
+      body: <><p>This removes your Recall account and all of your data ({counts}). It cannot be undone.</p>{!user.isAnonymous && <p>Google will ask you to confirm it is you.</p>}</>,
       confirm: 'Delete my account',
       danger: true,
     });
@@ -258,7 +325,8 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
     setError('');
     try {
       // Confirm it is them first, so the data is never deleted without the account going too.
-      await reauthenticateWithPopup(user, new GoogleAuthProvider());
+      // (A guest has no Google account to confirm with.)
+      if (!user.isAnonymous) await reauthenticateWithPopup(user, new GoogleAuthProvider());
       await deleteAllData(user.uid);
       await deleteUser(user);
     } catch (e) {
