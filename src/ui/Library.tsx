@@ -123,7 +123,7 @@ export function DeckView({ uid, deck, cards, attempts, newPerSession, ask, onDel
           <h1>{deck.title}</h1>
           {deck.origin && (
             <p className="small muted">
-              Made by Recall from <a href={deck.origin.url} target="_blank" rel="noreferrer">{deck.origin.title}</a>, {deck.origin.publisher}.
+              Made by Recall from <a href={deck.origin.url} target="_blank" rel="noreferrer">a public document</a> by {deck.origin.publisher}.
             </p>
           )}
           <p className="muted">

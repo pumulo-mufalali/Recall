@@ -39,7 +39,7 @@ export function EnginePage({ conditions: c, settings, attempts, policy }: {
         <div>
           <p className="eyebrow">AI engine</p>
           <h1>Where your AI works</h1>
-          <p className="muted">Everyday work happens on this device: fast, free and private. Big jobs, like a PDF, go to the cloud.</p>
+          <p className="muted">Everyday work runs on this device when Chrome's built-in AI is here: fast, free and private. Big jobs, like a PDF, go to the cloud.</p>
         </div>
       </header>
 

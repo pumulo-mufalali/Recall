@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Policy } from '../core/audit';
 import { friendly, type Friendly } from '../core/errors';
-import { GAUNTLET_CARDS, SECONDS_PER_STATEMENT, levelOf, pickCards, playedToday, pointsFor, totalXp, type GauntletRun, type Ruling, type Statement } from '../core/gauntlet';
+import { GAUNTLET_CARDS, SECONDS_PER_STATEMENT, lastMiss, levelOf, pickCards, playedToday, pointsFor, totalXp, type GauntletRun, type Ruling, type Statement } from '../core/gauntlet';
 import type { Route } from '../core/route';
 import type { Attempt, Card, Engine } from '../core/types';
 import { Queued } from '../services/engine';
@@ -39,6 +39,8 @@ const FEEDBACK_MS = 1800;
 
 export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone }: Props) {
   const source = useMemo(() => pickCards(cards, attempts, GAUNTLET_CARDS), [cards, attempts]);
+  /** How many of them the learner has actually got wrong (the rest top the gauntlet up). */
+  const misses = useMemo(() => source.filter((c) => lastMiss(c, attempts)).length, [source, attempts]);
   // Whether this run earns XP is settled when it starts: saving it adds it to the history, which
   // would otherwise make it look like a second run of the day.
   const countsNow = !playedToday(runs, new Date());
@@ -230,7 +232,7 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
         )}
       </div>
 
-      {phase === 'intro' && <Intro source={source} where={where} xp={xpNow} counted={countsNow} failure={failure} onStart={start} />}
+      {phase === 'intro' && <Intro source={source} misses={misses} where={where} xp={xpNow} counted={countsNow} failure={failure} onStart={start} />}
 
       {phase === 'writing' && (
         <div className="gauntlet-writing">
@@ -300,7 +302,7 @@ export function Gauntlet({ uid, cards, attempts, runs, settings, policy, onDone 
   );
 }
 
-function Intro({ source, where, xp, counted, failure, onStart }: { source: Card[]; where: Route | null; xp: number; counted: boolean; failure: Friendly | string | null; onStart: () => void }) {
+function Intro({ source, misses, where, xp, counted, failure, onStart }: { source: Card[]; misses: number; where: Route | null; xp: number; counted: boolean; failure: Friendly | string | null; onStart: () => void }) {
   const lvl = levelOf(xp);
   const can = where?.run === 'model' && source.length > 0;
   return (
@@ -308,6 +310,7 @@ function Intro({ source, where, xp, counted, failure, onStart }: { source: Card[
       <p className="eyebrow">Daily challenge</p>
       <h1>The Trap Gauntlet</h1>
       <p className="lede">True or false, against the clock. The AI writes traps from <em>your</em> past mistakes; a referee in the cloud makes sure every one is fair.</p>
+      {source.length > 0 && !misses && <p className="muted small">No mistakes yet, so today's traps come from cards you have not mastered. Miss a few cards and they come from your own mistakes.</p>}
       <LevelBar xp={xp} />
       <ul className="gauntlet-rules">
         <li><b>Sure and right:</b> +3 · <b>a right guess:</b> +1 · <b>a wrong guess:</b> 0 · <b>sure and wrong:</b> −2</li>

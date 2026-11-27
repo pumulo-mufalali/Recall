@@ -94,7 +94,7 @@ export function SignIn() {
 
       <section className="welcome-steps">
         <Step icon="device" title="Saved only on your device">
-          Your answers are saved only on your device and marked by AI built into Chrome, so a wrong one is not kept anywhere else. It even works on a plane.
+          Your answers are saved only on your device, so a wrong one is not kept anywhere else. With Chrome's built-in AI they are marked there too, even on a plane.
         </Step>
         <Step icon="cloud" title="The cloud for heavy lifting">
           Long chapters and PDFs go to AI in the cloud, and a second AI fact-checks every card before you learn it.

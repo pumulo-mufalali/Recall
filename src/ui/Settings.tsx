@@ -117,9 +117,11 @@ export function Settings({ user, prefs, defaultNew, conditions, policy, onPolicy
         <Row label="Built-in AI" help="AI built into Chrome marks your answers on this device: instantly, privately, even offline.">
           <ModelState c={conditions} onGet={() => askDownload(ask, conditions)} />
         </Row>
-        <Row label="Download on mobile data" help="The built-in AI is a few GB. By default Recall only downloads it on Wi-Fi.">
-          <Choice value={useAllowMobileData()} options={[[false, 'Wi-Fi only'], [true, 'Allow']]} onChange={setAllowMobileData} label="Download on mobile data" />
-        </Row>
+        {(conditions.device === 'downloadable' || conditions.device === 'downloading') && (
+          <Row label="Download on mobile data" help="The built-in AI is a few GB. By default Recall only downloads it on Wi-Fi.">
+            <MobileData />
+          </Row>
+        )}
         <p className="small"><a href="#/engine">See where Recall's AI works <Icon name="arrow" size={13} /></a></p>
       </Section>
 
@@ -368,4 +370,8 @@ function YourData({ user, data, prefs, ask, online }: { user: User; data: Props[
       {error && <p className="small settings-error">{error}</p>}
     </Section>
   );
+}
+
+function MobileData() {
+  return <Choice value={useAllowMobileData()} options={[[false, 'Wi-Fi only'], [true, 'Allow']]} onChange={setAllowMobileData} label="Download on mobile data" />;
 }

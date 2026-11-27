@@ -2,7 +2,7 @@
  * The home screen: what is due and a way to start, the streak and this week's numbers,
  * material waiting for a connection, the decks in progress and recent activity.
  */
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { User } from 'firebase/auth';
 import { activity, dayKey, deckProgress, engineSplit, nextDue, perDay, relative, streak } from '../core/stats';
 import { RIGHT } from '../core/calibration';
@@ -73,12 +73,7 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
         </div>
       </header>
 
-      {decks.some((d) => d.starter) && (
-        <p className="example-note">
-          <Icon name="sparkle" size={15} />
-          <span>You have three <strong>starter decks</strong>, made by Recall from real public documents (NASA, the National Park Service, the U.S. National Library of Medicine). Study a few cards and Insights, levels and the Trap Gauntlet fill in from your own answers. Add your own material any time; remove the starters in <a href="#/settings">Settings</a>.</span>
-        </p>
-      )}
+      {decks.some((d) => d.starter) && <SamplesNote />}
 
       <NextSession sessions={sessions} decks={decks} now={now} />
 
@@ -129,7 +124,10 @@ export function Today({ user, due, decks, cards, attempts, jobs, ready, sessions
         </Tile>
         <Tile icon="check" value={stats.week} label="Answered this week" />
         <Tile icon="insights" value={stats.accuracy === null ? '–' : `${Math.round(stats.accuracy * 100)}%`} label="Right this week" />
-        <Tile icon="shield" tone="device" value={stats.private === null ? '–' : `${Math.round(stats.private * 100)}%`} label="Marked privately on device" href="#/engine" />
+        {/* Where there is no built-in AI and never was, this would read 0% forever: left out. */}
+        {(conditions.device !== 'unavailable' || !!stats.private) && (
+          <Tile icon="shield" tone="device" value={stats.private === null ? '–' : `${Math.round(stats.private * 100)}%`} label="Marked privately on device" href="#/engine" />
+        )}
       </section>
 
       {jobs.length > 0 && (
@@ -312,4 +310,32 @@ function Welcome({ uid, name, conditions }: { uid: string; name: string; conditi
 function greeting(d: Date): string {
   const h = d.getHours();
   return h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+/** The starter decks are samples for trying Recall: said once, briefly, and dismissible. */
+const SAMPLES_SEEN = 'recall.samplesNoteSeen';
+function SamplesNote() {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(SAMPLES_SEEN) === '1';
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  const hide = () => {
+    setHidden(true);
+    try {
+      localStorage.setItem(SAMPLES_SEEN, '1');
+    } catch {
+      // Private browsing: hidden until the page reloads.
+    }
+  };
+  return (
+    <p className="example-note">
+      <Icon name="sparkle" size={15} />
+      <span><strong>These are sample decks, to try Recall.</strong> <a href="#/add">Add your own notes, a photo or a PDF</a> to study what you need.</span>
+      <button className="icon-btn sm example-close" onClick={hide} aria-label="Dismiss" title="Dismiss"><Icon name="x" size={15} /></button>
+    </p>
+  );
 }
