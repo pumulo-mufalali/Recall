@@ -15,6 +15,8 @@
   --ink-2: #000000;
   --muted: #000000;
   --subtle: #5d6878;
+  /* The sidebar's links and account: a dark grey, quieter than page text. */
+  --nav-ink: #3a4250;
   --line: #dde2e8;
   --track: #e5e9ee;
   --accent: #2f5fb8;
@@ -68,6 +70,7 @@
 /* Dark colours. src/ui/theme.ts sets data-theme from the learner's choice or the system. */
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --nav-ink: var(--ink-2);
   /* Pure black page; cards one step lighter so they stay distinct. */
   --bg: #000000;
   --bg-2: #0b0b0b;
@@ -212,14 +215,14 @@ textarea { resize: vertical; line-height: 1.55; }
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item {
   display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px;
-  color: var(--ink-2); font-weight: 500; transition: background .15s, color .15s;
+  color: var(--nav-ink); font-weight: 500; transition: background .15s, color .15s;
 }
 .nav-item:hover { background: color-mix(in srgb, var(--panel) 70%, transparent); }
 .nav-item.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow-sm); }
 .nav-count { margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--warm); color: #fff; font-size: 0.75rem; font-weight: 600; display: grid; place-items: center; }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
 /* The learner's name at the foot of the sidebar opens Settings. */
-.me { display: flex; align-items: center; gap: 10px; padding: 10px 10px; margin-top: 4px; border-radius: 12px; color: var(--ink); border: 1px solid transparent; transition: background .15s, border-color .15s; }
+.me { display: flex; align-items: center; gap: 10px; padding: 10px 10px; margin-top: 4px; border-radius: 12px; color: var(--nav-ink); border: 1px solid transparent; transition: background .15s, border-color .15s; }
 .me:hover { background: var(--inset); }
 .me.active { background: var(--panel); border-color: var(--line); box-shadow: var(--shadow-sm); }
 .me .icon { margin-left: auto; color: var(--subtle); }
