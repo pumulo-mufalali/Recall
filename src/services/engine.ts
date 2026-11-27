@@ -23,7 +23,7 @@ import {
   toSelfConfidence,
   type DraftCard,
 } from '../core/prompts';
-import { isBusy } from '../core/busy';
+import { isBusy, modelOrder } from '../core/busy';
 import { localGrade } from '../core/localGrade';
 import { pcmToWav, rateOf } from '../core/speech';
 import { agrees, decide, doubt, type Decision, type Doubt, type Policy, type Trust } from '../core/audit';
@@ -117,19 +117,27 @@ const CARDS_FORMAT: Format = {
 
 /** A model set up the same way for both engines: instructions, and JSON output when given. */
 export function build(mode: Mode, system: string, format: Format | null, io: object, cloudModel: string): GenerativeModel {
-  return getGenerativeModel(ai, {
-    mode,
-    inCloudParams: {
-      model: cloudModel,
-      systemInstruction: system,
-      generationConfig: format ? { responseMimeType: 'application/json', responseSchema: format.cloud, temperature: 0.2 } : { temperature: 0.4 },
+  return getGenerativeModel(
+    ai,
+    {
+      mode,
+      inCloudParams: {
+        model: cloudModel,
+        systemInstruction: system,
+        generationConfig: format ? { responseMimeType: 'application/json', responseSchema: format.cloud, temperature: 0.2 } : { temperature: 0.4 },
+      },
+      onDeviceParams: {
+        createOptions: { ...io, initialPrompts: [{ role: 'system', content: [{ type: 'text', value: system }] }] },
+        ...(format ? { promptOptions: { responseConstraint: format.device } } : {}),
+      },
     },
-    onDeviceParams: {
-      createOptions: { ...io, initialPrompts: [{ role: 'system', content: [{ type: 'text', value: system }] }] },
-      ...(format ? { promptOptions: { responseConstraint: format.device } } : {}),
-    },
-  });
+    // A model that has not answered in this long is struggling: the caller moves on to another.
+    { timeout: CLOUD_TIMEOUT_MS },
+  );
 }
+
+/** How long one cloud request may take before another model is tried. */
+const CLOUD_TIMEOUT_MS = 60_000;
 
 // ----- Calling a model, resiliently -----
 
@@ -146,25 +154,31 @@ export interface Spec {
 }
 
 const PAUSES_MS = [1000, 3000, 7000];
+/** Cloud models that were busy, and until when to try them last (see modelOrder). */
+const resting = new Map<string, number>();
+const REST_MS = 60_000;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms + Math.random() * 400));
 
 /**
- * Runs a request: each cloud model in turn, retrying with growing pauses while it is busy;
- * then, if the cloud stays busy and the request fits, the on-device model. Errors that are not
- * "busy" (a bad request, App Check) fail at once.
+ * Runs a request on the cloud models: when one is busy (overloaded, rate-limited or too slow),
+ * the next is tried at once, and only when every model has been tried is there a pause before
+ * the next round. A busy model rests for a minute (tried last). Then, if the cloud stays busy
+ * and the request fits, the on-device model. Errors that are not "busy" (a bad request, App
+ * Check) fail at once.
  */
 export async function call(spec: Spec, request: Parameters<GenerativeModel['generateContent']>[0]) {
   let last: unknown;
-  for (const model of spec.models) {
-    for (let attempt = 0; attempt <= PAUSES_MS.length; attempt++) {
+  for (let round = 0; round <= PAUSES_MS.length; round++) {
+    for (const model of modelOrder(spec.models, resting, Date.now())) {
       try {
         return await build(spec.mode, spec.system, spec.format, spec.io, model).generateContent(request);
       } catch (e) {
         if (!isBusy(e)) throw e;
         last = e;
-        if (attempt < PAUSES_MS.length) await sleep(PAUSES_MS[attempt]);
+        resting.set(model, Date.now() + REST_MS);
       }
     }
+    if (round < PAUSES_MS.length) await sleep(PAUSES_MS[round]);
   }
   if (spec.deviceCan && spec.mode !== 'only_on_device' && (await deviceModel()) === 'available') {
     return build('only_on_device', spec.system, spec.format, spec.io, spec.models[0]).generateContent(request);
