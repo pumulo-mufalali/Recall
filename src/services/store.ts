@@ -2,7 +2,8 @@
  * The learner's data in Firestore, under users/{uid}/:
  *   decks/{deckId}               a set of cards made from one piece of material
  *   decks/{deckId}/cards/{id}    one question, its model answer, key points, schedule
- *   attempts/{id}                every answer, with confidence and marking (for calibration)
+ *   attempts/{id}                every answer's confidence and marking (for calibration); the
+ *                                answer's words stay in this browser only (see words.ts)
  *   queue/{id}                   material waiting for a connection (see route.ts)
  *   audits/{id}                  the cloud model's check of an on-device mark (see audit.ts)
  *   sessions/{id}                a planned study session (see plan.ts)
@@ -18,6 +19,7 @@ import {
   collection,
   collectionGroup,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   increment,
@@ -29,6 +31,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type QueryDocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore';
 import type { DraftCard } from '../core/prompts';
@@ -41,6 +44,7 @@ import { DEFAULT_STUDY_PREFS, type StudyPrefs } from '../core/prefs';
 import { isAttempt, isCard, isDeck, keepValid } from '../core/valid';
 import type { ExampleData } from '../core/example';
 import { db } from './firebase';
+import { allWords, forgetWords, keepWords } from './words';
 
 const decks = (uid: string) => collection(db, 'users', uid, 'decks');
 const cards = (uid: string, deckId: string) => collection(db, 'users', uid, 'decks', deckId, 'cards');
@@ -66,7 +70,38 @@ export function watchCards(uid: string, on: (cards: Card[]) => void): Unsubscrib
 }
 
 export function watchAttempts(uid: string, on: (attempts: Attempt[]) => void): Unsubscribe {
-  return onSnapshot(query(attempts(uid), orderBy('at', 'desc')), (s) => on(keepValid(s.docs.map((d) => d.data()), isAttempt, 'answers')), failed('answers'));
+  return onSnapshot(
+    query(attempts(uid), orderBy('at', 'desc')),
+    (s) => {
+      moveWordsHere(uid, s.docs);
+      const words = allWords(uid);
+      const list = keepValid(s.docs.map((d) => d.data()), isAttempt, 'answers');
+      on(list.map((a) => ({ ...a, answer: words[a.id]?.answer ?? a.answer ?? '', grade: { ...a.grade, feedback: words[a.id]?.feedback ?? a.grade.feedback ?? '' } })));
+    },
+    failed('answers'),
+  );
+}
+
+/**
+ * Answers saved before words stayed on the device still have them in the account: keep them
+ * here, and remove them there. The example data's made-up answers stay where they are.
+ */
+function moveWordsHere(uid: string, docs: QueryDocumentSnapshot[]): void {
+  const old = docs.filter((d) => !d.data().example && typeof d.data().answer === 'string' && !d.metadata.hasPendingWrites);
+  if (!old.length) return;
+  keepWords(uid, Object.fromEntries(old.map((d) => [d.id, { answer: d.data().answer as string, feedback: (d.data().grade?.feedback as string) ?? '' }])));
+  for (let i = 0; i < old.length; i += 400) {
+    const batch = writeBatch(db);
+    old.slice(i, i + 400).forEach((d) => batch.update(d.ref, { answer: deleteField(), 'grade.feedback': deleteField() }));
+    settle(batch.commit());
+  }
+}
+
+/** What the account keeps of an answer: everything but the learner's words. */
+function withoutWords(attempt: Attempt) {
+  const { answer: _answer, grade, ...rest } = attempt;
+  const { feedback: _feedback, ...marking } = grade;
+  return { ...rest, grade: marking };
 }
 
 export function saveDeck(uid: string, title: string, source: Deck['source'], drafts: DraftCard[], madeBy: Engine): string {
@@ -88,8 +123,9 @@ export function recordAnswer(uid: string, card: Card, answer: string, confidence
   const now = new Date();
   const ref = doc(attempts(uid));
   const attempt: Attempt = { id: ref.id, cardId: card.id, deckId: card.deckId, at: now.toISOString(), answer, confidence, grade, mode };
+  keepWords(uid, { [ref.id]: { answer, feedback: grade.feedback } });
   const batch = writeBatch(db);
-  batch.set(ref, attempt);
+  batch.set(ref, withoutWords(attempt));
   batch.update(doc(cards(uid, card.deckId), card.id), { srs: review(card.srs, grade.score, confidence, now) });
   settle(batch.commit());
   return attempt;
@@ -100,8 +136,10 @@ export function recordAnswer(uid: string, card: Card, answer: string, confidence
  * rescheduled from where it stood before the answer (`card` is that earlier state).
  */
 export function reviseAnswer(uid: string, card: Card, attempt: Attempt, grade: Grade): void {
+  keepWords(uid, { [attempt.id]: { answer: attempt.answer, feedback: grade.feedback } });
+  const { feedback: _feedback, ...marking } = grade;
   const batch = writeBatch(db);
-  batch.update(doc(attempts(uid), attempt.id), { grade });
+  batch.update(doc(attempts(uid), attempt.id), { grade: marking });
   batch.update(doc(cards(uid, card.deckId), card.id), { srs: review(card.srs, grade.score, attempt.confidence, new Date(attempt.at)) });
   settle(batch.commit());
 }
@@ -197,6 +235,7 @@ export async function deleteAllData(uid: string): Promise<void> {
   }
   for (const col of [attempts(uid), audits(uid), sessions(uid), queue(uid), gauntlets(uid)]) refs.push(...(await getDocs(col)).docs.map((d) => d.ref));
   refs.push(prefsDoc(uid));
+  forgetWords(uid);
   for (let i = 0; i < refs.length; i += 400) {
     const batch = writeBatch(db);
     refs.slice(i, i + 400).forEach((r) => batch.delete(r));

@@ -217,7 +217,7 @@ export interface Marked extends Outcome<Grade> {
  * sees them; a sample of confident ones is spot-checked by it in the background.
  */
 export async function grade(question: string, keyPoints: string[], answer: string, settings: Settings, hybrid?: Hybrid): Promise<Marked> {
-  const r = route({ kind: 'grade', chars: answer.length }, await conditions(), settings);
+  const r = privately(route({ kind: 'grade', chars: answer.length }, await conditions(), settings), hybrid?.policy);
   const prompt = gradePrompt(question, keyPoints, answer);
   const cloudGrade = async (): Promise<Grade | null> => {
     const result = await call({ mode: 'only_in_cloud', system: GRADE_SYSTEM, format: GRADE_FORMAT, io: TEXT_IO, models: checkers(settings), deviceCan: false }, prompt);
@@ -279,6 +279,16 @@ export async function grade(question: string, keyPoints: string[], answer: strin
   }
   const local: Route = r.run === 'local' ? r : { run: 'local', reason: 'The model could not mark this one: marked by matching key points.' };
   return { value: localGrade(answer, keyPoints), engine: 'local', route: local };
+}
+
+/**
+ * Private mode: an answer never goes to the cloud. Where the cloud would mark it, the offline
+ * marker does; where the device marks it, it may not fall back to the cloud.
+ */
+function privately(r: Route, policy?: Policy): Route {
+  if (policy !== 'private' || r.run !== 'model') return r;
+  if (r.mode === 'only_in_cloud' || r.mode === 'prefer_in_cloud') return { run: 'local', reason: 'Private mode: marked on this device by matching key points.' };
+  return { ...r, mode: 'only_on_device' };
 }
 
 /** Makes cards from text, splitting it for the device when the router says so. */
