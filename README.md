@@ -2,7 +2,7 @@
 
 **Know what you actually know.** Recall turns your notes, a photo of a page or a PDF into questions, asks you to answer from memory and say how sure you are, marks the answer with AI, and shows the honest gap between feeling ready and being ready.
 
-Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: every piece of AI work is routed between **Gemini Nano on the device** (Chrome's built-in model) and **Gemini in the cloud**, and the app shows, for every result, where it ran and why.
+Built for **#BuildHybridAI 2026** with **Firebase AI Logic hybrid inference**: every piece of AI work is routed between **Gemini Nano on the device** (Chrome's built-in model) and **Gemini in the cloud**, and the app shows, for every result, where it ran.
 
 > **Live app:** <https://recall-three-rust.vercel.app/> · Web (Chrome desktop for on-device AI; any modern browser works with cloud AI)
 >
