@@ -1,5 +1,6 @@
 /** The built-in model (Gemini Nano): its state, and asking before its download. Used by the AI engine page and Settings. */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { deviceReport, type DeviceReport } from '../services/engine';
 import { downloadBlocked, useDownloadBlocked } from './dataPolicy';
 import { Icon } from './Icon';
 import type { LiveConditions } from './useConditions';
@@ -51,5 +52,42 @@ export function ModelState({ c, onGet }: { c: LiveConditions; onGet: () => void 
         </p>
       </div>
     );
-  return <p className="state off">Not available in this browser. Your answers are marked in the cloud instead.</p>;
+  return <Unavailable />;
+}
+
+/**
+ * Why the built-in AI is not here, in plain words, with the facts Chrome reports (to pass on
+ * when asking for help). Answers are marked in the cloud meanwhile.
+ */
+function Unavailable() {
+  const [r, setR] = useState<DeviceReport | null>(null);
+  useEffect(() => void deviceReport().then(setR), []);
+  const why = !r
+    ? 'Not available in this browser.'
+    : r.mobile
+      ? 'Phones do not have Chrome’s built-in AI yet.'
+      : r.browser !== 'chrome'
+        ? 'Only Google Chrome on a computer has this built-in AI.'
+        : !r.api
+          ? 'Chrome has not switched its built-in AI on for this site.'
+          : 'Chrome says this computer cannot run its built-in AI.';
+  const help =
+    r && !r.mobile && r.browser === 'chrome'
+      ? !r.api
+        ? 'Update Chrome (menu › Help › About Google Chrome). If it still shows this, open chrome://flags, enable “Prompt API for Gemini Nano” and “Enables optimization guide on device”, then relaunch Chrome.'
+        : 'It needs about 22 GB of free disk space, and either 16 GB of memory or a graphics card with more than 4 GB. chrome://on-device-internals shows what Chrome found.'
+      : null;
+  return (
+    <div className="dl">
+      <p className="state off">{why} Your answers are marked in the cloud instead.</p>
+      {help && <p className="small muted dl-note">{help}</p>}
+      {r && (
+        <p className="small muted dl-note">
+          Details: {r.browser === 'chrome' ? `Chrome ${r.version ?? '?'}` : r.browser === 'edge' ? 'Microsoft Edge' : 'another browser'}
+          {r.mobile ? ' on a phone' : ''} · built-in AI for websites: {r.api ? 'on' : 'off'}
+          {r.api ? ` · Chrome says: ${r.availability}` : ''}
+        </p>
+      )}
+    </div>
+  );
 }

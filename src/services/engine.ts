@@ -59,6 +59,36 @@ export async function deviceModel(): Promise<DeviceModel> {
   }
 }
 
+/** Plain facts about why the built-in model is or is not here, for the AI engine page. */
+export interface DeviceReport {
+  browser: 'chrome' | 'edge' | 'other';
+  /** Chrome's major version, when this is Chrome. */
+  version: number | null;
+  mobile: boolean;
+  /** Whether Chrome offers its built-in AI to this site at all. */
+  api: boolean;
+  /** What Chrome says about running it here. */
+  availability: string;
+}
+
+export async function deviceReport(): Promise<DeviceReport> {
+  const ua = navigator.userAgent;
+  const data = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+  const browser = /Edg\//.test(ua) ? 'edge' : /Chrome\//.test(ua) && !/OPR\//.test(ua) ? 'chrome' : 'other';
+  const version = browser === 'chrome' ? Number((ua.match(/Chrome\/(\d+)/) ?? [])[1]) || null : null;
+  const mobile = data?.mobile ?? /Android|iPhone|iPad|Mobile/.test(ua);
+  const lm = languageModel();
+  let availability = 'no API';
+  if (lm) {
+    try {
+      availability = await lm.availability(TEXT_IO);
+    } catch (e) {
+      availability = `error: ${(e as Error).message}`;
+    }
+  }
+  return { browser, version, mobile, api: !!lm, availability };
+}
+
 /** Starts (or joins) the model download. Must follow a user gesture, such as a click. */
 export async function downloadDeviceModel(onProgress: (fraction: number) => void): Promise<void> {
   await build('prefer_on_device', GRADE_SYSTEM, GRADE_FORMAT, TEXT_IO, 'gemini-3.5-flash-lite').initializeDeviceModel(onProgress);
