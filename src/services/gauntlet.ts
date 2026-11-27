@@ -9,7 +9,7 @@ import { REFEREE_SYSTEM, TRAPS_SYSTEM, lastMiss, refereePrompt, toRulings, toSta
 import { parseJson } from '../core/prompts';
 import { route, type Route } from '../core/route';
 import type { Attempt, Card } from '../core/types';
-import { Queued, TEXT_IO, call, checkers, conditions, engineOf, writers, type Format, type Outcome } from './engine';
+import { INTERACTIVE_TIMEOUT_MS, Queued, TEXT_IO, call, checkers, conditions, engineOf, writers, type Format, type Outcome } from './engine';
 import type { Settings } from './firebase';
 
 const STATEMENTS_FORMAT: Format = {
@@ -91,7 +91,7 @@ export async function referee(statements: Statement[], cards: Card[], settings: 
   if (r.run !== 'model') return { rulings: null, route: r };
   if (policy === 'private') return { rulings: null, route: { run: 'local', reason: 'Private mode: no referee, so nothing leaves this device.' } };
   const result = await call(
-    { mode: r.mode, system: REFEREE_SYSTEM, format: RULINGS_FORMAT, io: TEXT_IO, models: checkers(settings), deviceCan: false },
+    { mode: r.mode, system: REFEREE_SYSTEM, format: RULINGS_FORMAT, io: TEXT_IO, models: checkers(settings), deviceCan: false, timeoutMs: INTERACTIVE_TIMEOUT_MS },
     refereePrompt(statements, cards),
   );
   return { rulings: toRulings(parseJson(result.response.text()), statements.length), route: r };

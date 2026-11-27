@@ -9,7 +9,7 @@ import { isBusy } from '../core/busy';
 import { route, type Mode, type Route } from '../core/route';
 import { recentHistory, tutorSystem, type TutorCard, type TutorTurn } from '../core/tutor';
 import type { Engine } from '../core/types';
-import { Queued, TEXT_IO, build, conditions, deviceModel, engineOf, writers } from './engine';
+import { INTERACTIVE_TIMEOUT_MS, Queued, TEXT_IO, build, checkers, cloudOrder, conditions, deviceModel, engineOf, restModel, writers } from './engine';
 import type { Settings } from './firebase';
 
 export interface TutorContext {
@@ -59,14 +59,15 @@ export async function askTutor(
   const r = await tutorRoute(opts.settings, opts.policy, opts.deeper);
   if (r.run !== 'model') throw new Queued(r);
 
-  const stream = async (mode: Mode, cloudModel: string, routeUsed: Route): Promise<TutorReply> => {
+  const stream = async (mode: Mode, cloudModel: string, routeUsed: Route, onStart?: () => void): Promise<TutorReply> => {
     const short = mode === 'only_on_device' || mode === 'prefer_on_device';
-    const chat = build(mode, tutorSystem(ctx.card, ctx.said, ctx.missing, short), null, TEXT_IO, cloudModel).startChat({
+    const chat = build(mode, tutorSystem(ctx.card, ctx.said, ctx.missing, short), null, TEXT_IO, cloudModel, INTERACTIVE_TIMEOUT_MS).startChat({
       history: recentHistory(history).map((t) => ({ role: t.role, parts: [{ type: 'text' as const, text: t.text }] })),
     });
     const result = await chat.sendMessageStream(message);
     let text = '';
     for await (const chunk of result.stream) {
+      onStart?.();
       text += chunk.text();
       opts.onText(text);
     }
@@ -74,15 +75,25 @@ export async function askTutor(
     return { text: text.trim() || final.text().trim(), engine: engineOf(final.inferenceSource), route: routeUsed };
   };
 
-  const cloudModel = opts.deeper ? opts.settings.checkModel : writers(opts.settings)[0];
-  try {
-    return await stream(r.mode, cloudModel, r);
-  } catch (e) {
-    // A busy cloud: Nano answers instead, when it is ready and the learner did not ask for the cloud.
-    if (!opts.deeper && isBusy(e) && r.mode !== 'only_on_device' && (await deviceModel()) === 'available') {
-      opts.onText('');
-      return stream('only_on_device', cloudModel, model('only_on_device', 'The cloud was busy, so this device answered.'));
+  // The cloud models in turn (busy ones last): a busy or slow one hands over to the next, as
+  // long as it has not started replying.
+  const models = cloudOrder(opts.deeper ? checkers(opts.settings) : writers(opts.settings));
+  let last: unknown;
+  for (const cloudModel of models) {
+    let started = false;
+    try {
+      return await stream(r.mode, cloudModel, r, () => (started = true));
+    } catch (e) {
+      if (!isBusy(e) || started) throw e;
+      restModel(cloudModel);
+      last = e;
+      if (r.mode === 'only_on_device') break;
     }
-    throw e;
   }
+  // A busy cloud: Nano answers instead, when it is ready and the learner did not ask for the cloud.
+  if (!opts.deeper && r.mode !== 'only_on_device' && (await deviceModel()) === 'available') {
+    opts.onText('');
+    return stream('only_on_device', models[0], model('only_on_device', 'The cloud was busy, so this device answered.'));
+  }
+  throw last;
 }

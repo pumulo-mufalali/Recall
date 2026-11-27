@@ -146,7 +146,7 @@ const CARDS_FORMAT: Format = {
 };
 
 /** A model set up the same way for both engines: instructions, and JSON output when given. */
-export function build(mode: Mode, system: string, format: Format | null, io: object, cloudModel: string): GenerativeModel {
+export function build(mode: Mode, system: string, format: Format | null, io: object, cloudModel: string, timeoutMs = CLOUD_TIMEOUT_MS): GenerativeModel {
   return getGenerativeModel(
     ai,
     {
@@ -162,12 +162,14 @@ export function build(mode: Mode, system: string, format: Format | null, io: obj
       },
     },
     // A model that has not answered in this long is struggling: the caller moves on to another.
-    { timeout: CLOUD_TIMEOUT_MS },
+    { timeout: timeoutMs },
   );
 }
 
 /** How long one cloud request may take before another model is tried. */
 const CLOUD_TIMEOUT_MS = 60_000;
+/** The same for work someone is waiting on as it happens (the tutor, the gauntlet's referee). */
+export const INTERACTIVE_TIMEOUT_MS = 25_000;
 
 // ----- Calling a model, resiliently -----
 
@@ -181,12 +183,17 @@ export interface Spec {
   models: string[];
   /** Whether the on-device model can take this request if the cloud stays busy. */
   deviceCan: boolean;
+  /** How long each cloud model gets before the next is tried (default CLOUD_TIMEOUT_MS). */
+  timeoutMs?: number;
 }
 
 const PAUSES_MS = [1000, 3000, 7000];
 /** Cloud models that were busy, and until when to try them last (see modelOrder). */
 const resting = new Map<string, number>();
 const REST_MS = 60_000;
+/** Cloud models in the order to try them now (busy ones last), and marking one busy. */
+export const cloudOrder = (models: string[]) => modelOrder(models, resting, Date.now());
+export const restModel = (model: string) => resting.set(model, Date.now() + REST_MS);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms + Math.random() * 400));
 
 /**
@@ -201,7 +208,7 @@ export async function call(spec: Spec, request: Parameters<GenerativeModel['gene
   for (let round = 0; round <= PAUSES_MS.length; round++) {
     for (const model of modelOrder(spec.models, resting, Date.now())) {
       try {
-        return await build(spec.mode, spec.system, spec.format, spec.io, model).generateContent(request);
+        return await build(spec.mode, spec.system, spec.format, spec.io, model, spec.timeoutMs).generateContent(request);
       } catch (e) {
         if (!isBusy(e)) throw e;
         last = e;
