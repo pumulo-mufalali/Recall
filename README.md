@@ -92,8 +92,10 @@ Stack: React 19, TypeScript, Vite, `firebase` 13 (`firebase/ai`), `ts-fsrs`, `vi
    VITE_FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}
    VITE_RECAPTCHA_ENTERPRISE_KEY=your-site-key
    VITE_APPCHECK_DEBUG_TOKEN=optional-fixed-debug-token
+   CHROME_ORIGIN_TRIALS=optional-origin-trial-tokens
    ```
    The config may also be given as `FIREBASE_CONFIG` and `RECAPTCHA_ENTERPRISE_KEY` (useful on hosts that refuse `VITE_`-prefixed variables).
+   `CHROME_ORIGIN_TRIALS` (optional) puts Chrome origin-trial tokens in the page, for a Chrome feature still in trial, such as the built-in AI for websites. Register the deployed origin at <https://developer.chrome.com/origintrials>, then set it on the host (Vercel: Project Settings › Environment Variables) and redeploy.
 3. **Install and run.**
    ```
    npm install

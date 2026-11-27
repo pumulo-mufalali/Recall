@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The app shell is cached by a service worker, so Recall opens with no connection;
@@ -23,6 +23,7 @@ export default defineConfig({
   envPrefix: ['VITE_', 'FIREBASE_CONFIG', 'RECAPTCHA_ENTERPRISE_KEY'],
   plugins: [
     react(),
+    originTrials(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
@@ -41,3 +42,20 @@ export default defineConfig({
     }),
   ],
 });
+
+/**
+ * Chrome origin-trial tokens, from CHROME_ORIGIN_TRIALS (comma-separated; in .env.local or the
+ * host's settings): written into the page's <head> as <meta http-equiv="origin-trial">, which is
+ * how a site switches on a Chrome feature still in trial, such as the built-in AI for websites,
+ * for its visitors. With none set, nothing is added.
+ */
+function originTrials(): Plugin {
+  let tokens: string[] = [];
+  return {
+    name: 'recall-origin-trials',
+    configResolved(config) {
+      tokens = (loadEnv(config.mode, config.root, '').CHROME_ORIGIN_TRIALS ?? '').split(',').map((t) => t.trim()).filter(Boolean);
+    },
+    transformIndexHtml: () => tokens.map((content) => ({ tag: 'meta', attrs: { 'http-equiv': 'origin-trial', content }, injectTo: 'head-prepend' as const })),
+  };
+}
