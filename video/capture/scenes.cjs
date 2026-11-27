@@ -60,7 +60,7 @@ const scenes = {
     await s.finish();
   },
 
-  /** Add material: notes, a photo, a PDF, and where each runs; then writing and the fact-check. */
+  /** Add material: notes, a photo, a PDF; then writing and the fact-check. */
   async add() {
     const s = await open('add');
     await s.go('#/add');
@@ -71,23 +71,23 @@ const scenes = {
     await s.click('textarea.notes', '', { label: 'notes' });
     await s.paste(NOTES);
     await s.sleep(400);
-    await s.mark('plan-notes', '.plan');
+    await s.mark('source-notes', '.seg');
     await s.sleep(2600);
     await s.click('.seg button', 'Photo');
     await s.sleep(500);
     await s.ev(dropFile('image'));
     await s.sleep(300);
-    await s.mark('plan-photo', '.plan');
+    await s.mark('source-photo', '.seg');
     await s.sleep(2600);
     await s.click('.seg button', 'PDF');
     await s.sleep(500);
     await s.ev(dropFile('pdf'));
     await s.sleep(300);
-    await s.mark('plan-pdf', '.plan');
+    await s.mark('source-pdf', '.seg');
     await s.sleep(3000);
     await s.click('.seg button', 'Notes');
     await s.sleep(700);
-    await s.mark('plan-back', '.plan');
+    await s.mark('source-back', '.seg');
     await s.sleep(1800);
     await s.click('button.btn.primary', 'Make questions');
     await s.sleep(200);
@@ -198,7 +198,7 @@ const scenes = {
     await s.finish();
   },
 
-  /** The AI engine page: the router live, going offline, privacy, Remote Config, App Check, trust. */
+  /** The AI engine page: where each job runs right now, going offline, and the privacy mode. */
   async engine() {
     const s = await open('engine');
     await s.go('#/engine');
@@ -209,7 +209,6 @@ const scenes = {
       await s.sleep(1600);
     };
     await s.mark('cards', '.engine-cards');
-    await s.mark('appcheck', '.engine-card', 'App Check');
     await s.sleep(1800);
     await scrollTo('.routes', 70);
     await s.mark('routes', '.routes');
@@ -220,16 +219,9 @@ const scenes = {
     await s.sleep(5200);
     await s.offline(false);
     await s.sleep(300);
-    await scrollTo('.trust');
-    await s.mark('trust', '.trust');
+    await scrollTo('.policy-now', 200);
     await s.mark('policy', '.policy-now');
-    await s.sleep(3000);
-    await scrollTo('.config', 300);
-    await s.mark('config', '.config');
-    await s.sleep(2400);
-    await scrollTo('.engine-cards', 160);
-    await s.mark('appcheck-2', '.engine-card', 'App Check');
-    await s.sleep(3000);
+    await s.sleep(4000);
     await s.finish();
   },
 
